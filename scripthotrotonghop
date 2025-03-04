@@ -165,7 +165,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Totocoems/Ace/main/Ac
 })
 
 ------ Tab
-     local Tab4o = MakeTab({Name = "Script tìmmirage,katav2,rip,râuden"})
+     local Tab4o = MakeTab({Name = "Script gạt cần"})
 
 ------- BUTTON
     
@@ -187,7 +187,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/skibiditoiletgojo/Hai
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/AnDepZaiHub/AnBeoDepTrai/refs/heads/main/Rip_Indra"))()(Settings)
   end
-})   AddButton(Tab4o, {
+     })   AddButton(Tab4o, {
      Name = "cuttay hub",
     Callback = function()
 	getgenv().Team = "Pirates"
@@ -203,7 +203,8 @@ loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/a1498369f289af
   Translator = true; -- true/false
 }
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AnDepZaiHub/AnBeoDepTrai/refs/heads/main/Dough_King"))()(Settings)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AnDepZaiHub/AnBeoDepTrai/refs/heads/main/Dough_King"))()
+(Settings)
   end
   })
 
