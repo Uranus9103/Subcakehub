@@ -170,7 +170,7 @@ getgenv().FixCrash2 = false -- Turn it On For Hopping Server, Improve Performanc
 loadstring(game:HttpGet("https://raw.githubusercontent.com/AnDepZaiHub/AnBeoDepTrai/refs/heads/main/Rip_Indra"))()
   end
      })   AddButton(Tab3o, {
-     Name = "Hop mirage katav2 rip",
+     Name = "Hop katav2",
     Callback = function()
 	  local Settings = {
   JoinTeam = "Pirates"; -- Pirates/Marines
