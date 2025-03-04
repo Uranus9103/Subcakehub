@@ -1,4 +1,4 @@
-local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/skibiditoiletgojo/Tubo-lite/refs/heads/main/Haidepzai"))()
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/Subcakehub/refs/heads/main/Anhphuongtuan"))()
 local SaveManager = 
 loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V2/refs/heads/main/UiREDzV2.lua")))()
 
@@ -23,7 +23,7 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
   })
 
        MinimizeButton({
-       Image = "www.roblox.com/library/75558298917118/Sub-cake",
+      Image = "http://www.roblox.com/asset/?id=89284864928775",
        Size = {40, 40},
        Color = Color3.fromRGB(10, 10, 10),
        Corner = true,
@@ -137,4 +137,73 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/BapRed/main/
   end
   })
 
+------ Tab
+     local Tab3o = MakeTab({Name = "Script tiếp theo"})
+
+
+------- BUTTON
+    
+    AddButton(Tab3o, {
+     Name = "Min lỏ",
+    Callback = function()
+	getgenv().Team = "Pirates"
+getgenv().FixCrash = false -- Turn it On For Hopping Server, Improve Performance But Silent Aim On Mob And Player
+getgenv().FixCrash2 = false -- Turn it On For Hopping Server, Improve Performance But Will Remove Speed Changer
+loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/Min/refs/heads/main/MinAV"))()
+  end
+     })   AddButton(Tab3o, {
+     Name = "Script Pvp",
+    Callback = function()
+	  local Settings = {
+  JoinTeam = "Pirates"; -- Pirates/Marines
+  Translator = true; -- true/false
+}
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Totocoems/Ace/main/Ace"))()
+(Settings)
+  end
+})
+
+------ Tab
+     local Tab4o = MakeTab({Name = "Script tìmmirage,katav2,rip,râuden"})
+
+------- BUTTON
+    
+    AddButton(Tab4o, {
+     Name = "Teddy",
+    Callback = function()
+	getgenv().Team = "Pirates"
+getgenv().FixCrash = false -- Turn it On For Hopping Server, Improve Performance But Silent Aim On Mob And Player
+getgenv().FixCrash2 = false -- Turn it On For Hopping Server, Improve Performance But Will Remove Speed Changer
+loadstring(game:HttpGet("https://raw.githubusercontent.com/skibiditoiletgojo/Haidepzai/refs/heads/main/Teddy-Premium"))()
+  end
+     })   AddButton(Tab4o, {
+     Name = "Rip indra",
+    Callback = function()
+	  local Settings = {
+  JoinTeam = "Pirates"; -- Pirates/Marines
+  Translator = true; -- true/false
+}
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AnDepZaiHub/AnBeoDepTrai/refs/heads/main/Rip_Indra"))()(Settings)
+  end
+})   AddButton(Tab4o, {
+     Name = "cuttay hub",
+    Callback = function()
+	getgenv().Team = "Pirates"
+getgenv().FixCrash = false -- Turn it On For Hopping Server, Improve Performance But Silent Aim On Mob And Player
+getgenv().FixCrash2 = false -- Turn it On For Hopping Server, Improve Performance But Will Remove Speed Changer
+loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/a1498369f289af2671cca90085f23fb8.lua"))()
+  end
+     })   AddButton(Tab4o, {
+     Name = "Dough king",
+    Callback = function()
+	  local Settings = {
+  JoinTeam = "Pirates"; -- Pirates/Marines
+  Translator = true; -- true/false
+}
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AnDepZaiHub/AnBeoDepTrai/refs/heads/main/Dough_King"))()(Settings)
+  end
+  })
 
