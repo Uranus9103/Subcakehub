@@ -1,187 +1,116 @@
--- LocalScript trong StarterGui
 local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui")
-gui.Name = "SubcakeVNScriptUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
--- Giữ nguyên loadstring của bạn
-loadstring(game:HttpGet("https://raw.githubusercontent.com/vinh12eqweaws/vvvs/refs/heads/main/caz"))()
-
-----------------------------------------------------------------
--- PHẦN FLY SYSTEM
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
+local mouse = player:GetMouse()
 local camera = workspace.CurrentCamera
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
 
-local flying = false
+-- Tạo GUI
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
+gui.Name = "FlyGUI"
+
+local function createButton(text, pos, size, color)
+	local btn = Instance.new("TextButton")
+	btn.Text = text
+	btn.Size = UDim2.new(0, size.X, 0, size.Y)
+	btn.Position = UDim2.new(0, pos.X, 0, pos.Y)
+	btn.BackgroundColor3 = color
+	btn.TextScaled = true
+	btn.Parent = gui
+	return btn
+end
+
+-- Nút và biến điều khiển
 local speed = 50
-local ascend = 0
-local moveForward, moveRight = 0, 0
-local bv, bg
+local flying = false
+local moveDir = Vector3.zero
+local upBtn = createButton("UP", Vector2.new(10, 50), Vector2.new(80, 40), Color3.fromRGB(144, 238, 144))
+local downBtn = createButton("DOWN", Vector2.new(10, 100), Vector2.new(80, 40), Color3.fromRGB(255, 255, 153))
+local plusBtn = createButton("+", Vector2.new(100, 50), Vector2.new(40, 40), Color3.fromRGB(173, 216, 230))
+local minusBtn = createButton("-", Vector2.new(100, 100), Vector2.new(40, 40), Color3.fromRGB(216, 191, 216))
+local toggleBtn = createButton("FLY", Vector2.new(150, 50), Vector2.new(80, 90), Color3.fromRGB(255, 182, 193))
 
-local function enableFly(char)
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-    bv.Velocity = Vector3.new(0,0,0)
-    bv.Parent = hrp
+-- Cơ chế bay
+local bodyGyro = Instance.new("BodyGyro")
+bodyGyro.P = 9e4
+bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
 
-    bg = Instance.new("BodyGyro")
-    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
-    bg.P = 10000
-    bg.CFrame = hrp.CFrame
-    bg.Parent = hrp
+local bodyVel = Instance.new("BodyVelocity")
+bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+bodyVel.Velocity = Vector3.zero
+
+local function startFly()
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	bodyGyro.Parent = char.HumanoidRootPart
+	bodyVel.Parent = char.HumanoidRootPart
+	flying = true
 end
 
-local function disableFly()
-    if bv then bv:Destroy() bv = nil end
-    if bg then bg:Destroy() bg = nil end
+local function stopFly()
+	bodyGyro.Parent = nil
+	bodyVel.Parent = nil
+	flying = false
 end
 
-UIS.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.W then moveForward = 1 end
-    if input.KeyCode == Enum.KeyCode.S then moveForward = -1 end
-    if input.KeyCode == Enum.KeyCode.A then moveRight = -1 end
-    if input.KeyCode == Enum.KeyCode.D then moveRight = 1 end
-    if input.KeyCode == Enum.KeyCode.Space then ascend = 1 end
-    if input.KeyCode == Enum.KeyCode.LeftShift then ascend = -1 end
+-- Nút sự kiện
+toggleBtn.MouseButton1Click:Connect(function()
+	if flying then
+		stopFly()
+		toggleBtn.Text = "FLY"
+	else
+		startFly()
+		toggleBtn.Text = "STOP"
+	end
+end)
+
+plusBtn.MouseButton1Click:Connect(function()
+	speed = speed + 10
+end)
+
+minusBtn.MouseButton1Click:Connect(function()
+	speed = math.max(0, speed - 10)
+end)
+
+upBtn.MouseButton1Click:Connect(function()
+	moveDir = moveDir + Vector3.new(0, 1, 0)
+end)
+
+downBtn.MouseButton1Click:Connect(function()
+	moveDir = moveDir - Vector3.new(0, 1, 0)
+end)
+
+UIS.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.W then
+		moveDir = moveDir + camera.CFrame.LookVector
+	elseif input.KeyCode == Enum.KeyCode.S then
+		moveDir = moveDir - camera.CFrame.LookVector
+	elseif input.KeyCode == Enum.KeyCode.A then
+		moveDir = moveDir - camera.CFrame.RightVector
+	elseif input.KeyCode == Enum.KeyCode.D then
+		moveDir = moveDir + camera.CFrame.RightVector
+	end
 end)
 
 UIS.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then moveForward = 0 end
-    if input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.D then moveRight = 0 end
-    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.LeftShift then ascend = 0 end
+	if input.KeyCode == Enum.KeyCode.W then
+		moveDir = moveDir - camera.CFrame.LookVector
+	elseif input.KeyCode == Enum.KeyCode.S then
+		moveDir = moveDir + camera.CFrame.LookVector
+	elseif input.KeyCode == Enum.KeyCode.A then
+		moveDir = moveDir + camera.CFrame.RightVector
+	elseif input.KeyCode == Enum.KeyCode.D then
+		moveDir = moveDir - camera.CFrame.RightVector
+	end
 end)
 
-RunService.RenderStepped:Connect(function()
-    if not flying or not bv or not bg or not player.Character then return end
-    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local camCF = camera.CFrame
-    local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
-    local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
-
-    local move = (forward * moveForward + right * moveRight) * speed
-    move = move + Vector3.new(0, ascend * speed, 0)
-
-    bv.Velocity = move
-    bg.CFrame = CFrame.new(hrp.Position, hrp.Position + forward)
-end)
-
-player.CharacterAdded:Connect(function(char)
-    if flying then
-        enableFly(char)
-    else
-        disableFly()
-    end
-end)
-
-----------------------------------------------------------------
--- HÀM TẠO NÚT GẠT
-local function createSwitch(parent, yPos, labelText, onToggle)
-    local holder = Instance.new("Frame")
-    holder.Parent = parent
-    holder.Size = UDim2.new(1, -24, 0, 46)
-    holder.Position = UDim2.new(0, 12, 0, yPos)
-    holder.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel")
-    label.Parent = holder
-    label.Size = UDim2.new(0, 110, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = Color3.fromRGB(230,230,230)
-    label.TextSize = 18
-    label.Font = Enum.Font.Gotham
-
-    local toggleBG = Instance.new("Frame")
-    toggleBG.Parent = holder
-    toggleBG.Size = UDim2.new(0, 90, 0, 32)
-    toggleBG.Position = UDim2.new(0, 120, 0.5, -16)
-    toggleBG.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-    toggleBG.BorderSizePixel = 0
-    local bgCorner = Instance.new("UICorner", toggleBG)
-    bgCorner.CornerRadius = UDim.new(1, 0)
-
-    local knob = Instance.new("Frame")
-    knob.Parent = toggleBG
-    knob.Size = UDim2.new(0, 32, 0, 32)
-    knob.Position = UDim2.new(0, 0, 0, 0)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.BorderSizePixel = 0
-    local knobCorner = Instance.new("UICorner", knob)
-    knobCorner.CornerRadius = UDim.new(1, 0)
-
-    local state = false
-    local function setState(newState, animate)
-        state = newState
-        if state then
-            toggleBG.BackgroundColor3 = Color3.fromRGB(40, 170, 60)
-            if animate then
-                knob:TweenPosition(UDim2.new(1, -32, 0, 0), "Out", "Quad", 0.15, true)
-            else
-                knob.Position = UDim2.new(1, -32, 0, 0)
-            end
-        else
-            toggleBG.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-            if animate then
-                knob:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.15, true)
-            else
-                knob.Position = UDim2.new(0, 0, 0, 0)
-            end
-        end
-        if onToggle then
-            onToggle(state)
-        end
-    end
-    setState(false, false)
-
-    local function toggle()
-        setState(not state, true)
-    end
-
-    knob.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggle()
-        end
-    end)
-    toggleBG.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            toggle()
-        end
-    end)
-end
-
-----------------------------------------------------------------
--- TẠO FRAME & NÚT FLY
-local frame = Instance.new("Frame")
-frame.Parent = gui
-frame.Size = UDim2.new(0, 280, 0, 120)
-frame.Position = UDim2.new(0.5, -140, 0.4, 0)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
-
-local title = Instance.new("TextLabel")
-title.Parent = frame
-title.Size = UDim2.new(1, 0, 0, 36)
-title.BackgroundTransparency = 1
-title.Text = "APEX PREMIUM"
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.TextSize = 21
-title.Font = Enum.Font.GothamBold
-
--- Nút gạt bật/tắt bay
-createSwitch(frame, 46, "Fly Mode", function(state)
-    flying = state
-    if flying then
-        enableFly(player.Character)
-    else
-        disableFly()
-    end
+-- Vòng lặp bay
+RS.RenderStepped:Connect(function()
+	if flying then
+		local char = player.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			bodyGyro.CFrame = camera.CFrame
+			bodyVel.Velocity = moveDir.Unit * speed
+		end
+	end
 end)
