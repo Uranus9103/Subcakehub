@@ -1,233 +1,187 @@
--- LocalScript: FlyGuiController (dán vào ScreenGui)
+-- LocalScript trong StarterGui
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "SubcakeVNScriptUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Giữ nguyên loadstring của bạn
+loadstring(game:HttpGet("https://raw.githubusercontent.com/vinh12eqweaws/vvvs/refs/heads/main/caz"))()
+
+----------------------------------------------------------------
+-- PHẦN FLY SYSTEM
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
-
-local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
-local screenGui = script.Parent
--- Tên các nút phải trùng với GUI bạn tạo
-local closeBtn = screenGui:WaitForChild("CloseButton")
-local upBtn = screenGui:WaitForChild("UpButton")
-local downBtn = screenGui:WaitForChild("DownButton")
-local plusBtn = screenGui:WaitForChild("PlusButton")
-local minusBtn = screenGui:WaitForChild("MinusButton")
-local speedLabel = screenGui:WaitForChild("SpeedLabel")
-local flyToggle = screenGui:WaitForChild("FlyToggle")
-
--- Cấu hình mặc định
-local baseSpeed = 50         -- tốc độ di chuyển ngang (m/s)
-local verticalSpeed = 40     -- tốc độ lên/xuống mặc định
-local speedStep = 10         -- mỗi + hoặc - tăng/giảm bao nhiêu
-local minSpeed = 10
-local maxSpeed = 200
-
--- trạng thái
 local flying = false
-local speed = baseSpeed
-local ascend = 0     -- -1 xuống, 0 ko, +1 lên (điều khiển bởi nút hoặc phím)
-local moveForward = 0
-local moveRight = 0
-
--- Body objects (tạo khi bật fly)
+local speed = 50
+local ascend = 0
+local moveForward, moveRight = 0, 0
 local bv, bg
 
--- Giúp cập nhật label
-local function updateSpeedLabel()
-    speedLabel.Text = tostring(math.floor(speed))
-end
-updateSpeedLabel()
-
--- Tạo BodyVelocity & BodyGyro cho character
-local function enableFly(character)
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    -- nếu đã có thì remove trước
-    if bv then bv:Destroy() end
-    if bg then bg:Destroy() end
-
+local function enableFly(char)
+    local hrp = char:WaitForChild("HumanoidRootPart")
     bv = Instance.new("BodyVelocity")
-    bv.Name = "Fly_BodyVelocity"
     bv.MaxForce = Vector3.new(1e5,1e5,1e5)
     bv.Velocity = Vector3.new(0,0,0)
-    bv.P = 10000
     bv.Parent = hrp
 
     bg = Instance.new("BodyGyro")
-    bg.Name = "Fly_BodyGyro"
     bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
     bg.P = 10000
     bg.CFrame = hrp.CFrame
     bg.Parent = hrp
-
-    -- tắt humanoid's state làm rối (giữ người không bị rơi animation)
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.PlatformStand = false -- giữ false để animation vẫn hoạt động; nếu muốn ép đứng yên set true
-    end
 end
 
 local function disableFly()
-    if bv then
-        bv:Destroy()
-        bv = nil
-    end
-    if bg then
-        bg:Destroy()
-        bg = nil
-    end
+    if bv then bv:Destroy() bv = nil end
+    if bg then bg:Destroy() bg = nil end
 end
 
--- Xử lý input bàn phím
-local function onInputBegan(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.Keyboard then
-        local key = input.KeyCode
-        if key == Enum.KeyCode.W then moveForward = 1 end
-        if key == Enum.KeyCode.S then moveForward = -1 end
-        if key == Enum.KeyCode.A then moveRight = -1 end
-        if key == Enum.KeyCode.D then moveRight = 1 end
-        if key == Enum.KeyCode.Space then ascend = 1 end
-        if key == Enum.KeyCode.LeftShift then ascend = -1 end
-        -- +- bằng keyboard
-        if key == Enum.KeyCode.Equals or key == Enum.KeyCode.KeypadPlus then
-            speed = math.clamp(speed + speedStep, minSpeed, maxSpeed); updateSpeedLabel()
-        end
-        if key == Enum.KeyCode.Minus or key == Enum.KeyCode.KeypadMinus then
-            speed = math.clamp(speed - speedStep, minSpeed, maxSpeed); updateSpeedLabel()
-        end
-        -- toggle bằng B (ví dụ) nếu muốn nhanh
-        if key == Enum.KeyCode.B then
-            flying = not flying
-            if flying then
-                if player.Character then enableFly(player.Character) end
-            else
-                disableFly()
-            end
-        end
-    end
-end
-
-local function onInputEnded(input)
-    if input.UserInputType == Enum.UserInputType.Keyboard then
-        local key = input.KeyCode
-        if key == Enum.KeyCode.W or key == Enum.KeyCode.S then moveForward = 0 end
-        if key == Enum.KeyCode.A or key == Enum.KeyCode.D then moveRight = 0 end
-        if key == Enum.KeyCode.Space or key == Enum.KeyCode.LeftShift then ascend = 0 end
-    end
-end
-
-UIS.InputBegan:Connect(onInputBegan)
-UIS.InputEnded:Connect(onInputEnded)
-
--- Xử lý nhấn giữ nút GUI (mobile & mouse)
-local function makeHoldBehavior(button, setFunc)
-    local holding = false
-    local connectionBegin, connectionEnd
-
-    local function begin()
-        holding = true
-        setFunc(true)
-    end
-    local function finish()
-        holding = false
-        setFunc(false)
-    end
-
-    button.MouseButton1Down:Connect(begin)
-    button.MouseButton1Up:Connect(finish)
-    button.TouchStarted:Connect(function() begin() end)
-    button.TouchEnded:Connect(function() finish() end)
-    -- in case pointer leaves
-    button.MouseLeave:Connect(finish)
-end
-
--- Up/Down nút: khi giữ sẽ đặt ascend = 1 hoặc -1
-makeHoldBehavior(upBtn, function(state) if state then ascend = 1 else if UIS:IsKeyDown(Enum.KeyCode.Space) then ascend = 1 else ascend = 0 end end end)
-makeHoldBehavior(downBtn, function(state) if state then ascend = -1 else if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then ascend = -1 else ascend = 0 end end end)
-
--- Plus / Minus click (tăng giảm)
-plusBtn.MouseButton1Click:Connect(function()
-    speed = math.clamp(speed + speedStep, minSpeed, maxSpeed)
-    updateSpeedLabel()
-end)
-minusBtn.MouseButton1Click:Connect(function()
-    speed = math.clamp(speed - speedStep, minSpeed, maxSpeed)
-    updateSpeedLabel()
+UIS.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.W then moveForward = 1 end
+    if input.KeyCode == Enum.KeyCode.S then moveForward = -1 end
+    if input.KeyCode == Enum.KeyCode.A then moveRight = -1 end
+    if input.KeyCode == Enum.KeyCode.D then moveRight = 1 end
+    if input.KeyCode == Enum.KeyCode.Space then ascend = 1 end
+    if input.KeyCode == Enum.KeyCode.LeftShift then ascend = -1 end
 end)
 
--- Close button giấu GUI
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui.Enabled = false
+UIS.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then moveForward = 0 end
+    if input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.D then moveRight = 0 end
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.LeftShift then ascend = 0 end
 end)
 
--- Fly toggle
-flyToggle.MouseButton1Click:Connect(function()
-    flying = not flying
+RunService.RenderStepped:Connect(function()
+    if not flying or not bv or not bg or not player.Character then return end
+    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local camCF = camera.CFrame
+    local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+    local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
+
+    local move = (forward * moveForward + right * moveRight) * speed
+    move = move + Vector3.new(0, ascend * speed, 0)
+
+    bv.Velocity = move
+    bg.CFrame = CFrame.new(hrp.Position, hrp.Position + forward)
+end)
+
+player.CharacterAdded:Connect(function(char)
     if flying then
-        if player.Character then enableFly(player.Character) end
-        flyToggle.Text = "FLY: ON"
-    else
-        disableFly()
-        flyToggle.Text = "FLY: OFF"
-    end
-end)
-
--- Khi character respawn, đảm bảo clean up & tái tạo body
-local function onCharacterAdded(char)
-    -- nếu đang bay thì tạo lại body
-    if flying then
-        -- một chút delay để HumanoidRootPart xuất hiện
-        char:WaitForChild("HumanoidRootPart", 5)
         enableFly(char)
     else
         disableFly()
     end
-end
+end)
 
-if player.Character then
-    onCharacterAdded(player.Character)
-end
-player.CharacterAdded:Connect(onCharacterAdded)
+----------------------------------------------------------------
+-- HÀM TẠO NÚT GẠT
+local function createSwitch(parent, yPos, labelText, onToggle)
+    local holder = Instance.new("Frame")
+    holder.Parent = parent
+    holder.Size = UDim2.new(1, -24, 0, 46)
+    holder.Position = UDim2.new(0, 12, 0, yPos)
+    holder.BackgroundTransparency = 1
 
--- Vòng lặp RenderStepped để cập nhật BV/BG dựa trên camera
-RunService.RenderStepped:Connect(function(dt)
-    local char = player.Character
-    if not char or not flying or not bv or not bg then return end
+    local label = Instance.new("TextLabel")
+    label.Parent = holder
+    label.Size = UDim2.new(0, 110, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(230,230,230)
+    label.TextSize = 18
+    label.Font = Enum.Font.Gotham
 
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+    local toggleBG = Instance.new("Frame")
+    toggleBG.Parent = holder
+    toggleBG.Size = UDim2.new(0, 90, 0, 32)
+    toggleBG.Position = UDim2.new(0, 120, 0.5, -16)
+    toggleBG.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    toggleBG.BorderSizePixel = 0
+    local bgCorner = Instance.new("UICorner", toggleBG)
+    bgCorner.CornerRadius = UDim.new(1, 0)
 
-    -- Tính hướng dựa trên camera (để bay theo hướng nhìn)
-    local camCF = camera.CFrame
-    local forwardVec = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
-    if forwardVec ~= forwardVec then forwardVec = Vector3.new(0,0,-1) end -- check NaN
-    local rightVec = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
-    if rightVec ~= rightVec then rightVec = Vector3.new(1,0,0) end
+    local knob = Instance.new("Frame")
+    knob.Parent = toggleBG
+    knob.Size = UDim2.new(0, 32, 0, 32)
+    knob.Position = UDim2.new(0, 0, 0, 0)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.BorderSizePixel = 0
+    local knobCorner = Instance.new("UICorner", knob)
+    knobCorner.CornerRadius = UDim.new(1, 0)
 
-    -- combine movement inputs
-    local horiz = (forwardVec * moveForward) + (rightVec * moveRight)
-    local horizMag = horiz.Magnitude
-    if horizMag > 0 then
-        horiz = horiz.Unit
-    else
-        horiz = Vector3.new(0,0,0)
+    local state = false
+    local function setState(newState, animate)
+        state = newState
+        if state then
+            toggleBG.BackgroundColor3 = Color3.fromRGB(40, 170, 60)
+            if animate then
+                knob:TweenPosition(UDim2.new(1, -32, 0, 0), "Out", "Quad", 0.15, true)
+            else
+                knob.Position = UDim2.new(1, -32, 0, 0)
+            end
+        else
+            toggleBG.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+            if animate then
+                knob:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.15, true)
+            else
+                knob.Position = UDim2.new(0, 0, 0, 0)
+            end
+        end
+        if onToggle then
+            onToggle(state)
+        end
+    end
+    setState(false, false)
+
+    local function toggle()
+        setState(not state, true)
     end
 
-    -- vertical control
-    local vert = ascend -- -1,0,1
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            toggle()
+        end
+    end)
+    toggleBG.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            toggle()
+        end
+    end)
+end
 
-    -- final velocity
-    local targetVel = Vector3.new(0,0,0)
-    targetVel = targetVel + horiz * speed
-    targetVel = targetVel + Vector3.new(0, vert * verticalSpeed, 0)
+----------------------------------------------------------------
+-- TẠO FRAME & NÚT FLY
+local frame = Instance.new("Frame")
+frame.Parent = gui
+frame.Size = UDim2.new(0, 280, 0, 120)
+frame.Position = UDim2.new(0.5, -140, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 
-    -- smoothly set BV velocity (you can make interpolation for smoothness)
-    bv.Velocity = targetVel
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Size = UDim2.new(1, 0, 0, 36)
+title.BackgroundTransparency = 1
+title.Text = "APEX PREMIUM"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextSize = 21
+title.Font = Enum.Font.GothamBold
 
-    -- keep orientation roughly aligned with camera's Y rotation
-    local lookY = CFrame.new(hrp.Position, hrp.Position + Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z))
-    bg.CFrame = lookY
+-- Nút gạt bật/tắt bay
+createSwitch(frame, 46, "Fly Mode", function(state)
+    flying = state
+    if flying then
+        enableFly(player.Character)
+    else
+        disableFly()
+    end
 end)
