@@ -1,12 +1,10 @@
 local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
 local camera = workspace.CurrentCamera
-local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
 
 -- Tạo GUI
 local gui = Instance.new("ScreenGui")
-gui.Parent = player.PlayerGui
+gui.Parent = player:WaitForChild("PlayerGui")
 gui.Name = "FlyGUI"
 
 local function createButton(text, pos, size, color)
@@ -20,36 +18,46 @@ local function createButton(text, pos, size, color)
 	return btn
 end
 
--- Nút và biến điều khiển
-local speed = 50
-local flying = false
-local moveDir = Vector3.zero
-local upBtn = createButton("UP", Vector2.new(10, 50), Vector2.new(80, 40), Color3.fromRGB(144, 238, 144))
-local downBtn = createButton("DOWN", Vector2.new(10, 100), Vector2.new(80, 40), Color3.fromRGB(255, 255, 153))
-local plusBtn = createButton("+", Vector2.new(100, 50), Vector2.new(40, 40), Color3.fromRGB(173, 216, 230))
-local minusBtn = createButton("-", Vector2.new(100, 100), Vector2.new(40, 40), Color3.fromRGB(216, 191, 216))
-local toggleBtn = createButton("FLY", Vector2.new(150, 50), Vector2.new(80, 90), Color3.fromRGB(255, 182, 193))
+-- Nút FLY
+local toggleBtn = createButton("FLY", Vector2.new(10, 50), Vector2.new(100, 50), Color3.fromRGB(255, 182, 193))
 
 -- Cơ chế bay
+local flying = false
+local speed = 50
+
 local bodyGyro = Instance.new("BodyGyro")
 bodyGyro.P = 9e4
 bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
 
 local bodyVel = Instance.new("BodyVelocity")
 bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-bodyVel.Velocity = Vector3.zero
 
+-- Ẩn nhân vật
+local function setCharacterTransparency(char, alpha)
+	for _, v in pairs(char:GetDescendants()) do
+		if v:IsA("BasePart") or v:IsA("Decal") then
+			v.Transparency = alpha
+		end
+	end
+end
+
+-- Bắt đầu bay
 local function startFly()
 	local char = player.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 	bodyGyro.Parent = char.HumanoidRootPart
 	bodyVel.Parent = char.HumanoidRootPart
+	setCharacterTransparency(char, 1) -- Tàng hình
 	flying = true
 end
 
+-- Dừng bay
 local function stopFly()
+	local char = player.Character
+	if not char then return end
 	bodyGyro.Parent = nil
 	bodyVel.Parent = nil
+	setCharacterTransparency(char, 0) -- Hiện lại
 	flying = false
 end
 
@@ -64,53 +72,14 @@ toggleBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
-plusBtn.MouseButton1Click:Connect(function()
-	speed = speed + 10
-end)
-
-minusBtn.MouseButton1Click:Connect(function()
-	speed = math.max(0, speed - 10)
-end)
-
-upBtn.MouseButton1Click:Connect(function()
-	moveDir = moveDir + Vector3.new(0, 1, 0)
-end)
-
-downBtn.MouseButton1Click:Connect(function()
-	moveDir = moveDir - Vector3.new(0, 1, 0)
-end)
-
-UIS.InputBegan:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.W then
-		moveDir = moveDir + camera.CFrame.LookVector
-	elseif input.KeyCode == Enum.KeyCode.S then
-		moveDir = moveDir - camera.CFrame.LookVector
-	elseif input.KeyCode == Enum.KeyCode.A then
-		moveDir = moveDir - camera.CFrame.RightVector
-	elseif input.KeyCode == Enum.KeyCode.D then
-		moveDir = moveDir + camera.CFrame.RightVector
-	end
-end)
-
-UIS.InputEnded:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.W then
-		moveDir = moveDir - camera.CFrame.LookVector
-	elseif input.KeyCode == Enum.KeyCode.S then
-		moveDir = moveDir + camera.CFrame.LookVector
-	elseif input.KeyCode == Enum.KeyCode.A then
-		moveDir = moveDir + camera.CFrame.RightVector
-	elseif input.KeyCode == Enum.KeyCode.D then
-		moveDir = moveDir - camera.CFrame.RightVector
-	end
-end)
-
--- Vòng lặp bay
+-- Vòng lặp bay (dùng di chuyển mặc định của Roblox)
 RS.RenderStepped:Connect(function()
 	if flying then
 		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
+		if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChildOfClass("Humanoid") then
+			local moveDir = char:FindFirstChildOfClass("Humanoid").MoveDirection
 			bodyGyro.CFrame = camera.CFrame
-			bodyVel.Velocity = moveDir.Unit * speed
+			bodyVel.Velocity = moveDir * speed
 		end
 	end
 end)
