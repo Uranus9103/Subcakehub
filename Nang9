@@ -4,6 +4,10 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 
+-- ⚡ THÔNG SỐ CHỈNH Ở ĐÂY
+local liftSpeed = 5 -- tốc độ nâng (càng lớn càng nâng nhanh)
+local moveFollowSpeed = 0 -- tốc độ theo dõi khi di chuyển (có thể để 1 là chuẩn, tăng thì theo sát hơn)
+
 -- GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "LiftGui"
@@ -47,7 +51,8 @@ local btnMove = createBtn("🛫 Di chuyển OFF",60,Color3.fromRGB(200,150,50))
 local liftPart = nil
 local connection = nil
 local mode = nil -- "Nang" hoặc "Move"
-local speed = 5 -- tốc độ nâng
+local savedMode = nil -- lưu để sau khi chết còn giữ
+local height = 0
 
 -- Reset
 local function reset()
@@ -70,6 +75,8 @@ end
 local function enableLift(liftMode)
 	reset()
 	mode = liftMode
+	savedMode = liftMode -- 🔒 Lưu lại chế độ để respawn giữ nguyên
+	height = 0
 
 	-- Tạo part
 	liftPart = Instance.new("Part")
@@ -81,18 +88,19 @@ local function enableLift(liftMode)
 	liftPart.Name = "LiftBlock"
 	liftPart.Parent = workspace
 
-	local height = 0
-
 	connection = RunService.RenderStepped:Connect(function(dt)
 		if not hrp or not liftPart then return end
 
 		if mode == "Nang" then
 			-- Nâng dần lên
-			height += speed * dt
+			height += liftSpeed * dt
 			liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0) + Vector3.new(0,height,0))
 		elseif mode == "Move" then
-			-- Giữ dưới chân (không nâng)
-			liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
+			-- Giữ dưới chân (không nâng), có thêm follow mượt
+			local targetPos = hrp.Position - Vector3.new(0,3,0)
+			local currentPos = liftPart.Position
+			local newPos = currentPos:Lerp(targetPos, moveFollowSpeed * dt)
+			liftPart.CFrame = CFrame.new(newPos)
 		end
 	end)
 
@@ -109,6 +117,7 @@ end
 btnLift.MouseButton1Click:Connect(function()
 	if mode == "Nang" then
 		reset()
+		savedMode = nil
 	else
 		enableLift("Nang")
 	end
@@ -117,6 +126,7 @@ end)
 btnMove.MouseButton1Click:Connect(function()
 	if mode == "Move" then
 		reset()
+		savedMode = nil
 	else
 		enableLift("Move")
 	end
@@ -126,8 +136,8 @@ end)
 player.CharacterAdded:Connect(function()
 	character = player.Character
 	hrp = character:WaitForChild("HumanoidRootPart")
-	if mode then
+	if savedMode then
 		task.wait(1)
-		enableLift(mode)
+		enableLift(savedMode) -- 🔁 Bật lại chế độ cũ
 	end
 end)
