@@ -33,11 +33,9 @@ local function rainbowStroke(obj)
         local hue = 0
         while obj and obj.Parent do
             hue = (hue+0.01)%1
-            if obj:IsA("Frame") or obj:IsA("TextButton") then
-                local stroke = obj:FindFirstChild("UIStroke")
-                if stroke then
-                    stroke.Color = Color3.fromHSV(hue,1,1)
-                end
+            local stroke = obj:FindFirstChild("UIStroke")
+            if stroke then
+                stroke.Color = Color3.fromHSV(hue,1,1)
             end
             task.wait(0.05)
         end
@@ -144,7 +142,7 @@ feedback.TextColor3=Color3.fromRGB(255,200,100)
 feedback.BackgroundTransparency=1
 
 --======================
--- Main GUI
+-- Main GUI (ẩn)
 --======================
 local mainFrame = Instance.new("Frame", gui)
 mainFrame.Size=UDim2.new(0,250,0,220)
@@ -152,13 +150,12 @@ mainFrame.Position=UDim2.new(0.05,0,0.4,0)
 mainFrame.BackgroundColor3=Color3.new(0,0,0)
 mainFrame.Visible=false
 makeDraggable(mainFrame)
-
 local strokeMain=Instance.new("UIStroke",mainFrame)
 strokeMain.Thickness=3
 rainbowStroke(mainFrame)
 Instance.new("UICorner",mainFrame)
 
--- Nút mở/đóng
+-- Nút mở/đóng bảng
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size=UDim2.new(0,50,0,50)
 toggleBtn.Position=UDim2.new(0,10,0.8,0)
@@ -173,7 +170,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 --======================
--- Lift Button
+-- Lift
 --======================
 local liftBtn = Instance.new("TextButton", mainFrame)
 liftBtn.Size=UDim2.new(0.85,0,0.2,0)
@@ -188,7 +185,7 @@ local liftStroke=Instance.new("UIStroke", liftBtn)
 liftStroke.Thickness=2
 rainbowStroke(liftBtn)
 
-local liftPart, liftConn
+local liftPart,liftConn=nil,nil
 
 liftBtn.MouseButton1Click:Connect(function()
 	if not liftPart then
@@ -204,7 +201,7 @@ liftBtn.MouseButton1Click:Connect(function()
 		liftConn = RunService.RenderStepped:Connect(function(dt)
 			if character and hrp then
 				local pos = hrp.Position - Vector3.new(0,3,0)
-				liftPart.CFrame = CFrame.new(pos + Vector3.new(0,12*dt,0)) -- tốc độ 12
+				liftPart.CFrame = CFrame.new(pos + Vector3.new(0,12*dt,0))
 			end
 		end)
 	else
@@ -217,7 +214,7 @@ liftBtn.MouseButton1Click:Connect(function()
 end)
 
 --======================
--- AirWalk Button
+-- AirWalk
 --======================
 local airBtn = Instance.new("TextButton", mainFrame)
 airBtn.Size=UDim2.new(0.85,0,0.2,0)
@@ -233,7 +230,7 @@ airStroke.Thickness=2
 rainbowStroke(airBtn)
 
 local airPart, airConn, airActive=false,nil,false
-
+local airTime=0
 airBtn.MouseButton1Click:Connect(function()
 	airActive = not airActive
 	if airActive then
@@ -245,12 +242,12 @@ airBtn.MouseButton1Click:Connect(function()
 		airPart.Parent=workspace
 		airBtn.Text="🟩 Đi Trên Không ON"
 		airBtn.BackgroundColor3=Color3.fromRGB(50,200,50)
+		airTime=0
 
-		local t=0
 		airConn=RunService.Heartbeat:Connect(function(dt)
 			if character and hrp then
-				t=t+dt
-				local offset = math.sin(math.pi*t) -- 1s lên, 1s xuống
+				airTime = airTime + dt
+				local offset = math.sin(math.pi*airTime) -- 1s lên,1s xuống
 				airPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3-offset,0))
 			end
 		end)
