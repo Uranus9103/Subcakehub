@@ -1,0 +1,255 @@
+-- APEX HUB FINAL
+-- Gộp 1 file full UI: GetKey + MainHub
+-- Có lưu key, reset không mất, viền cầu vồng, nền đẹp, nút di chuyển tự do
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local rs = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
+
+--// DataStore (Fake cho Local, gắn GitHub thì giữ)
+local keyStore = {} 
+
+--// Config
+local KEYS = {
+	"APEXKEY1","APEXKEY2","APEXKEY3","APEXKEY4","APEXKEY5","APEXKEY6",
+	"APEXKEY7","APEXKEY8","APEXKEY9","APEXKEY10","APEXKEY11","APEXKEY12"
+}
+local LINKS = {
+	"https://link1.com","https://link2.com","https://link3.com","https://link4.com","https://link5.com","https://link6.com",
+	"https://link7.com","https://link8.com","https://link9.com","https://link10.com","https://link11.com","https://link12.com"
+}
+
+-- Key theo ngày
+local day = os.date("*t").yday
+local index = ((day - 1) % #KEYS) + 1
+local todayKey = KEYS[index]
+local todayLink = LINKS[index]
+
+--// UI Helper
+local function draggable(frame)
+	local dragging, dragInput, startPos, startInput
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			startPos = frame.Position
+			startInput = input.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	frame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+	uis.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - startInput
+			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+end
+
+--// Rainbow
+local function rainbow(obj)
+	coroutine.wrap(function()
+		while true do
+			for i = 0, 1, 0.01 do
+				obj.UIStroke.Color = Color3.fromHSV(i,1,1)
+				wait(0.05)
+			end
+		end
+	end)()
+end
+
+--// GUI Root
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+gui.Name = "APEX_HUB"
+
+-- Thông báo cảm ơn
+local msg = Instance.new("TextLabel", gui)
+msg.Size = UDim2.new(0.6,0,0.1,0)
+msg.Position = UDim2.new(0.2,0,0.05,0)
+msg.Text = "✨ Cảm ơn đã sử dụng APEX HUB ✨"
+msg.TextScaled = true
+msg.Font = Enum.Font.GothamBold
+msg.TextColor3 = Color3.new(1,1,1)
+msg.BackgroundTransparency = 1
+game:GetService("Debris"):AddItem(msg,5)
+
+--// Frame GetKey
+local keyFrame = Instance.new("Frame", gui)
+keyFrame.Size = UDim2.new(0,350,0,200)
+keyFrame.Position = UDim2.new(0.3,0,0.3,0)
+keyFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+draggable(keyFrame)
+
+local stroke = Instance.new("UIStroke", keyFrame)
+stroke.Thickness = 3
+rainbow(keyFrame)
+
+local corner = Instance.new("UICorner", keyFrame)
+
+local title = Instance.new("TextLabel", keyFrame)
+title.Size = UDim2.new(1,0,0.2,0)
+title.Text = "🔑 GET KEY APEX HUB"
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+
+local input = Instance.new("TextBox", keyFrame)
+input.Size = UDim2.new(0.8,0,0.2,0)
+input.Position = UDim2.new(0.1,0,0.35,0)
+input.PlaceholderText = "Nhập Key..."
+input.TextScaled = true
+input.Text = ""
+input.Font = Enum.Font.Gotham
+input.BackgroundColor3 = Color3.fromRGB(50,50,50)
+input.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", input)
+
+local confirm = Instance.new("TextButton", keyFrame)
+confirm.Size = UDim2.new(0.35,0,0.2,0)
+confirm.Position = UDim2.new(0.1,0,0.65,0)
+confirm.Text = "✅ Xác Nhận"
+confirm.TextScaled = true
+confirm.Font = Enum.Font.GothamBold
+confirm.BackgroundColor3 = Color3.fromRGB(0,150,0)
+confirm.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", confirm)
+
+local getlink = Instance.new("TextButton", keyFrame)
+getlink.Size = UDim2.new(0.35,0,0.2,0)
+getlink.Position = UDim2.new(0.55,0,0.65,0)
+getlink.Text = "🌐 Get Link"
+getlink.TextScaled = true
+getlink.Font = Enum.Font.GothamBold
+getlink.BackgroundColor3 = Color3.fromRGB(0,100,200)
+getlink.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", getlink)
+
+--// Frame Main
+local mainFrame = Instance.new("Frame", gui)
+mainFrame.Size = UDim2.new(0,200,0,200)
+mainFrame.Position = UDim2.new(0.05,0,0.3,0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+mainFrame.Visible = false
+draggable(mainFrame)
+
+local stroke2 = Instance.new("UIStroke", mainFrame)
+stroke2.Thickness = 3
+rainbow(mainFrame)
+Instance.new("UICorner", mainFrame)
+
+local function createBtn(text,y,color)
+	local btn = Instance.new("TextButton", mainFrame)
+	btn.Size = UDim2.new(0.8,0,0.2,0)
+	btn.Position = UDim2.new(0.1,0,y,0)
+	btn.Text = text
+	btn.TextScaled = true
+	btn.Font = Enum.Font.GothamBold
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.new(1,1,1)
+	Instance.new("UICorner", btn)
+	return btn
+end
+
+local liftBtn = createBtn("⬆️ Nâng OFF",0.1,Color3.fromRGB(200,50,50))
+local flyBtn = createBtn("🟩 Đi Trên Không OFF",0.4,Color3.fromRGB(200,50,50))
+
+-- Ẩn/hiện
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.new(0,50,0,50)
+toggleBtn.Position = UDim2.new(0,10,0.8,0)
+toggleBtn.Text = "📂"
+toggleBtn.TextScaled = true
+toggleBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", toggleBtn)
+
+--// Logic Key
+getlink.MouseButton1Click:Connect(function()
+	setclipboard(todayLink)
+end)
+
+confirm.MouseButton1Click:Connect(function()
+	if input.Text == todayKey then
+		keyFrame.Visible = false
+		mainFrame.Visible = true
+	else
+		input.Text = ""
+		input.PlaceholderText = "❌ Sai Key!"
+	end
+end)
+
+--// Toggle Show/Hide
+toggleBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
+--// Logic Lift
+local liftPart, liftConn
+local speed = 12
+liftBtn.MouseButton1Click:Connect(function()
+	if not liftPart then
+		liftPart = Instance.new("Part")
+		liftPart.Size = Vector3.new(6,1,6)
+		liftPart.Anchored = true
+		liftPart.CanCollide = true
+		liftPart.Color = Color3.fromRGB(50,200,50)
+		liftPart.Transparency = 0.2
+		liftPart.Parent = workspace
+		liftBtn.Text = "⬆️ Nâng ON"
+		liftBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		liftConn = rs.RenderStepped:Connect(function(dt)
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local pos = char.HumanoidRootPart.Position - Vector3.new(0,3,0)
+				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
+			end
+		end)
+	else
+		liftConn:Disconnect()
+		liftPart:Destroy()
+		liftPart = nil
+		liftBtn.Text = "⬆️ Nâng OFF"
+		liftBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
+
+--// Logic Fly (lên/xuống chậm)
+local flyPart, flyConn
+local flyUp = true
+flyBtn.MouseButton1Click:Connect(function()
+	if not flyPart then
+		flyPart = Instance.new("Part")
+		flyPart.Size = Vector3.new(6,1,6)
+		flyPart.Anchored = true
+		flyPart.CanCollide = true
+		flyPart.Color = Color3.fromRGB(200,200,50)
+		flyPart.Transparency = 0.2
+		flyPart.Parent = workspace
+		flyBtn.Text = "🟩 Đi Trên Không ON"
+		flyBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		flyConn = rs.Heartbeat:Connect(function(dt)
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local pos = char.HumanoidRootPart.Position - Vector3.new(0,3,0)
+				local offset = math.sin(tick()*math.pi) -- lên/xuống mỗi ~2s
+				flyPart.CFrame = CFrame.new(pos + Vector3.new(0,offset,0))
+			end
+		end)
+	else
+		flyConn:Disconnect()
+		flyPart:Destroy()
+		flyPart = nil
+		flyBtn.Text = "🟩 Đi Trên Không OFF"
+		flyBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
