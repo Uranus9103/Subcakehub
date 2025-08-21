@@ -9,10 +9,11 @@ gui.Name = "LiftGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
+-- Nút bật/tắt
 local btn = Instance.new("TextButton")
 btn.Size = UDim2.new(0,140,0,50)
 btn.Position = UDim2.new(0.05,0,0.2,0)
-btn.Text = "⬆️ Nâng OFF"
+btn.Text = "⬆️ OFF"
 btn.TextScaled = true
 btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
 btn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -23,18 +24,34 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0,12)
 corner.Parent = btn
 
+-- Nút chế độ (Nâng / Dừng)
+local modeBtn = Instance.new("TextButton")
+modeBtn.Size = UDim2.new(0,140,0,50)
+modeBtn.Position = UDim2.new(0.05,0,0.3,0)
+modeBtn.Text = "⚙️ Chế độ: Nâng"
+modeBtn.TextScaled = true
+modeBtn.BackgroundColor3 = Color3.fromRGB(70,70,200)
+modeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+modeBtn.Font = Enum.Font.GothamBold
+modeBtn.Parent = gui
+
+local corner2 = Instance.new("UICorner")
+corner2.CornerRadius = UDim.new(0,12)
+corner2.Parent = modeBtn
+
 -- Biến
 local liftPart = nil
 local liftEnabled = false
 local connection = nil
-local speed = 10 -- ⚡ tốc độ nâng (càng cao càng nhanh)
+local mode = "Nâng" -- hoặc "Dừng"
+local speed = 5 -- tốc độ nâng
 
--- Toggle
+-- Hàm toggle bật/tắt
 local function toggleLift()
 	liftEnabled = not liftEnabled
 
 	if liftEnabled then
-		-- Tạo part dưới chân
+		-- Tạo part
 		liftPart = Instance.new("Part")
 		liftPart.Size = Vector3.new(6,1,6)
 		liftPart.Anchored = true
@@ -44,15 +61,18 @@ local function toggleLift()
 		liftPart.Name = "LiftBlock"
 		liftPart.Parent = workspace
 
-		btn.Text = "⬆️ Nâng ON"
+		btn.Text = "⬆️ ON"
 		btn.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		-- Luôn theo nhân vật + nâng dần
+		-- Cập nhật vị trí part
 		connection = game:GetService("RunService").RenderStepped:Connect(function(dt)
 			if hrp and liftPart and liftEnabled then
-				local pos = hrp.Position - Vector3.new(0,3,0)
-				-- nâng dần theo tốc độ
-				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
+				if mode == "Nâng" then
+					local pos = hrp.Position - Vector3.new(0,3,0)
+					liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
+				elseif mode == "Dừng" then
+					liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
+				end
 			end
 		end)
 
@@ -65,9 +85,23 @@ local function toggleLift()
 			connection:Disconnect()
 			connection = nil
 		end
-		btn.Text = "⬆️ Nâng OFF"
+		btn.Text = "⬆️ OFF"
 		btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end
 
+-- Hàm đổi chế độ
+local function switchMode()
+	if mode == "Nâng" then
+		mode = "Dừng"
+		modeBtn.Text = "⚙️ Chế độ: Dừng"
+		modeBtn.BackgroundColor3 = Color3.fromRGB(200,150,50)
+	else
+		mode = "Nâng"
+		modeBtn.Text = "⚙️ Chế độ: Nâng"
+		modeBtn.BackgroundColor3 = Color3.fromRGB(70,70,200)
+	end
+end
+
 btn.MouseButton1Click:Connect(toggleLift)
+modeBtn.MouseButton1Click:Connect(switchMode)
