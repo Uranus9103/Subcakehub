@@ -2,7 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- GUI
+-- GUI (tạo 1 lần, reset không mất)
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
 if not gui then
 	gui = Instance.new("ScreenGui")
@@ -11,35 +11,48 @@ if not gui then
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
+-- Khung menu
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,200,0,150)
+frame.Position = UDim2.new(0.05,0,0.2,0)
+frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.Active = true
+frame.Draggable = true -- ✅ cho kéo đi trên màn hình
+frame.Parent = gui
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0,12)
+frameCorner.Parent = frame
+
 -- Nút nâng
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(0,140,0,50)
-btn.Position = UDim2.new(0.05,0,0.2,0)
-btn.Text = "⬆️ Nâng OFF"
-btn.TextScaled = true
-btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
-btn.TextColor3 = Color3.fromRGB(255,255,255)
-btn.Font = Enum.Font.GothamBold
-btn.Parent = gui
+local btnLift = Instance.new("TextButton")
+btnLift.Size = UDim2.new(0.9,0,0,40)
+btnLift.Position = UDim2.new(0.05,0,0.15,0)
+btnLift.Text = "⬆️ Nâng OFF"
+btnLift.TextScaled = true
+btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btnLift.TextColor3 = Color3.fromRGB(255,255,255)
+btnLift.Font = Enum.Font.GothamBold
+btnLift.Parent = frame
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0,12)
-corner.Parent = btn
+local cornerLift = Instance.new("UICorner")
+cornerLift.CornerRadius = UDim.new(0,10)
+cornerLift.Parent = btnLift
 
--- Nút đi lại trên không
-local airBtn = Instance.new("TextButton")
-airBtn.Size = UDim2.new(0,180,0,50)
-airBtn.Position = UDim2.new(0.05,0,0.3,0)
-airBtn.Text = "🛑 Đi Trên Không OFF"
-airBtn.TextScaled = true
-airBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
-airBtn.TextColor3 = Color3.fromRGB(255,255,255)
-airBtn.Font = Enum.Font.GothamBold
-airBtn.Parent = gui
+-- Nút đi trên không
+local btnFly = Instance.new("TextButton")
+btnFly.Size = UDim2.new(0.9,0,0,40)
+btnFly.Position = UDim2.new(0.05,0,0.5,0)
+btnFly.Text = "🛑 Đi Trên Không OFF"
+btnFly.TextScaled = true
+btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btnFly.TextColor3 = Color3.fromRGB(255,255,255)
+btnFly.Font = Enum.Font.GothamBold
+btnFly.Parent = frame
 
-local corner2 = Instance.new("UICorner")
-corner2.CornerRadius = UDim.new(0,12)
-corner2.Parent = airBtn
+local cornerFly = Instance.new("UICorner")
+cornerFly.CornerRadius = UDim.new(0,10)
+cornerFly.Parent = btnFly
 
 -- Biến
 local liftPart = nil
@@ -66,8 +79,8 @@ local function toggleLift()
 		liftPart.Name = "LiftBlock"
 		liftPart.Parent = workspace
 
-		btn.Text = "⬆️ Nâng ON"
-		btn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		btnLift.Text = "⬆️ Nâng ON"
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
 		connection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and liftPart and liftEnabled then
@@ -84,13 +97,13 @@ local function toggleLift()
 			connection:Disconnect()
 			connection = nil
 		end
-		btn.Text = "⬆️ Nâng OFF"
-		btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		btnLift.Text = "⬆️ Nâng OFF"
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end
 
 -- Toggle đi trên không
-local function toggleFlyPart()
+local function toggleFly()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
 	local hrp = character:WaitForChild("HumanoidRootPart")
@@ -105,12 +118,12 @@ local function toggleFlyPart()
 		flyPart.Name = "FlyPlatform"
 		flyPart.Parent = workspace
 
-		airBtn.Text = "🛑 Đi Trên Không ON"
-		airBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		btnFly.Text = "🛑 Đi Trên Không ON"
+		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
 		flyConnection = RunService.RenderStepped:Connect(function()
 			if hrp and flyPart and flyEnabled then
-				-- Giữ platform ngay dưới chân để có thể đi lại trên không
+				-- ✅ Platform đứng yên với nhân vật, không nâng lên
 				flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
 			end
 		end)
@@ -123,10 +136,11 @@ local function toggleFlyPart()
 			flyConnection:Disconnect()
 			flyConnection = nil
 		end
-		airBtn.Text = "🛑 Đi Trên Không OFF"
-		airBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		btnFly.Text = "🛑 Đi Trên Không OFF"
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end
 
-btn.MouseButton1Click:Connect(toggleLift)
-airBtn.MouseButton1Click:Connect(toggleFlyPart)
+-- Kết nối
+btnLift.MouseButton1Click:Connect(toggleLift)
+btnFly.MouseButton1Click:Connect(toggleFly)
