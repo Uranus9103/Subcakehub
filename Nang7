@@ -1,0 +1,246 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local player = Players.LocalPlayer
+
+-- 🔑 Danh sách 12 key
+local keys = {
+	"KEY1-APEX", "KEY2-APEX", "KEY3-APEX", "KEY4-APEX",
+	"KEY5-APEX", "KEY6-APEX", "KEY7-APEX", "KEY8-APEX",
+	"KEY9-APEX", "KEY10-APEX", "KEY11-APEX", "KEY12-APEX"
+}
+
+-- 🕒 Hàm chọn key theo ngày
+local function getCurrentKey()
+	local dayIndex = math.floor(os.time() / 86400) % #keys + 1
+	return keys[dayIndex]
+end
+
+-- 📡 Tạo RemoteEvent (nếu chưa có)
+local remote = ReplicatedStorage:FindFirstChild("ApexKeyRemote")
+if not remote then
+	remote = Instance.new("RemoteEvent")
+	remote.Name = "ApexKeyRemote"
+	remote.Parent = ReplicatedStorage
+end
+
+-- 🖥️ Client chỉ tạo ServerScript lần đầu
+if not ServerStorage:FindFirstChild("ApexKeyServer") and player.Name == Players:GetPlayers()[1].Name then
+	local serverScript = Instance.new("Script")
+	serverScript.Name = "ApexKeyServer"
+	serverScript.Parent = game.ServerScriptService
+	serverScript.Source = [[
+		local DSS = game:GetService("DataStoreService")
+		local store = DSS:GetDataStore("ApexKeySystem")
+		local RS = game:GetService("ReplicatedStorage")
+		local remote = RS:WaitForChild("ApexKeyRemote")
+
+		local keys = {
+			"KEY1-APEX", "KEY2-APEX", "KEY3-APEX", "KEY4-APEX",
+			"KEY5-APEX", "KEY6-APEX", "KEY7-APEX", "KEY8-APEX",
+			"KEY9-APEX", "KEY10-APEX", "KEY11-APEX", "KEY12-APEX"
+		}
+		local function getCurrentKey()
+			local dayIndex = math.floor(os.time() / 86400) % #keys + 1
+			return keys[dayIndex]
+		end
+
+		remote.OnServerEvent:Connect(function(plr, action, inputKey)
+			if action == "CheckKey" then
+				local saved = store:GetAsync(plr.UserId)
+				local currentKey = getCurrentKey()
+				if saved and saved.key == currentKey and os.time() < saved.expire then
+					remote:FireClient(plr, "Valid")
+				else
+					if inputKey == currentKey then
+						store:SetAsync(plr.UserId, {key = currentKey, expire = os.time()+86400})
+						remote:FireClient(plr, "Valid")
+					else
+						remote:FireClient(plr, "Invalid")
+					end
+				end
+			end
+		end)
+	]]
+end
+
+-- 🎨 UI
+local gui = Instance.new("ScreenGui")
+gui.Name = "ApexHub"
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+-- Bảng Key
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.new(0,300,0,180)
+keyFrame.Position = UDim2.new(0.35,0,0.3,0)
+keyFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+keyFrame.Visible = true
+keyFrame.Parent = gui
+
+local keyCorner = Instance.new("UICorner")
+keyCorner.CornerRadius = UDim.new(0,12)
+keyCorner.Parent = keyFrame
+
+local keyBox = Instance.new("TextBox")
+keyBox.Size = UDim2.new(0.8,0,0.2,0)
+keyBox.Position = UDim2.new(0.1,0,0.3,0)
+keyBox.PlaceholderText = "Nhập key..."
+keyBox.TextScaled = true
+keyBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+keyBox.TextColor3 = Color3.fromRGB(255,255,255)
+keyBox.Parent = keyFrame
+Instance.new("UICorner", keyBox).CornerRadius = UDim.new(0,8)
+
+local confirmBtn = Instance.new("TextButton")
+confirmBtn.Size = UDim2.new(0.35,0,0.2,0)
+confirmBtn.Position = UDim2.new(0.1,0,0.6,0)
+confirmBtn.Text = "Xác nhận"
+confirmBtn.TextScaled = true
+confirmBtn.BackgroundColor3 = Color3.fromRGB(40,170,80)
+confirmBtn.TextColor3 = Color3.fromRGB(255,255,255)
+confirmBtn.Parent = keyFrame
+Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0,8)
+
+local getBtn = Instance.new("TextButton")
+getBtn.Size = UDim2.new(0.35,0,0.2,0)
+getBtn.Position = UDim2.new(0.55,0,0.6,0)
+getBtn.Text = "Get Key"
+getBtn.TextScaled = true
+getBtn.BackgroundColor3 = Color3.fromRGB(70,120,200)
+getBtn.TextColor3 = Color3.fromRGB(255,255,255)
+getBtn.Parent = keyFrame
+Instance.new("UICorner", getBtn).CornerRadius = UDim.new(0,8)
+
+-- Bảng chính
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0,200,0,150)
+mainFrame.Position = UDim2.new(0.05,0,0.2,0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+mainFrame.Visible = false
+mainFrame.Parent = gui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,12)
+
+local btnLift = Instance.new("TextButton")
+btnLift.Size = UDim2.new(0.8,0,0.3,0)
+btnLift.Position = UDim2.new(0.1,0,0.1,0)
+btnLift.Text = "⬆️ Nâng OFF"
+btnLift.TextScaled = true
+btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btnLift.TextColor3 = Color3.fromRGB(255,255,255)
+btnLift.Parent = mainFrame
+Instance.new("UICorner", btnLift).CornerRadius = UDim.new(0,8)
+
+local btnFly = Instance.new("TextButton")
+btnFly.Size = UDim2.new(0.8,0,0.3,0)
+btnFly.Position = UDim2.new(0.1,0,0.55,0)
+btnFly.Text = "☁️ Đi trên không OFF"
+btnFly.TextScaled = true
+btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btnFly.TextColor3 = Color3.fromRGB(255,255,255)
+btnFly.Parent = mainFrame
+Instance.new("UICorner", btnFly).CornerRadius = UDim.new(0,8)
+
+-- Nút ẩn/hiện
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0,50,0,50)
+toggleBtn.Position = UDim2.new(0,10,0.85,0)
+toggleBtn.Text = "≡"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.TextScaled = true
+toggleBtn.Parent = gui
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,12)
+
+-- 🌟 Cảm ơn
+task.delay(3,function()
+	local msg = Instance.new("TextLabel")
+	msg.Size = UDim2.new(0.6,0,0.1,0)
+	msg.Position = UDim2.new(0.2,0,0.05,0)
+	msg.Text = "Cảm ơn đã sử dụng APEX HUB"
+	msg.TextScaled = true
+	msg.BackgroundTransparency = 1
+	msg.TextColor3 = Color3.fromRGB(255,255,100)
+	msg.Font = Enum.Font.GothamBold
+	msg.Parent = gui
+	game:GetService("TweenService"):Create(msg, TweenInfo.new(2), {TextTransparency=1}):Play()
+	game:GetService("Debris"):AddItem(msg,3)
+end)
+
+-- ⚡ Chức năng
+local liftOn = false
+local flyOn = false
+local liftPart = nil
+local flyPart = nil
+
+btnLift.MouseButton1Click:Connect(function()
+	liftOn = not liftOn
+	if liftOn then
+		liftPart = Instance.new("Part")
+		liftPart.Size = Vector3.new(6,1,6)
+		liftPart.Anchored = true
+		liftPart.CanCollide = true
+		liftPart.Color = Color3.fromRGB(50,200,50)
+		liftPart.Parent = workspace
+
+		game:GetService("RunService").RenderStepped:Connect(function(dt)
+			if liftPart and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and liftOn then
+				local hrp = player.Character.HumanoidRootPart
+				liftPart.CFrame = hrp.CFrame * CFrame.new(0,-3,0)
+			end
+		end)
+		btnLift.Text = "⬆️ Nâng ON"
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
+	else
+		if liftPart then liftPart:Destroy() liftPart=nil end
+		btnLift.Text = "⬆️ Nâng OFF"
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
+
+btnFly.MouseButton1Click:Connect(function()
+	flyOn = not flyOn
+	if flyOn then
+		flyPart = Instance.new("Part")
+		flyPart.Size = Vector3.new(6,1,6)
+		flyPart.Anchored = true
+		flyPart.CanCollide = true
+		flyPart.Color = Color3.fromRGB(100,100,255)
+		flyPart.Parent = workspace
+
+		task.spawn(function()
+			while flyOn and player.Character and player.Character:FindFirstChild("HumanoidRootPart") do
+				local hrp = player.Character.HumanoidRootPart
+				flyPart.CFrame = hrp.CFrame * CFrame.new(0,-3,0)
+				wait(1)
+				flyPart.CFrame = flyPart.CFrame * CFrame.new(0,1,0)
+				wait(1)
+			end
+		end)
+		btnFly.Text = "☁️ Đi trên không ON"
+		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
+	else
+		if flyPart then flyPart:Destroy() flyPart=nil end
+		btnFly.Text = "☁️ Đi trên không OFF"
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+	keyFrame.Visible = not keyFrame.Visible
+end)
+
+-- 🔑 Xử lý nhập key
+confirmBtn.MouseButton1Click:Connect(function()
+	remote:FireServer("CheckKey", keyBox.Text)
+end)
+
+remote.OnClientEvent:Connect(function(status)
+	if status == "Valid" then
+		keyFrame.Visible = false
+		mainFrame.Visible = true
+	elseif status == "Invalid" then
+		keyBox.Text = "Sai key!"
+	end
+end)
