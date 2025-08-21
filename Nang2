@@ -27,7 +27,7 @@ corner.Parent = btn
 local liftPart = nil
 local liftEnabled = false
 local connection = nil
-local speed = 5 -- ⚡ tốc độ nâng (càng cao càng nhanh)
+local speed = 10 -- ⚡ tốc độ nâng (càng cao càng nhanh)
 
 -- Toggle
 local function toggleLift()
