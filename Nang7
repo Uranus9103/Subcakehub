@@ -2,19 +2,18 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- Tạo GUI
+-- GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "FlyGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Frame chính
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0,180,0,140)
 frame.Position = UDim2.new(0.05,0,0.2,0)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frame.Active = true
-frame.Draggable = true -- cho phép kéo UI
+frame.Draggable = true
 frame.Parent = gui
 
 local uiCorner = Instance.new("UICorner")
@@ -39,17 +38,16 @@ local function createBtn(text, posY, color)
 	return btn
 end
 
--- Các nút
 local btnLift = createBtn("⬆️ Nâng",10,Color3.fromRGB(200,50,50))
 local btnMove = createBtn("🛫 Di chuyển",70,Color3.fromRGB(200,150,50))
 
 -- Biến điều khiển
 local liftPart = nil
 local connection = nil
-local mode = nil -- "Nâng" hoặc "Di chuyển"
-local speed = 8 -- tốc độ nâng
+local mode = nil
+local speed = 6 -- tốc độ nâng
 
--- Hàm reset (xóa part + tắt connection)
+-- Hàm reset
 local function resetPart()
 	if liftPart then
 		liftPart:Destroy()
@@ -77,12 +75,18 @@ local function enableLift(newMode)
 	liftPart.Name = "LiftBlock"
 	liftPart.Parent = workspace
 
+	local height = 0
+
 	connection = RunService.RenderStepped:Connect(function(dt)
 		if not hrp or not liftPart then return end
+
 		if mode == "Nâng" then
-			local pos = hrp.Position - Vector3.new(0,3,0)
-			liftPart.CFrame = CFrame.new(pos) * CFrame.new(0,speed*dt,0)
+			-- Block nâng dần lên
+			height += speed * dt
+			local pos = hrp.Position - Vector3.new(0,3,0) + Vector3.new(0,height,0)
+			liftPart.CFrame = CFrame.new(pos)
 		elseif mode == "Di chuyển" then
+			-- Block luôn giữ dưới chân, không nâng
 			liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
 		end
 	end)
@@ -97,7 +101,7 @@ btnLift.MouseButton1Click:Connect(function()
 	else
 		enableLift("Nâng")
 		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
-		btnMove.BackgroundColor3 = Color3.fromRGB(200,150,50) -- tắt di chuyển nếu đang bật
+		btnMove.BackgroundColor3 = Color3.fromRGB(200,150,50)
 	end
 end)
 
@@ -109,11 +113,11 @@ btnMove.MouseButton1Click:Connect(function()
 	else
 		enableLift("Di chuyển")
 		btnMove.BackgroundColor3 = Color3.fromRGB(100,200,250)
-		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50) -- tắt nâng nếu đang bật
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end)
 
--- Đảm bảo khi chết spawn lại vẫn chạy
+-- Respawn vẫn giữ mode
 player.CharacterAdded:Connect(function()
 	if mode then
 		task.wait(1)
