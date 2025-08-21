@@ -1,0 +1,111 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- GUI
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
+if not gui then
+	gui = Instance.new("ScreenGui")
+	gui.Name = "LiftGui"
+	gui.ResetOnSpawn = false -- ✅ giữ khi reset
+	gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Nút nâng
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0,140,0,50)
+btn.Position = UDim2.new(0.05,0,0.2,0)
+btn.Text = "⬆️ Nâng OFF"
+btn.TextScaled = true
+btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btn.TextColor3 = Color3.fromRGB(255,255,255)
+btn.Font = Enum.Font.GothamBold
+btn.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0,12)
+corner.Parent = btn
+
+-- Nút "Không di chuyển trên không"
+local airBtn = Instance.new("TextButton")
+airBtn.Size = UDim2.new(0,180,0,50)
+airBtn.Position = UDim2.new(0.05,0,0.3,0)
+airBtn.Text = "🛑 Không Di Chuyển OFF"
+airBtn.TextScaled = true
+airBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+airBtn.TextColor3 = Color3.fromRGB(255,255,255)
+airBtn.Font = Enum.Font.GothamBold
+airBtn.Parent = gui
+
+local corner2 = Instance.new("UICorner")
+corner2.CornerRadius = UDim.new(0,12)
+corner2.Parent = airBtn
+
+-- Biến
+local liftPart = nil
+local liftEnabled = false
+local noAirMove = false
+local connection = nil
+local speed = 5 -- ⚡ tốc độ nâng (càng cao càng nhanh)
+
+-- Toggle nâng
+local function toggleLift()
+	liftEnabled = not liftEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if liftEnabled then
+		-- Tạo part dưới chân
+		liftPart = Instance.new("Part")
+		liftPart.Size = Vector3.new(6,1,6)
+		liftPart.Anchored = true
+		liftPart.CanCollide = true
+		liftPart.Color = Color3.fromRGB(50,200,50)
+		liftPart.Transparency = 0.2
+		liftPart.Name = "LiftBlock"
+		liftPart.Parent = workspace
+
+		btn.Text = "⬆️ Nâng ON"
+		btn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		-- Theo nhân vật + nâng dần
+		connection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and liftPart and liftEnabled then
+				local pos = hrp.Position - Vector3.new(0,3,0)
+				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
+
+				-- Nếu bật "Không di chuyển trên không" thì giữ HRP đứng yên trục X,Z
+				if noAirMove then
+					hrp.Velocity = Vector3.new(0, hrp.Velocity.Y, 0)
+				end
+			end
+		end)
+
+	else
+		if liftPart then
+			liftPart:Destroy()
+			liftPart = nil
+		end
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
+		btn.Text = "⬆️ Nâng OFF"
+		btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end
+
+-- Toggle "Không di chuyển trên không"
+local function toggleNoAirMove()
+	noAirMove = not noAirMove
+	if noAirMove then
+		airBtn.Text = "🛑 Không Di Chuyển ON"
+		airBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+	else
+		airBtn.Text = "🛑 Không Di Chuyển OFF"
+		airBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end
+
+btn.MouseButton1Click:Connect(toggleLift)
+airBtn.MouseButton1Click:Connect(toggleNoAirMove)
