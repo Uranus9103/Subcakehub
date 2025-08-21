@@ -2,12 +2,12 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- GUI
+-- GUI (tạo 1 lần, reset không mất)
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
 if not gui then
 	gui = Instance.new("ScreenGui")
 	gui.Name = "LiftGui"
-	gui.ResetOnSpawn = false -- ✅ giữ khi reset
+	gui.ResetOnSpawn = false 
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
@@ -26,7 +26,7 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0,12)
 corner.Parent = btn
 
--- Nút "Không di chuyển trên không"
+-- Nút không di chuyển trên không
 local airBtn = Instance.new("TextButton")
 airBtn.Size = UDim2.new(0,180,0,50)
 airBtn.Position = UDim2.new(0.05,0,0.3,0)
@@ -53,9 +53,10 @@ local function toggleLift()
 	liftEnabled = not liftEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
 	local hrp = character:WaitForChild("HumanoidRootPart")
+	local humanoid = character:WaitForChild("Humanoid")
 
 	if liftEnabled then
-		-- Tạo part dưới chân
+		-- Tạo block dưới chân
 		liftPart = Instance.new("Part")
 		liftPart.Size = Vector3.new(6,1,6)
 		liftPart.Anchored = true
@@ -68,14 +69,15 @@ local function toggleLift()
 		btn.Text = "⬆️ Nâng ON"
 		btn.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		-- Theo nhân vật + nâng dần
+		-- Theo nhân vật + nâng
 		connection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and liftPart and liftEnabled then
 				local pos = hrp.Position - Vector3.new(0,3,0)
 				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
 
-				-- Nếu bật "Không di chuyển trên không" thì giữ HRP đứng yên trục X,Z
+				-- Nếu bật chế độ không di chuyển trên không
 				if noAirMove then
+					-- Chặn ngang, nhưng giữ y
 					hrp.Velocity = Vector3.new(0, hrp.Velocity.Y, 0)
 				end
 			end
@@ -95,12 +97,27 @@ local function toggleLift()
 	end
 end
 
--- Toggle "Không di chuyển trên không"
+-- Toggle không di chuyển trên không
 local function toggleNoAirMove()
 	noAirMove = not noAirMove
 	if noAirMove then
 		airBtn.Text = "🛑 Không Di Chuyển ON"
 		airBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		-- Giữ nhân vật đứng yên nếu đang lơ lửng
+		RunService.RenderStepped:Connect(function()
+			local character = player.Character
+			if character then
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+				if hrp and humanoid and noAirMove then
+					if humanoid.FloorMaterial == Enum.Material.Air and not liftEnabled then
+						hrp.Velocity = Vector3.zero
+					end
+				end
+			end
+		end)
+
 	else
 		airBtn.Text = "🛑 Không Di Chuyển OFF"
 		airBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
