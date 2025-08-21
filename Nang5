@@ -1,0 +1,143 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Tạo GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "FlyGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Frame chính
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,180,0,200)
+frame.Position = UDim2.new(0.05,0,0.2,0)
+frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.Active = true
+frame.Draggable = true -- cho phép kéo thả
+frame.Parent = gui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0,12)
+uiCorner.Parent = frame
+
+-- Hàm tạo nút
+local function createBtn(text, posY, color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,160,0,50)
+	btn.Position = UDim2.new(0,10,0,posY)
+	btn.Text = text
+	btn.TextScaled = true
+	btn.Font = Enum.Font.GothamBold
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.BackgroundColor3 = color
+	btn.Parent = frame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,10)
+	corner.Parent = btn
+	return btn
+end
+
+-- Các nút
+local btnLift = createBtn("⬆️ Nâng",10,Color3.fromRGB(200,50,50))
+local btnStop = createBtn("⏸️ Dừng",70,Color3.fromRGB(70,70,200))
+local btnMove = createBtn("🛫 Di chuyển",130,Color3.fromRGB(200,150,50))
+
+-- Biến điều khiển
+local liftPart = nil
+local connection = nil
+local mode = nil -- "Nâng", "Dừng", "Di chuyển"
+local speed = 8 -- tốc độ nâng
+local moveSpeed = 40 -- tốc độ bay
+
+-- Hàm reset (xóa part + tắt connection)
+local function resetPart()
+	if liftPart then
+		liftPart:Destroy()
+		liftPart = nil
+	end
+	if connection then
+		connection:Disconnect()
+		connection = nil
+	end
+end
+
+-- Hàm bật part
+local function enableLift(newMode)
+	resetPart()
+	mode = newMode
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	liftPart = Instance.new("Part")
+	liftPart.Size = Vector3.new(6,1,6)
+	liftPart.Anchored = true
+	liftPart.CanCollide = true
+	liftPart.Color = Color3.fromRGB(50,200,50)
+	liftPart.Transparency = 0.2
+	liftPart.Name = "LiftBlock"
+	liftPart.Parent = workspace
+
+	connection = RunService.RenderStepped:Connect(function(dt)
+		if not hrp or not liftPart then return end
+		if mode == "Nâng" then
+			local pos = hrp.Position - Vector3.new(0,3,0)
+			liftPart.CFrame = CFrame.new(pos) * CFrame.new(0,speed*dt,0)
+		elseif mode == "Dừng" then
+			liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
+		elseif mode == "Di chuyển" then
+			local moveDir = Vector3.zero
+			local hum = character:FindFirstChildOfClass("Humanoid")
+			if hum and hum.MoveDirection.Magnitude > 0 then
+				moveDir = hum.MoveDirection
+			end
+			local newPos = hrp.Position + moveDir * moveSpeed * dt
+			liftPart.CFrame = CFrame.new(newPos - Vector3.new(0,3,0))
+			hrp.CFrame = CFrame.new(newPos, newPos + hrp.CFrame.LookVector)
+		end
+	end)
+end
+
+-- Nút bấm
+btnLift.MouseButton1Click:Connect(function()
+	if mode == "Nâng" then
+		resetPart()
+		mode = nil
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	else
+		enableLift("Nâng")
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
+	end
+end)
+
+btnStop.MouseButton1Click:Connect(function()
+	if mode == "Dừng" then
+		resetPart()
+		mode = nil
+		btnStop.BackgroundColor3 = Color3.fromRGB(70,70,200)
+	else
+		enableLift("Dừng")
+		btnStop.BackgroundColor3 = Color3.fromRGB(100,250,100)
+	end
+end)
+
+btnMove.MouseButton1Click:Connect(function()
+	if mode == "Di chuyển" then
+		resetPart()
+		mode = nil
+		btnMove.BackgroundColor3 = Color3.fromRGB(200,150,50)
+	else
+		enableLift("Di chuyển")
+		btnMove.BackgroundColor3 = Color3.fromRGB(100,200,250)
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50) -- tắt nâng khi bay
+	end
+end)
+
+-- Đảm bảo khi chết spawn lại vẫn chạy
+player.CharacterAdded:Connect(function()
+	if mode then
+		task.wait(1)
+		enableLift(mode)
+	end
+end)
