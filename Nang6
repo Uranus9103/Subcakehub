@@ -10,11 +10,11 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Frame chính
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,180,0,200)
+frame.Size = UDim2.new(0,180,0,140)
 frame.Position = UDim2.new(0.05,0,0.2,0)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frame.Active = true
-frame.Draggable = true -- cho phép kéo thả
+frame.Draggable = true -- cho phép kéo UI
 frame.Parent = gui
 
 local uiCorner = Instance.new("UICorner")
@@ -41,15 +41,13 @@ end
 
 -- Các nút
 local btnLift = createBtn("⬆️ Nâng",10,Color3.fromRGB(200,50,50))
-local btnStop = createBtn("⏸️ Dừng",70,Color3.fromRGB(70,70,200))
-local btnMove = createBtn("🛫 Di chuyển",130,Color3.fromRGB(200,150,50))
+local btnMove = createBtn("🛫 Di chuyển",70,Color3.fromRGB(200,150,50))
 
 -- Biến điều khiển
 local liftPart = nil
 local connection = nil
-local mode = nil -- "Nâng", "Dừng", "Di chuyển"
+local mode = nil -- "Nâng" hoặc "Di chuyển"
 local speed = 8 -- tốc độ nâng
-local moveSpeed = 40 -- tốc độ bay
 
 -- Hàm reset (xóa part + tắt connection)
 local function resetPart()
@@ -84,17 +82,8 @@ local function enableLift(newMode)
 		if mode == "Nâng" then
 			local pos = hrp.Position - Vector3.new(0,3,0)
 			liftPart.CFrame = CFrame.new(pos) * CFrame.new(0,speed*dt,0)
-		elseif mode == "Dừng" then
-			liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
 		elseif mode == "Di chuyển" then
-			local moveDir = Vector3.zero
-			local hum = character:FindFirstChildOfClass("Humanoid")
-			if hum and hum.MoveDirection.Magnitude > 0 then
-				moveDir = hum.MoveDirection
-			end
-			local newPos = hrp.Position + moveDir * moveSpeed * dt
-			liftPart.CFrame = CFrame.new(newPos - Vector3.new(0,3,0))
-			hrp.CFrame = CFrame.new(newPos, newPos + hrp.CFrame.LookVector)
+			liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
 		end
 	end)
 end
@@ -108,17 +97,7 @@ btnLift.MouseButton1Click:Connect(function()
 	else
 		enableLift("Nâng")
 		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
-	end
-end)
-
-btnStop.MouseButton1Click:Connect(function()
-	if mode == "Dừng" then
-		resetPart()
-		mode = nil
-		btnStop.BackgroundColor3 = Color3.fromRGB(70,70,200)
-	else
-		enableLift("Dừng")
-		btnStop.BackgroundColor3 = Color3.fromRGB(100,250,100)
+		btnMove.BackgroundColor3 = Color3.fromRGB(200,150,50) -- tắt di chuyển nếu đang bật
 	end
 end)
 
@@ -130,7 +109,7 @@ btnMove.MouseButton1Click:Connect(function()
 	else
 		enableLift("Di chuyển")
 		btnMove.BackgroundColor3 = Color3.fromRGB(100,200,250)
-		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50) -- tắt nâng khi bay
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50) -- tắt nâng nếu đang bật
 	end
 end)
 
