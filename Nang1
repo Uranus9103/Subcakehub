@@ -22,16 +22,18 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0,12)
 corner.Parent = toggleBtn
 
--- Biến lưu part
+-- Biến
 local liftPart = nil
 local enabled = false
+local speed = 2 -- tốc độ nâng (càng lớn càng nhanh)
+local connection = nil
 
--- Hàm tạo/xoá part
+-- Hàm bật/tắt
 local function toggleLift()
 	enabled = not enabled
 
 	if enabled then
-		-- Tạo part dưới chân
+		-- Tạo part
 		liftPart = Instance.new("Part")
 		liftPart.Size = Vector3.new(6,1,6)
 		liftPart.Anchored = true
@@ -41,16 +43,15 @@ local function toggleLift()
 		liftPart.Name = "LiftBlock"
 		liftPart.Parent = workspace
 
-		-- Đặt vị trí ngay dưới chân
 		liftPart.CFrame = humanoidRoot.CFrame * CFrame.new(0,-3,0)
 
 		toggleBtn.Text = "⬆️ Nâng: ON"
 		toggleBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		-- Theo dõi để part đi theo nhân vật
-		game:GetService("RunService").RenderStepped:Connect(function()
-			if liftPart and enabled and humanoidRoot then
-				liftPart.CFrame = humanoidRoot.CFrame * CFrame.new(0,-3,0)
+		-- Nâng dần lên
+		connection = game:GetService("RunService").RenderStepped:Connect(function(dt)
+			if liftPart and enabled then
+				liftPart.CFrame = liftPart.CFrame * CFrame.new(0, speed*dt, 0)
 			end
 		end)
 
@@ -59,10 +60,14 @@ local function toggleLift()
 			liftPart:Destroy()
 			liftPart = nil
 		end
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
 		toggleBtn.Text = "⬆️ Nâng: OFF"
 		toggleBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end
 
--- Khi bấm nút
+-- Nút bấm
 toggleBtn.MouseButton1Click:Connect(toggleLift)
