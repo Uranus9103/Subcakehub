@@ -61,7 +61,7 @@ local liftEnabled = false
 local flyEnabled = false
 local connection = nil
 local flyConnection = nil
-local speed = 12 -- tốc độ nâng
+local speed = 12 -- ✅ tốc độ nâng (đã chỉnh)
 local flyHeight = 3 -- độ cao sàn bay dưới chân
 local flyTime = 0 -- thời gian đếm để nâng/hạ
 
@@ -104,7 +104,7 @@ local function toggleLift()
 	end
 end
 
--- Toggle đi trên không (nâng 1s, hạ 1s, lặp lại)
+-- Toggle đi trên không (xuất hiện liền dưới chân, nhấp nhô 1s lên 1s xuống)
 local function toggleFly()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
@@ -118,6 +118,7 @@ local function toggleFly()
 		flyPart.Color = Color3.fromRGB(100,150,250)
 		flyPart.Transparency = 0.2
 		flyPart.Name = "FlyPlatform"
+		flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, flyHeight, 0)) -- ✅ xuất hiện ngay dưới chân
 		flyPart.Parent = workspace
 
 		btnFly.Text = "🛑 Đi Trên Không ON"
@@ -136,12 +137,12 @@ local function toggleFly()
 					flyTime = 0
 				end
 
-				-- Tính offset Y (nâng hoặc hạ)
+				-- offset nâng/hạ
 				local offsetY = goingUp and 1.5 or -1.5
 
-				-- Platform lặp lại nâng/hạ
-				local pos = hrp.Position - Vector3.new(0,flyHeight,0)
-				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(pos + Vector3.new(0,offsetY,0)), 0.1)
+				-- cập nhật vị trí platform
+				local pos = hrp.Position - Vector3.new(0, flyHeight, 0)
+				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(pos + Vector3.new(0, offsetY, 0)), 0.1)
 			end
 		end)
 	else
