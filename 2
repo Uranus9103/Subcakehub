@@ -17,30 +17,30 @@ local Links = {
     "https://link4m.com/LinkNgay5"
 }
 
---== Tính ngày hiện tại (1 key chỉ hoạt động đúng 1 ngày) ==--
-local day = os.date("!*t").yday  -- ngày trong năm (1-365)
-local index = ((day - 1) % 5) + 1 -- quay vòng 1 → 5
+--== Tính ngày hiện tại (theo thứ tự 1→5, lặp lại) ==--
+local unixTime = os.time()                   -- giây từ 1/1/1970
+local globalDay = math.floor(unixTime / 86400) -- tổng số ngày từ 1970
+local index = ((globalDay) % 5) + 1          -- quay vòng 1 → 5
 
 local CorrectKey = Keys[index]
 local KeyLink = Links[index]
 
 --------------------------------------------------------
--- GUI (giữ nguyên như code của bạn, chỉ đổi CorrectKey & KeyLink)
+-- GUI (y như code trước, chỉ thay CorrectKey & KeyLink)
 --------------------------------------------------------
 
 local player = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.ResetOnSpawn = false
 
---== UI GET KEY ==--
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 340, 0, 200)
 frame.Position = UDim2.new(0.5, -170, 0.5, -100)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BackgroundTransparency = 0.05
-
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 15)
 
+-- Viền đổi màu
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness = 3
 task.spawn(function()
@@ -65,7 +65,7 @@ local info = Instance.new("TextLabel", frame)
 info.Size = UDim2.new(1, -20, 0, 25)
 info.Position = UDim2.new(0, 10, 0.2, 0)
 info.BackgroundTransparency = 1
-info.Text = "📅 Hôm nay dùng Key số "..index
+info.Text = "📅 Hôm nay là Key số "..index
 info.Font = Enum.Font.Gotham
 info.TextSize = 18
 info.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -92,7 +92,6 @@ confirmBtn.TextColor3 = Color3.new(1,1,1)
 confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
 Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 8)
 
--- Hover
 confirmBtn.MouseEnter:Connect(function()
 	confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 end)
@@ -118,7 +117,7 @@ getKeyBtn.MouseLeave:Connect(function()
 	getKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 85, 170)
 end)
 
---== Chức năng nút Get Key ==--
+--== Nút Get Key copy link ==
 getKeyBtn.MouseButton1Click:Connect(function()
 	setclipboard(KeyLink)
 	game:GetService("StarterGui"):SetCore("SendNotification",{
@@ -128,12 +127,11 @@ getKeyBtn.MouseButton1Click:Connect(function()
 	})
 end)
 
---== Xử lý xác nhận key ==--
+--== Xử lý xác nhận key ==
 confirmBtn.MouseButton1Click:Connect(function()
 	if box.Text == CorrectKey then
 		frame:Destroy()
 
-		-- Nút chính
 		local btn = Instance.new("TextButton", gui)
 		btn.Size = UDim2.new(0, 220, 0, 65)
 		btn.Position = UDim2.new(0.5, -110, 0.5, -32)
