@@ -7,7 +7,7 @@ local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
 if not gui then
 	gui = Instance.new("ScreenGui")
 	gui.Name = "LiftGui"
-	gui.ResetOnSpawn = false
+	gui.ResetOnSpawn = false -- giữ khi reset
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
@@ -38,7 +38,7 @@ local frameCorner = Instance.new("UICorner")
 frameCorner.CornerRadius = UDim.new(0,12)
 frameCorner.Parent = frame
 
--- Button tạo
+-- Hàm tạo button
 local function createButton(name, posY, color)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0.9,0,0,40)
@@ -58,17 +58,7 @@ end
 local btnFly = createButton("🛑 Đi Trên Không",0.2,Color3.fromRGB(50,200,50))
 local btnLift = createButton("⬆️ Nâng",0.5,Color3.fromRGB(50,100,200))
 
--- Biến đi trên không
-local flyPart = nil
-local flyEnabled = false
-local flyConnection = nil
-local flyHeight = 3
-local goingUp = true
-local switchTime = 1
-local flyTimer = 0
-local flyRange = 1
-
--- Thông báo đẹp
+-- Thông báo
 local function showNotice(text)
 	local notice = Instance.new("TextLabel")
 	notice.Size = UDim2.new(0.4,0,0.08,0)
@@ -90,7 +80,16 @@ local function showNotice(text)
 	game:GetService("Debris"):AddItem(notice,6)
 end
 
--- Đi Trên Không tự động ON/OFF
+-- ==== ĐI TRÊN KHÔNG (loop 6s) ====
+local flyPart = nil
+local flyEnabled = false
+local flyConnection = nil
+local flyHeight = 3
+local goingUp = true
+local switchTime = 1
+local flyTimer = 0
+local flyRange = 1
+
 local function startFlyLoop()
 	if flyEnabled then return end
 	flyEnabled = true
@@ -124,7 +123,7 @@ local function startFlyLoop()
 
 					local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
 					local offset = goingUp and flyRange or -flyRange
-					flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
+					flyPart.CFrame = CFrame.new(basePos + Vector3.new(0, offset, 0))
 				end
 			end)
 
@@ -133,7 +132,7 @@ local function startFlyLoop()
 			if flyConnection then flyConnection:Disconnect() end
 			if flyPart then flyPart:Destroy() end
 			flyPart = nil
-			showNotice("⚠️ Vui lòng tắt bật lại nhanh để không bị lỗi ⚠️")
+			showNotice("⚠️ Đi trên không tự reset, bật lại nhanh ⚠️")
 
 			task.wait(0.1)
 		end
@@ -151,41 +150,56 @@ btnFly.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Nút Nâng (tốc độ 17, bằng part nâng)
-btnLift.MouseButton1Click:Connect(function()
-	local character = player.Character or player.CharacterAdded:Wait()
-	local hrp = character:WaitForChild("HumanoidRootPart")
+-- ==== NÚT NÂNG (theo người chơi) ====
+local lifting = false
+local liftPart = nil
+local liftConnection = nil
 
-	-- Nếu đã có platform thì xài lại
-	local liftPart = workspace:FindFirstChild("LiftPlatform")
-	if not liftPart then
+local function startLift()
+	if lifting then return end
+	lifting = true
+	btnLift.BackgroundColor3 = Color3.fromRGB(100,200,250)
+
+	task.spawn(function()
+		local character = player.Character or player.CharacterAdded:Wait()
+		local hrp = character:WaitForChild("HumanoidRootPart")
+
 		liftPart = Instance.new("Part")
 		liftPart.Size = Vector3.new(8,1,8)
 		liftPart.Anchored = true
 		liftPart.CanCollide = true
 		liftPart.Color = Color3.fromRGB(250,200,100)
-		liftPart.Transparency = 0
 		liftPart.Name = "LiftPlatform"
 		liftPart.Parent = workspace
-		liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
-	end
 
-	btnLift.BackgroundColor3 = Color3.fromRGB(100,200,250)
-
-	-- Nâng trong khi giữ
-	local lifting = true
-	local connection
-	connection = RunService.RenderStepped:Connect(function(dt)
-		if lifting and liftPart then
-			local pos = liftPart.Position
-			liftPart.Position = pos + Vector3.new(0,17*dt,0)
-		end
+		liftConnection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and liftPart then
+				-- Luôn đi theo chân
+				local basePos = hrp.Position - Vector3.new(0,3,0)
+				-- Tốc nâng 17
+				liftPart.CFrame = liftPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0,17*dt,0)),0.5)
+			end
+		end)
 	end)
+end
 
-	-- Nhấn lần nữa thì dừng
-	btnLift.MouseButton1Click:Once(function()
+btnLift.MouseButton1Click:Connect(function()
+	if lifting then
 		lifting = false
-		if connection then connection:Disconnect() end
+		if liftConnection then liftConnection:Disconnect() end
+		if liftPart then liftPart:Destroy() end
 		btnLift.BackgroundColor3 = Color3.fromRGB(50,100,200)
-	end)
+	else
+		startLift()
+	end
+end)
+
+-- Reset nhân vật vẫn giữ GUI và chức năng
+player.CharacterAdded:Connect(function()
+	if lifting then
+		startLift()
+	end
+	if flyEnabled then
+		startFlyLoop()
+	end
 end)
