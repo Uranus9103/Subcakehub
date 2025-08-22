@@ -1,0 +1,179 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- GUI
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
+if not gui then
+	gui = Instance.new("ScreenGui")
+	gui.Name = "LiftGui"
+	gui.ResetOnSpawn = false
+	gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Khung menu
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,220,0,180)
+frame.Position = UDim2.new(0.05,0,0.2,0)
+frame.BackgroundColor3 = Color3.fromRGB(0,0,0) -- nền đen
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+-- Viền cầu vồng
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 3
+UIStroke.Parent = frame
+
+task.spawn(function()
+	while true do
+		for hue=0,1,0.01 do
+			UIStroke.Color = Color3.fromHSV(hue,1,1)
+			task.wait(0.05)
+		end
+	end
+end)
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0,12)
+frameCorner.Parent = frame
+
+-- Button tạo
+local function createButton(name, posY, color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.9,0,0,40)
+	btn.Position = UDim2.new(0.05,0,posY,0)
+	btn.Text = name
+	btn.TextScaled = true
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.Font = Enum.Font.GothamBold
+	btn.Parent = frame
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,10)
+	corner.Parent = btn
+	return btn
+end
+
+local btnFly = createButton("🛑 Đi Trên Không",0.2,Color3.fromRGB(50,200,50))
+local btnLift = createButton("⬆️ Nâng",0.5,Color3.fromRGB(50,100,200))
+
+-- Biến đi trên không
+local flyPart = nil
+local flyEnabled = false
+local flyConnection = nil
+local flyHeight = 3
+local goingUp = true
+local switchTime = 1
+local flyTimer = 0
+local flyRange = 1
+
+-- Thông báo đẹp
+local function showNotice(text)
+	local notice = Instance.new("TextLabel")
+	notice.Size = UDim2.new(0.4,0,0.08,0)
+	notice.Position = UDim2.new(0.3,0,0.05,0)
+	notice.BackgroundTransparency = 0.2
+	notice.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	notice.Text = text
+	notice.TextScaled = true
+	notice.Font = Enum.Font.GothamBold
+	notice.TextColor3 = Color3.fromRGB(255,255,255)
+	notice.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,10)
+	corner.Parent = notice
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = Color3.fromRGB(255,255,0)
+	stroke.Parent = notice
+	game:GetService("Debris"):AddItem(notice,6)
+end
+
+-- Đi Trên Không tự động ON/OFF
+local function startFlyLoop()
+	if flyEnabled then return end
+	flyEnabled = true
+	btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+	task.spawn(function()
+		while flyEnabled do
+			local character = player.Character or player.CharacterAdded:Wait()
+			local hrp = character:WaitForChild("HumanoidRootPart")
+
+			flyPart = Instance.new("Part")
+			flyPart.Size = Vector3.new(8,1,8)
+			flyPart.Anchored = true
+			flyPart.CanCollide = true
+			flyPart.Color = Color3.fromRGB(100,150,250)
+			flyPart.Transparency = 0.2
+			flyPart.Name = "FlyPlatform"
+			flyPart.Parent = workspace
+			flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, flyHeight, 0))
+
+			goingUp = true
+			flyTimer = 0
+
+			flyConnection = RunService.RenderStepped:Connect(function(dt)
+				if hrp and flyPart then
+					flyTimer = flyTimer + dt
+					if flyTimer >= switchTime then
+						goingUp = not goingUp
+						flyTimer = 0
+					end
+
+					local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
+					local offset = goingUp and flyRange or -flyRange
+					flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
+				end
+			end)
+
+			-- Giữ trong 6s
+			task.wait(6)
+
+			-- Tắt đi
+			if flyConnection then flyConnection:Disconnect() end
+			if flyPart then flyPart:Destroy() end
+			flyPart = nil
+			showNotice("⚠️ Vui lòng tắt bật lại nhanh để không bị lỗi ⚠️")
+
+			-- Nghỉ siêu nhanh rồi bật lại
+			task.wait(0.1)
+		end
+	end)
+end
+
+btnFly.MouseButton1Click:Connect(function()
+	if flyEnabled then
+		flyEnabled = false
+		if flyConnection then flyConnection:Disconnect() end
+		if flyPart then flyPart:Destroy() end
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	else
+		startFlyLoop()
+	end
+end)
+
+-- Nút Nâng (tốc độ 17)
+btnLift.MouseButton1Click:Connect(function()
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	-- Nâng liên tục trong khi giữ
+	local lifting = true
+	btnLift.BackgroundColor3 = Color3.fromRGB(100,200,250)
+
+	local connection
+	connection = RunService.RenderStepped:Connect(function()
+		if lifting and hrp then
+			hrp.CFrame = hrp.CFrame + Vector3.new(0,17 * RunService.RenderStepped:Wait(),0)
+		end
+	end)
+
+	-- Tắt sau khi click lần nữa
+	btnLift.MouseButton1Click:Once(function()
+		lifting = false
+		if connection then connection:Disconnect() end
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,100,200)
+	end)
+end)
