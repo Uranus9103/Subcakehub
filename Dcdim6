@@ -17,7 +17,7 @@ frame.Size = UDim2.new(0,200,0,150)
 frame.Position = UDim2.new(0.05,0,0.2,0)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frame.Active = true
-frame.Draggable = true -- ✅ bảng di chuyển được
+frame.Draggable = true
 frame.Parent = gui
 
 local frameCorner = Instance.new("UICorner")
@@ -61,13 +61,12 @@ local liftEnabled = false
 local flyEnabled = false
 local connection = nil
 local flyConnection = nil
-local speed = 12 -- tốc độ nâng
-local flySpeed = 3 -- tốc độ đi trên không
-local flyHeight = 3 -- vị trí ban đầu sàn bay dưới chân
+local speed = 17 -- tốc độ nâng
+local flyHeight = 3 -- khoảng cách sàn ban đầu dưới chân
 local goingUp = true
 local switchTime = 1
 local flyTimer = 0
-local flyRange = 1.5 -- độ nâng/hạ ít (chỉ 1.5 studs)
+local flyRange = 1 -- độ nâng/hạ ít
 
 -- Toggle nâng
 local function toggleLift()
@@ -108,7 +107,7 @@ local function toggleLift()
 	end
 end
 
--- Toggle đi trên không
+-- Toggle đi trên không (luôn theo kịp người chơi)
 local function toggleFly()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
@@ -141,13 +140,14 @@ local function toggleFly()
 					flyTimer = 0
 				end
 
-				-- Vị trí cơ bản dưới chân
+				-- vị trí gốc luôn dưới chân
 				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
 
-				-- Nâng/hạ ít (± flyRange studs)
+				-- offset nâng/hạ nhẹ
 				local offset = goingUp and flyRange or -flyRange
 
-				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.05)
+				-- luôn bám theo chân + nâng/hạ
+				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
 			end
 		end)
 	else
