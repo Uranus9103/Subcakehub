@@ -15,7 +15,7 @@ end
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0,220,0,180)
 frame.Position = UDim2.new(0.05,0,0.2,0)
-frame.BackgroundColor3 = Color3.fromRGB(0,0,0) -- nền đen
+frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
@@ -128,16 +128,13 @@ local function startFlyLoop()
 				end
 			end)
 
-			-- Giữ trong 6s
 			task.wait(6)
 
-			-- Tắt đi
 			if flyConnection then flyConnection:Disconnect() end
 			if flyPart then flyPart:Destroy() end
 			flyPart = nil
 			showNotice("⚠️ Vui lòng tắt bật lại nhanh để không bị lỗi ⚠️")
 
-			-- Nghỉ siêu nhanh rồi bật lại
 			task.wait(0.1)
 		end
 	end)
@@ -154,23 +151,38 @@ btnFly.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Nút Nâng (tốc độ 17)
+-- Nút Nâng (tốc độ 17, bằng part nâng)
 btnLift.MouseButton1Click:Connect(function()
 	local character = player.Character or player.CharacterAdded:Wait()
 	local hrp = character:WaitForChild("HumanoidRootPart")
 
-	-- Nâng liên tục trong khi giữ
-	local lifting = true
+	-- Nếu đã có platform thì xài lại
+	local liftPart = workspace:FindFirstChild("LiftPlatform")
+	if not liftPart then
+		liftPart = Instance.new("Part")
+		liftPart.Size = Vector3.new(8,1,8)
+		liftPart.Anchored = true
+		liftPart.CanCollide = true
+		liftPart.Color = Color3.fromRGB(250,200,100)
+		liftPart.Transparency = 0
+		liftPart.Name = "LiftPlatform"
+		liftPart.Parent = workspace
+		liftPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0,3,0))
+	end
+
 	btnLift.BackgroundColor3 = Color3.fromRGB(100,200,250)
 
+	-- Nâng trong khi giữ
+	local lifting = true
 	local connection
-	connection = RunService.RenderStepped:Connect(function()
-		if lifting and hrp then
-			hrp.CFrame = hrp.CFrame + Vector3.new(0,17 * RunService.RenderStepped:Wait(),0)
+	connection = RunService.RenderStepped:Connect(function(dt)
+		if lifting and liftPart then
+			local pos = liftPart.Position
+			liftPart.Position = pos + Vector3.new(0,17*dt,0)
 		end
 	end)
 
-	-- Tắt sau khi click lần nữa
+	-- Nhấn lần nữa thì dừng
 	btnLift.MouseButton1Click:Once(function()
 		lifting = false
 		if connection then connection:Disconnect() end
