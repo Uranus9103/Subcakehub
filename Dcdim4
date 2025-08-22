@@ -1,0 +1,168 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- GUI (tạo 1 lần, reset không mất)
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
+if not gui then
+	gui = Instance.new("ScreenGui")
+	gui.Name = "LiftGui"
+	gui.ResetOnSpawn = false 
+	gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Khung menu
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,200,0,150)
+frame.Position = UDim2.new(0.05,0,0.2,0)
+frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.Active = true
+frame.Draggable = true -- ✅ bảng di chuyển được
+frame.Parent = gui
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0,12)
+frameCorner.Parent = frame
+
+-- Nút nâng
+local btnLift = Instance.new("TextButton")
+btnLift.Size = UDim2.new(0.9,0,0,40)
+btnLift.Position = UDim2.new(0.05,0,0.15,0)
+btnLift.Text = "⬆️ Nâng OFF"
+btnLift.TextScaled = true
+btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btnLift.TextColor3 = Color3.fromRGB(255,255,255)
+btnLift.Font = Enum.Font.GothamBold
+btnLift.Parent = frame
+
+local cornerLift = Instance.new("UICorner")
+cornerLift.CornerRadius = UDim.new(0,10)
+cornerLift.Parent = btnLift
+
+-- Nút đi trên không
+local btnFly = Instance.new("TextButton")
+btnFly.Size = UDim2.new(0.9,0,0,40)
+btnFly.Position = UDim2.new(0.05,0,0.55,0)
+btnFly.Text = "🛑 Đi Trên Không OFF"
+btnFly.TextScaled = true
+btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+btnFly.TextColor3 = Color3.fromRGB(255,255,255)
+btnFly.Font = Enum.Font.GothamBold
+btnFly.Parent = frame
+
+local cornerFly = Instance.new("UICorner")
+cornerFly.CornerRadius = UDim.new(0,10)
+cornerFly.Parent = btnFly
+
+-- Biến
+local liftPart = nil
+local flyPart = nil
+local liftEnabled = false
+local flyEnabled = false
+local connection = nil
+local flyConnection = nil
+local speed = 12 -- tốc độ nâng
+local flyHeight = 3 -- khoảng cách sàn bay dưới chân
+local flyTime = 0 -- thời gian đếm để nâng/hạ
+
+-- Toggle nâng
+local function toggleLift()
+	liftEnabled = not liftEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if liftEnabled then
+		liftPart = Instance.new("Part")
+		liftPart.Size = Vector3.new(6,1,6)
+		liftPart.Anchored = true
+		liftPart.CanCollide = true
+		liftPart.Color = Color3.fromRGB(50,200,50)
+		liftPart.Transparency = 0.2
+		liftPart.Name = "LiftBlock"
+		liftPart.Parent = workspace
+
+		btnLift.Text = "⬆️ Nâng ON"
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		connection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and liftPart and liftEnabled then
+				local pos = hrp.Position - Vector3.new(0,3,0)
+				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
+			end
+		end)
+	else
+		if liftPart then
+			liftPart:Destroy()
+			liftPart = nil
+		end
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
+		btnLift.Text = "⬆️ Nâng OFF"
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end
+
+-- Toggle đi trên không (1s nâng, 1s hạ, lặp lại)
+local function toggleFly()
+	flyEnabled = not flyEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if flyEnabled then
+		flyPart = Instance.new("Part")
+		flyPart.Size = Vector3.new(8,1,8)
+		flyPart.Anchored = true
+		flyPart.CanCollide = true
+		flyPart.Color = Color3.fromRGB(100,150,250)
+		flyPart.Transparency = 0.2
+		flyPart.Name = "FlyPlatform"
+		flyPart.Parent = workspace
+
+		btnFly.Text = "🛑 Đi Trên Không ON"
+		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		flyTime = 0
+		local goingUp = true -- true = nâng, false = hạ
+		local duration = 1 -- 1 giây mỗi pha
+
+		flyConnection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and flyPart and flyEnabled then
+				flyTime = flyTime + dt
+				local t = flyTime / duration -- 0 → 1
+
+				if goingUp then
+					-- nâng dần
+					local pos = hrp.Position - Vector3.new(0, flyHeight, 0) + Vector3.new(0, t * 3, 0)
+					flyPart.CFrame = CFrame.new(pos)
+				else
+					-- hạ dần
+					local pos = hrp.Position - Vector3.new(0, flyHeight, 0) + Vector3.new(0, (1 - t) * 3, 0)
+					flyPart.CFrame = CFrame.new(pos)
+				end
+
+				-- đổi pha khi đủ 1s
+				if flyTime >= duration then
+					goingUp = not goingUp
+					flyTime = 0
+				end
+			end
+		end)
+	else
+		if flyPart then
+			flyPart:Destroy()
+			flyPart = nil
+		end
+		if flyConnection then
+			flyConnection:Disconnect()
+			flyConnection = nil
+		end
+		btnFly.Text = "🛑 Đi Trên Không OFF"
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end
+
+-- Kết nối
+btnLift.MouseButton1Click:Connect(toggleLift)
+btnFly.MouseButton1Click:Connect(toggleFly)
