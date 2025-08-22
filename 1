@@ -1,0 +1,167 @@
+--// APEX HUB – Key Hệ Thống (Key 1-5 luân phiên theo ngày)
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Danh sách Key và Link tương ứng
+local Keys = {
+    "1",  -- Ngày 1
+    "2",           -- Ngày 2
+    "3",           -- Ngày 3
+    "4",           -- Ngày 4
+    "5"            -- Ngày 5
+}
+local Links = {
+    "https://link4m.com/zXgOyz",   -- Link Ngày 1
+    "https://link4m.com/LinkNgay2",-- Link Ngày 2
+    "https://link4m.com/LinkNgay3",-- Link Ngày 3
+    "https://link4m.com/LinkNgay4",-- Link Ngày 4
+    "https://link4m.com/LinkNgay5" -- Link Ngày 5
+}
+
+-- Lấy ngày toàn cầu + offset VN để xác định key theo thứ tự 1→5
+local unixUTC = DateTime.now().UnixTimestamp
+local unixLocal = unixUTC + 7 * 3600  -- offset +7 giờ
+local index = (math.floor(unixLocal / 86400) % 5) + 1
+
+local CorrectKey = Keys[index]
+local KeyLink = Links[index]
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "APEX_Key_GUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 340, 0, 200)
+frame.Position = UDim2.new(0.5, -170, 0.5, -100)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BackgroundTransparency = 0.05
+frame.Parent = gui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
+
+-- Viền đổi màu
+local stroke = Instance.new("UIStroke", frame)
+stroke.Thickness = 3
+task.spawn(function()
+    local hue = 0
+    while task.wait() do
+        hue = (hue + 1) % 360
+        stroke.Color = Color3.fromHSV(hue/360, 1, 1)
+    end
+end)
+
+-- Tiêu đề
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -20, 0, 40)
+title.Position = UDim2.new(0, 10, 0, 8)
+title.BackgroundTransparency = 1
+title.Text = "🔑 HỆ THỐNG NHẬP KEY | APEX HUB"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextScaled = true
+Instance.new("UITextSizeConstraint", title).MaxTextSize = 22
+
+-- Ô nhập Key
+local box = Instance.new("TextBox", frame)
+box.Size = UDim2.new(0.9, 0, 0, 40)
+box.Position = UDim2.new(0.05, 0, 0.45, 0)
+box.PlaceholderText = "Nhập Key"
+box.Text = ""
+box.TextScaled = true
+box.TextWrapped = true
+box.TextXAlignment = Enum.TextXAlignment.Center
+box.TextYAlignment = Enum.TextYAlignment.Center
+box.Font = Enum.Font.Gotham
+box.TextColor3 = Color3.fromRGB(255, 255, 255)
+box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+Instance.new("UITextSizeConstraint", box).MaxTextSize = 20
+
+-- Nút Confirm
+local confirmBtn = Instance.new("TextButton", frame)
+confirmBtn.Size = UDim2.new(0.42, 0, 0, 38)
+confirmBtn.Position = UDim2.new(0.05, 0, 0.75, 0)
+confirmBtn.Text = "✅ Confirm"
+confirmBtn.Font = Enum.Font.GothamBold
+confirmBtn.TextScaled = true
+confirmBtn.TextColor3 = Color3.new(1,1,1)
+confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+confirmBtn.AutoButtonColor = false
+Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UITextSizeConstraint", confirmBtn).MaxTextSize = 18
+confirmBtn.MouseEnter:Connect(function() confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0) end)
+confirmBtn.MouseLeave:Connect(function() confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0) end)
+
+-- Nút Get Key (copy link)
+local getKeyBtn = Instance.new("TextButton", frame)
+getKeyBtn.Size = UDim2.new(0.42, 0, 0, 38)
+getKeyBtn.Position = UDim2.new(0.53, 0, 0.75, 0)
+getKeyBtn.Text = "🌐 Get Key"
+getKeyBtn.Font = Enum.Font.GothamBold
+getKeyBtn.TextScaled = true
+getKeyBtn.TextColor3 = Color3.new(1,1,1)
+getKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 85, 170)
+getKeyBtn.AutoButtonColor = false
+Instance.new("UICorner", getKeyBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UITextSizeConstraint", getKeyBtn).MaxTextSize = 18
+getKeyBtn.MouseEnter:Connect(function() getKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 110, 200) end)
+getKeyBtn.MouseLeave:Connect(function() getKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 85, 170) end)
+
+getKeyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(KeyLink)
+    end
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Thông báo",
+        Text = "✅ Đã copy link Get Key vào clipboard!",
+        Duration = 4
+    })
+end)
+
+-- Xử lý xác nhận key
+confirmBtn.MouseButton1Click:Connect(function()
+    if box.Text == CorrectKey then
+        frame:Destroy()
+        -- Nút Chạy Script
+        local runBtn = Instance.new("TextButton", gui)
+        runBtn.Size = UDim2.new(0, 220, 0, 65)
+        runBtn.Position = UDim2.new(0.5, -110, 0.5, -32)
+        runBtn.Text = "🚀 Chạy Script"
+        runBtn.Font = Enum.Font.GothamBold
+        runBtn.TextScaled = true
+        runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        runBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        runBtn.AutoButtonColor = false
+        Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 15)
+        Instance.new("UITextSizeConstraint", runBtn).MaxTextSize = 22
+
+        local stroke2 = Instance.new("UIStroke", runBtn)
+        stroke2.Thickness = 3
+        task.spawn(function()
+            local hue = 0
+            while runBtn and runBtn.Parent do
+                hue = (hue + 1) % 360
+                runBtn.BackgroundColor3 = Color3.fromHSV(hue/360, 0.8, 1)
+                stroke2.Color = Color3.fromHSV(((hue + 180) % 360) / 360, 1, 1)
+                task.wait()
+            end
+        end)
+
+        runBtn.MouseButton1Click:Connect(function()
+            runBtn.Active = false
+            runBtn.AutoButtonColor = false
+            runBtn.Text = "Đang tải..."
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/telead"))()
+            end)
+            runBtn:Destroy()
+        end)
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "❌ Sai Key",
+            Text = "Vui lòng nhập lại!",
+            Duration = 3
+        })
+    end
+end)
