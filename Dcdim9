@@ -2,13 +2,51 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- GUI (tạo 1 lần, reset không mất)
+-- GUI chính
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
 if not gui then
 	gui = Instance.new("ScreenGui")
 	gui.Name = "LiftGui"
 	gui.ResetOnSpawn = false 
 	gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Thông báo (ẩn sẵn)
+local notifyLabel = Instance.new("TextLabel")
+notifyLabel.Size = UDim2.new(0.4,0,0.07,0)
+notifyLabel.Position = UDim2.new(0.3,0,0.1,0)
+notifyLabel.BackgroundColor3 = Color3.fromRGB(0,0,0)
+notifyLabel.BackgroundTransparency = 0.4
+notifyLabel.Text = ""
+notifyLabel.TextScaled = true
+notifyLabel.TextColor3 = Color3.fromRGB(255,255,255)
+notifyLabel.Font = Enum.Font.GothamBold
+notifyLabel.Visible = false
+notifyLabel.Parent = gui
+
+local notifyCorner = Instance.new("UICorner")
+notifyCorner.CornerRadius = UDim.new(0,10)
+notifyCorner.Parent = notifyLabel
+
+-- Hàm hiện thông báo
+local notifyRunning = false
+local function startNotify()
+	if notifyRunning then return end
+	notifyRunning = true
+	task.spawn(function()
+		while notifyRunning do
+			notifyLabel.Text = "⚠️ Vui lòng tắt bật lại nhanh để không bị lỗi"
+			notifyLabel.Visible = true
+			task.wait(2)
+			notifyLabel.Visible = false
+			task.wait(1) -- tổng 3s 1 lần
+		end
+	end)
+end
+
+local function stopNotify()
+	notifyRunning = false
+	notifyLabel.Visible = false
 end
 
 -- Khung menu
@@ -55,18 +93,15 @@ cornerFly.CornerRadius = UDim.new(0,10)
 cornerFly.Parent = btnFly
 
 -- Biến
-local liftPart = nil
-local flyPart = nil
-local liftEnabled = false
-local flyEnabled = false
-local connection = nil
-local flyConnection = nil
-local speed = 17 -- tốc độ nâng
-local flyHeight = 3 -- khoảng cách sàn ban đầu dưới chân
+local liftPart, flyPart
+local liftEnabled, flyEnabled = false, false
+local connection, flyConnection
+local speed = 12
+local flyHeight = 3
 local goingUp = true
 local switchTime = 1
 local flyTimer = 0
-local flyRange = 1 -- độ nâng/hạ ít
+local flyRange = 1.5
 
 -- Toggle nâng
 local function toggleLift()
@@ -81,11 +116,12 @@ local function toggleLift()
 		liftPart.CanCollide = true
 		liftPart.Color = Color3.fromRGB(50,200,50)
 		liftPart.Transparency = 0.2
-		liftPart.Name = "LiftBlock"
 		liftPart.Parent = workspace
 
 		btnLift.Text = "⬆️ Nâng ON"
 		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		startNotify()
 
 		connection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and liftPart and liftEnabled then
@@ -94,20 +130,15 @@ local function toggleLift()
 			end
 		end)
 	else
-		if liftPart then
-			liftPart:Destroy()
-			liftPart = nil
-		end
-		if connection then
-			connection:Disconnect()
-			connection = nil
-		end
+		if liftPart then liftPart:Destroy() end
+		if connection then connection:Disconnect() end
 		btnLift.Text = "⬆️ Nâng OFF"
 		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		stopNotify()
 	end
 end
 
--- Toggle đi trên không (luôn theo kịp người chơi)
+-- Toggle đi trên không
 local function toggleFly()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
@@ -120,18 +151,16 @@ local function toggleFly()
 		flyPart.CanCollide = true
 		flyPart.Color = Color3.fromRGB(100,150,250)
 		flyPart.Transparency = 0.2
-		flyPart.Name = "FlyPlatform"
 		flyPart.Parent = workspace
-
-		-- xuất hiện ngay dưới chân
 		flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, flyHeight, 0))
 
 		btnFly.Text = "🛑 Đi Trên Không ON"
 		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
+		startNotify()
+
 		goingUp = true
 		flyTimer = 0
-
 		flyConnection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and flyPart and flyEnabled then
 				flyTimer = flyTimer + dt
@@ -139,31 +168,20 @@ local function toggleFly()
 					goingUp = not goingUp
 					flyTimer = 0
 				end
-
-				-- vị trí gốc luôn dưới chân
 				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
-
-				-- offset nâng/hạ nhẹ
 				local offset = goingUp and flyRange or -flyRange
-
-				-- luôn bám theo chân + nâng/hạ
 				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
 			end
 		end)
 	else
-		if flyPart then
-			flyPart:Destroy()
-			flyPart = nil
-		end
-		if flyConnection then
-			flyConnection:Disconnect()
-			flyConnection = nil
-		end
+		if flyPart then flyPart:Destroy() end
+		if flyConnection then flyConnection:Disconnect() end
 		btnFly.Text = "🛑 Đi Trên Không OFF"
 		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		stopNotify()
 	end
 end
 
--- Kết nối
+-- Kết nối nút
 btnLift.MouseButton1Click:Connect(toggleLift)
 btnFly.MouseButton1Click:Connect(toggleFly)
