@@ -62,8 +62,11 @@ local flyEnabled = false
 local connection = nil
 local flyConnection = nil
 local speed = 12 -- tốc độ nâng
+local flySpeed = 2 -- tốc độ nâng/hạ cho đi trên không (chậm hơn)
 local flyHeight = 3 -- khoảng cách sàn bay dưới chân
-local flyTime = 0 -- thời gian đếm để nâng/hạ
+local goingUp = true
+local switchTime = 1
+local flyTimer = 0
 
 -- Toggle nâng
 local function toggleLift()
@@ -104,7 +107,7 @@ local function toggleLift()
 	end
 end
 
--- Toggle đi trên không (1s nâng, 1s hạ, lặp lại)
+-- Toggle đi trên không (nâng & hạ như lift nhưng chậm)
 local function toggleFly()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
@@ -123,29 +126,22 @@ local function toggleFly()
 		btnFly.Text = "🛑 Đi Trên Không ON"
 		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		flyTime = 0
-		local goingUp = true -- true = nâng, false = hạ
-		local duration = 1 -- 1 giây mỗi pha
+		goingUp = true
+		flyTimer = 0
 
 		flyConnection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and flyPart and flyEnabled then
-				flyTime = flyTime + dt
-				local t = flyTime / duration -- 0 → 1
-
-				if goingUp then
-					-- nâng dần
-					local pos = hrp.Position - Vector3.new(0, flyHeight, 0) + Vector3.new(0, t * 3, 0)
-					flyPart.CFrame = CFrame.new(pos)
-				else
-					-- hạ dần
-					local pos = hrp.Position - Vector3.new(0, flyHeight, 0) + Vector3.new(0, (1 - t) * 3, 0)
-					flyPart.CFrame = CFrame.new(pos)
+				flyTimer = flyTimer + dt
+				if flyTimer >= switchTime then
+					goingUp = not goingUp
+					flyTimer = 0
 				end
 
-				-- đổi pha khi đủ 1s
-				if flyTime >= duration then
-					goingUp = not goingUp
-					flyTime = 0
+				local pos = hrp.Position - Vector3.new(0, flyHeight, 0)
+				if goingUp then
+					flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(pos + Vector3.new(0, flySpeed*dt, 0)), 0.2)
+				else
+					flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(pos + Vector3.new(0, -flySpeed*dt, 0)), 0.2)
 				end
 			end
 		end)
