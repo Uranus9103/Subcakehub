@@ -1,6 +1,7 @@
--- Đặt script này trong StarterPlayer > StarterPlayerScripts
+--// Main Variables
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart") or nil
@@ -8,25 +9,25 @@ player.CharacterAdded:Connect(function(char)
 	hrp = char:WaitForChild("HumanoidRootPart")
 end)
 
--- GUI
+--// GUI Setup
 local gui = Instance.new("ScreenGui")
 gui.Name = "ControlHub"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Hàm tạo nút có viền cầu vồng
-local function createButton(name, text, pos)
+-- Rainbow border effect
+local function createFrame(parent, pos, size, text)
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(0,150,0,50)
+	frame.Size = size
 	frame.Position = pos
 	frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 	frame.BorderSizePixel = 4
-	frame.Parent = gui
+	frame.Parent = parent
+
+	local uiCorner = Instance.new("UICorner", frame)
 
 	local btn = Instance.new("TextButton")
-	btn.Name = name
-	btn.Size = UDim2.new(1,-10,1,-10)
+	btn.Size = UDim2.new(1, -10, 1, -10)
 	btn.Position = UDim2.new(0,5,0,5)
 	btn.Text = text
 	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
@@ -35,20 +36,20 @@ local function createButton(name, text, pos)
 	btn.TextSize = 18
 	btn.Parent = frame
 
-	-- Viền cầu vồng
+	-- Rainbow border
 	task.spawn(function()
 		while task.wait(0.1) do
 			local t = tick() * 2
-			frame.BorderColor3 = Color3.fromHSV(t % 1,1,1)
+			frame.BorderColor3 = Color3.fromHSV(t%1,1,1)
 		end
 	end)
 
 	return btn
 end
 
--- Tạo 2 nút
-local btnFly = createButton("FlyBtn","Đi Trên Không",UDim2.new(0.05,0,0.2,0))
-local btnLift = createButton("LiftBtn","Nâng",UDim2.new(0.05,0,0.35,0))
+-- Buttons
+local btnFly = createFrame(gui, UDim2.new(0.05,0,0.2,0), UDim2.new(0,150,0,50), "Đi Trên Không")
+local btnLift = createFrame(gui, UDim2.new(0.05,0,0.35,0), UDim2.new(0,150,0,50), "Nâng")
 
 -------------------------------------------------------------------
 -- NÂNG (theo nhân vật, tốc độ 17)
@@ -69,18 +70,20 @@ local function startLift()
 	liftPart.CanCollide = true
 	liftPart.Color = Color3.fromRGB(255,200,50)
 	liftPart.Transparency = 0.2
+	liftPart.Name = "LiftPlatform"
 	liftPart.Parent = workspace
 
 	liftConn = RunService.RenderStepped:Connect(function()
 		if hrp and liftPart then
 			local pos = hrp.Position - Vector3.new(0,3,0)
 			liftPart.Position = pos
+			liftPart.CFrame = CFrame.new(pos)
 		end
 	end)
 
 	-- tự nâng lên
 	task.spawn(function()
-		while lifting and hrp do
+		while lifting and hrp and liftPart do
 			hrp.CFrame = hrp.CFrame + Vector3.new(0, liftSpeed/60, 0)
 			task.wait(1/60)
 		end
@@ -125,6 +128,7 @@ local function startFly()
 			flyPart.CanCollide = true
 			flyPart.Color = Color3.fromRGB(100,150,250)
 			flyPart.Transparency = 0.2
+			flyPart.Name = "FlyPlatform"
 			flyPart.Parent = workspace
 
 			local timer, goingUp = 0, true
@@ -139,7 +143,10 @@ local function startFly()
 				end
 				local offset = goingUp and flyRange or -flyRange
 				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
-				flyPart.Position = basePos + Vector3.new(0, offset, 0)
+				flyPart.CFrame = flyPart.CFrame:Lerp(
+					CFrame.new(basePos + Vector3.new(0, offset, 0)),
+					0.05
+				)
 			end)
 
 			task.wait(flyDuration)
@@ -164,7 +171,7 @@ btnFly.MouseButton1Click:Connect(function()
 end)
 
 -------------------------------------------------------------------
--- Thông báo cảnh báo
+-- Thông báo cảnh báo mỗi 4s, tồn tại 6s
 -------------------------------------------------------------------
 local notifyLabel = Instance.new("TextLabel")
 notifyLabel.Size = UDim2.new(0.4,0,0.05,0)
