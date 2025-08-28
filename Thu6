@@ -1,0 +1,246 @@
+--// Dịch vụ cần dùng
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+
+--// GUI chính
+local gui = Instance.new("ScreenGui")
+gui.Name = "HackGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+--// Hàm tạo nút
+local function createButton(name, color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 200, 0, 50)
+	btn.Position = UDim2.new(0, 10, 0, (#gui:GetChildren()-1) * 55)
+	btn.BackgroundColor3 = color
+	btn.Text = name
+	btn.TextScaled = true
+	btn.Parent = gui
+	return btn
+end
+
+-- ==========================================
+-- 1. Nút Lift
+-- ==========================================
+local btnLift = createButton("⬆️ Lift : OFF", Color3.fromRGB(200,50,50))
+local liftEnabled, liftConnection = false, nil
+btnLift.MouseButton1Click:Connect(function()
+	liftEnabled = not liftEnabled
+	if liftEnabled then
+		btnLift.Text = "⬆️ Lift : ON"
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		liftConnection = RunService.RenderStepped:Connect(function()
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				char.HumanoidRootPart.CFrame *= CFrame.new(0,0.1,0)
+			end
+		end)
+	else
+		btnLift.Text = "⬆️ Lift : OFF"
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		if liftConnection then liftConnection:Disconnect() liftConnection=nil end
+	end
+end)
+
+-- ==========================================
+-- 2. Nút Đi Trên Không (nâng 1s, hạ 1s)
+-- ==========================================
+local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
+local flyPart, flyEnabled, flyConnection = nil, false, nil
+local flyHeight = 3
+local flyRange = 2
+local switchTime = 1
+local goingUp, flyTimer = true, 0
+
+btnFly.MouseButton1Click:Connect(function()
+	flyEnabled = not flyEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if flyEnabled then
+		flyPart = Instance.new("Part")
+		flyPart.Size = Vector3.new(8,1,8)
+		flyPart.Anchored = true
+		flyPart.CanCollide = true
+		flyPart.Color = Color3.fromRGB(100,150,250)
+		flyPart.Transparency = 0.2
+		flyPart.Parent = workspace
+
+		btnFly.Text = "🛑 Đi Trên Không : ON"
+		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		goingUp, flyTimer = true, 0
+
+		flyConnection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and flyPart and flyEnabled then
+				flyTimer += dt
+				if flyTimer >= switchTime then
+					goingUp = not goingUp
+					flyTimer = 0
+				end
+				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
+				local offset = goingUp and flyRange or -flyRange
+				flyPart.CFrame = flyPart.CFrame:Lerp(
+					CFrame.new(basePos + Vector3.new(0, offset, 0)),
+					0.1
+				)
+			end
+		end)
+	else
+		if flyPart then flyPart:Destroy() flyPart = nil end
+		if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+		btnFly.Text = "🛑 Đi Trên Không : OFF"
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
+
+-- ==========================================
+-- 3. ESP
+-- ==========================================
+local btnESP = createButton("👁 ESP : OFF", Color3.fromRGB(200,50,50))
+local espEnabled = false
+local espObjects = {}
+
+local function createESP(plr)
+	if plr == player then return end
+	local char = plr.Character
+	if not char then return end
+	local highlight = Instance.new("Highlight")
+	highlight.FillColor = Color3.fromRGB(255,0,0)
+	highlight.OutlineColor = Color3.fromRGB(255,255,255)
+	highlight.FillTransparency = 0.5
+	highlight.Adornee = char
+	highlight.Parent = char
+	espObjects[plr] = highlight
+end
+
+btnESP.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	if espEnabled then
+		btnESP.Text = "👁 ESP : ON"
+		btnESP.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		for _,plr in pairs(Players:GetPlayers()) do
+			createESP(plr)
+		end
+		Players.PlayerAdded:Connect(createESP)
+	else
+		btnESP.Text = "👁 ESP : OFF"
+		btnESP.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		for _,hl in pairs(espObjects) do
+			if hl then hl:Destroy() end
+		end
+		espObjects = {}
+	end
+end)
+
+-- ==========================================
+-- 4. Warning (cảnh báo 2 dòng)
+-- ==========================================
+local btnWarn = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
+local warnEnabled = false
+local warnDistance = 60
+local warnLabel = Instance.new("TextLabel")
+warnLabel.Size = UDim2.new(1,0,0,70)
+warnLabel.BackgroundTransparency = 0.3
+warnLabel.BackgroundColor3 = Color3.fromRGB(200,0,0)
+warnLabel.Text = ""
+warnLabel.TextScaled = true
+warnLabel.Visible = false
+warnLabel.TextColor3 = Color3.new(1, 1, 1)
+warnLabel.Font = Enum.Font.GothamBold
+warnLabel.Parent = gui
+local warnConnection
+
+btnWarn.MouseButton1Click:Connect(function()
+	warnEnabled = not warnEnabled
+	if warnEnabled then
+		btnWarn.Text = "👤 Warning : ON"
+		btnWarn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		warnConnection = RunService.RenderStepped:Connect(function()
+			local char = player.Character
+			if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+			local hrp = char.HumanoidRootPart
+			local danger = false
+			for _,plr in pairs(Players:GetPlayers()) do
+				if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					local dist = (plr.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+					if dist <= warnDistance then
+						danger = true
+						break
+					end
+				end
+			end
+			warnLabel.Visible = danger
+			if danger then 
+				warnLabel.Text = "⚠️ Có người lại gần!\n⚠️ Someone is near!"
+			end
+		end)
+	else
+		btnWarn.Text = "👤 Warning : OFF"
+		btnWarn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		if warnConnection then warnConnection:Disconnect() warnConnection=nil end
+		warnLabel.Visible = false
+	end
+end)
+
+-- ==========================================
+-- 5. Jump vô hạn
+-- ==========================================
+local btnJump = createButton("🦘 Jump : OFF", Color3.fromRGB(200,50,50))
+local jumpEnabled = false
+
+btnJump.MouseButton1Click:Connect(function()
+	jumpEnabled = not jumpEnabled
+	if jumpEnabled then
+		btnJump.Text = "🦘 Jump : ON"
+		btnJump.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		player.Character:FindFirstChildOfClass("Humanoid").UseJumpPower = true
+		player.Character:FindFirstChildOfClass("Humanoid").JumpPower = 75
+	else
+		btnJump.Text = "🦘 Jump : OFF"
+		btnJump.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		player.Character:FindFirstChildOfClass("Humanoid").JumpPower = 50
+	end
+end)
+
+-- ==========================================
+-- 6. Đổi server
+-- ==========================================
+local btnServer = createButton("🔄 Đổi Server", Color3.fromRGB(100,100,255))
+btnServer.MouseButton1Click:Connect(function()
+	local servers = HttpService:JSONDecode(
+		game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")
+	)
+	for _,srv in pairs(servers.data) do
+		if srv.playing < srv.maxPlayers then
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, srv.id, player)
+			break
+		end
+	end
+end)
+
+-- ==========================================
+-- 7. Shader & Fix Lag
+-- ==========================================
+local btnShader = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
+local shaderOn = false
+local shaderGuiName = "Shader4_MainUI"
+
+btnShader.MouseButton1Click:Connect(function()
+	shaderOn = not shaderOn
+	if shaderOn then
+		btnShader.Text = "✨ Shader & Fix Lag : ON"
+		btnShader.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Shader4"))()
+	else
+		btnShader.Text = "✨ Shader & Fix Lag : OFF"
+		btnShader.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		local shaderGui = player:FindFirstChild("PlayerGui"):FindFirstChild(shaderGuiName)
+		if shaderGui then shaderGui:Destroy() end
+	end
+end)
