@@ -1,46 +1,16 @@
--- Jump Cao + AntiDie + AntiKick (test trong game của bạn)
+-- Jump Cao + Đổi Server (All-in-one)
 -- Dán vào StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 
--- RemoteEvent cho AntiDie
-local antiDieRE = ReplicatedStorage:FindFirstChild("AntiDieToggle")
-if not antiDieRE then
-	local newRE = Instance.new("RemoteEvent")
-	newRE.Name = "AntiDieToggle"
-	newRE.Parent = ReplicatedStorage
-	antiDieRE = newRE
-
-	-- Server xử lý AntiDie
-	antiDieRE.OnServerEvent:Connect(function(plr, wantOn)
-		local char = plr.Character
-		if not char then return end
-		local hum = char:FindFirstChildOfClass("Humanoid")
-		if not hum then return end
-
-		if wantOn then
-			hum.BreakJointsOnDeath = false
-			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-			hum.HealthChanged:Connect(function(hp)
-				if hp <= 0 then
-					hum.Health = hum.MaxHealth
-					hum:ChangeState(Enum.HumanoidStateType.Running)
-				end
-			end)
-		else
-			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
-		end
-	end)
-end
-
 -- ===== GUI =====
 local gui = Instance.new("ScreenGui")
-gui.Name = "JumpGui"
+gui.Name = "JumpServerGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
@@ -48,11 +18,11 @@ local frame = Instance.new("Frame")
 frame.Name = "Panel"
 frame.AnchorPoint = Vector2.new(1,0)
 frame.Position = UDim2.new(1, -20, 0, 20)
-frame.Size = UDim2.new(0, 220, 0, 170)
+frame.Size = UDim2.new(0, 220, 0, 130)
 frame.BackgroundTransparency = 0.15
 frame.Parent = gui
 
--- Cho phép kéo
+-- Cho phép kéo bảng
 do
 	local dragging, dragStart, startPos
 	frame.InputBegan:Connect(function(input)
@@ -87,50 +57,53 @@ end
 
 -- Trạng thái
 local jumpBoostOn = false
-local antiDieOn = false
-local antiKickOn = false
 
 local btnJump = makeButton("Nhảy cao: OFF", 8)
-local btnAntiDie = makeButton("Anti die: OFF", 46)
-local btnAntiKick = makeButton("Anti kick: OFF", 84)
+local btnServer = makeButton("Đổi server", 46)
 
--- Nhảy cao
+-- ===== Nhảy cao =====
 btnJump.MouseButton1Click:Connect(function()
 	jumpBoostOn = not jumpBoostOn
 	btnJump.Text = jumpBoostOn and "Nhảy cao: ON" or "Nhảy cao: OFF"
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum.UseJumpPower = true
-		hum.JumpPower = jumpBoostOn and 150 or 50
+		hum.JumpPower = jumpBoostOn and 150 or 50 -- mặc định 50, bật lên 150
 	end
 end)
 
--- Anti die
-btnAntiDie.MouseButton1Click:Connect(function()
-	antiDieOn = not antiDieOn
-	btnAntiDie.Text = antiDieOn and "Anti die: ON" or "Anti die: OFF"
-	antiDieRE:FireServer(antiDieOn)
-end)
+-- ===== Đổi server =====
+local function teleportToAnotherServer()
+	local gameId = game.PlaceId
+	local servers = {}
+	local cursor
 
--- Anti kick (client test)
-btnAntiKick.MouseButton1Click:Connect(function()
-	antiKickOn = not antiKickOn
-	btnAntiKick.Text = antiKickOn and "Anti kick: ON" or "Anti kick: OFF"
+	-- Lấy danh sách server public
+	local success, result = pcall(function()
+		return HttpService:JSONDecode(game:HttpGet(
+			"https://games.roblox.com/v1/games/"..gameId.."/servers/Public?sortOrder=Asc&limit=100"..(cursor and "&cursor="..cursor or "")
+		))
+	end)
 
-	if antiKickOn then
-		-- hook Kick
-		local mt = getrawmetatable(game)
-		setreadonly(mt, false)
-		local oldNamecall = mt.__namecall
-		mt.__namecall = function(self, ...)
-			local method = getnamecallmethod()
-			if tostring(method) == "Kick" and self == player then
-				warn("Đã chặn Kick thử nghiệm!")
-				return nil
+	if success and result and result.data then
+		for _, srv in ipairs(result.data) do
+			if srv.playing < srv.maxPlayers and srv.id ~= game.JobId then
+				table.insert(servers, srv.id)
 			end
-			return oldNamecall(self, ...)
 		end
 	end
+
+	if #servers > 0 then
+		local randomServer = servers[math.random(1, #servers)]
+		TeleportService:TeleportToPlaceInstance(gameId, randomServer, player)
+	else
+		-- Nếu không có server nào khác thì rejoin lại server hiện tại
+		TeleportService:Teleport(gameId, player)
+	end
+end
+
+btnServer.MouseButton1Click:Connect(function()
+	teleportToAnotherServer()
 end)
 
 -- Giữ trạng thái khi respawn
@@ -139,8 +112,5 @@ player.CharacterAdded:Connect(function(char)
 		local hum = char:WaitForChild("Humanoid")
 		hum.UseJumpPower = true
 		hum.JumpPower = 150
-	end
-	if antiDieOn then
-		antiDieRE:FireServer(true)
 	end
 end)
