@@ -1,0 +1,133 @@
+-- InfinityJump + AntiDie (All-in-one) 
+-- Gắn 1 script duy nhất vào StarterPlayer > StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+-- Tạo RemoteEvent (nếu chưa có)
+local antiDieRE = ReplicatedStorage:FindFirstChild("AntiDieToggle")
+if not antiDieRE then
+	local newRE = Instance.new("RemoteEvent")
+	newRE.Name = "AntiDieToggle"
+	newRE.Parent = ReplicatedStorage
+	antiDieRE = newRE
+
+	-- Code server chạy ở đây (RunContext Server nếu script được publish trong StarterPlayerScripts)
+	antiDieRE.OnServerEvent:Connect(function(plr, wantOn)
+		local char = plr.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if not hum then return end
+
+		-- Bật anti die
+		if wantOn then
+			hum.BreakJointsOnDeath = false
+			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+			hum.HealthChanged:Connect(function(hp)
+				if hp <= 0 then
+					hum.Health = hum.MaxHealth
+					hum:ChangeState(Enum.HumanoidStateType.Running)
+				end
+			end)
+		else
+			-- Tắt anti die thì khôi phục trạng thái Dead
+			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+		end
+	end)
+end
+
+-- ===== GUI =====
+local gui = Instance.new("ScreenGui")
+gui.Name = "InfJumpGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Name = "Panel"
+frame.AnchorPoint = Vector2.new(1,0)
+frame.Position = UDim2.new(1, -20, 0, 20)
+frame.Size = UDim2.new(0, 220, 0, 90)
+frame.BackgroundTransparency = 0.15
+frame.Parent = gui
+
+-- Cho phép kéo
+do
+	local dragging, dragStart, startPos
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+	frame.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+end
+
+local function makeButton(text, y)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -20, 0, 36)
+	btn.Position = UDim2.new(0, 10, 0, y)
+	btn.Text = text
+	btn.AutoButtonColor = true
+	btn.Parent = frame
+	return btn
+end
+
+-- Trạng thái
+local infJumpOn = false
+local antiDieOn = false
+
+local btnInf = makeButton("Nhảy vô hạn: OFF", 8)
+local btnAnti = makeButton("Anti die: OFF", 46)
+
+btnInf.MouseButton1Click:Connect(function()
+	infJumpOn = not infJumpOn
+	btnInf.Text = infJumpOn and "Nhảy vô hạn: ON" or "Nhảy vô hạn: OFF"
+	StarterGui:SetCore("SendNotification", {
+		Title = "Infinity Jump", 
+		Text = infJumpOn and "Đã bật" or "Đã tắt", 
+		Duration = 1.5
+	})
+end)
+
+btnAnti.MouseButton1Click:Connect(function()
+	antiDieOn = not antiDieOn
+	btnAnti.Text = antiDieOn and "Anti die: ON" or "Anti die: OFF"
+	antiDieRE:FireServer(antiDieOn)
+end)
+
+-- ===== Nhảy vô hạn =====
+local function getHumanoid()
+	local char = player.Character or player.CharacterAdded:Wait()
+	return char:FindFirstChildOfClass("Humanoid")
+end
+
+UserInputService.JumpRequest:Connect(function()
+	if not infJumpOn then return end
+	local hum = getHumanoid()
+	if hum then
+		hum:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+player.CharacterAdded:Connect(function(char)
+	if antiDieOn then
+		task.wait(1)
+		antiDieRE:FireServer(true)
+	end
+end)
