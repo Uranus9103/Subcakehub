@@ -134,9 +134,10 @@ end)
 -- ==========================================
 local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
 local flyPart, flyEnabled, flyConnection = nil, false, nil
-local flyHeight = 3
+local flyHeight, flyRange, switchTime = 3, 1, 1
+local goingUp, flyTimer = true, 0
 
-btnFly.MouseButton1Click:Connect(function()
+local function toggleFly()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
 	local hrp = character:WaitForChild("HumanoidRootPart")
@@ -148,15 +149,27 @@ btnFly.MouseButton1Click:Connect(function()
 		flyPart.CanCollide = true
 		flyPart.Color = Color3.fromRGB(100,150,250)
 		flyPart.Transparency = 0.2
+		flyPart.Name = "FlyPlatform"
 		flyPart.Parent = workspace
+
+		flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, flyHeight, 0))
 
 		btnFly.Text = "🛑 Đi Trên Không : ON"
 		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		flyConnection = RunService.RenderStepped:Connect(function()
+		goingUp, flyTimer = true, 0
+
+		flyConnection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and flyPart and flyEnabled then
+				flyTimer += dt
+				if flyTimer >= switchTime then
+					goingUp = not goingUp
+					flyTimer = 0
+				end
+
 				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
-				flyPart.CFrame = CFrame.new(basePos)
+				local offset = goingUp and flyRange or -flyRange
+				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
 			end
 		end)
 	else
@@ -165,10 +178,11 @@ btnFly.MouseButton1Click:Connect(function()
 		btnFly.Text = "🛑 Đi Trên Không : OFF"
 		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
-end)
+end
+btnFly.MouseButton1Click:Connect(toggleFly)
 
 -- ==========================================
--- Nút ESP
+-- Nút ESP Highlight
 -- ==========================================
 local btnESP = createButton("👀 ESP OFF", Color3.fromRGB(200,50,50))
 local espEnabled = false
@@ -186,11 +200,19 @@ local function addESP(targetPlayer)
 	end
 end
 
-btnESP.MouseButton1Click:Connect(function()
+local function removeESP(targetPlayer)
+	if highlights[targetPlayer] then
+		highlights[targetPlayer]:Destroy()
+		highlights[targetPlayer] = nil
+	end
+end
+
+local function toggleESP()
 	espEnabled = not espEnabled
 	if espEnabled then
 		btnESP.Text = "👀 ESP : ON"
 		btnESP.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
 		for _,plr in pairs(Players:GetPlayers()) do
 			if plr ~= player then
 				addESP(plr)
@@ -206,22 +228,24 @@ btnESP.MouseButton1Click:Connect(function()
 		btnESP.Text = "👀 ESP : OFF"
 		btnESP.BackgroundColor3 = Color3.fromRGB(200,50,50)
 		for _,plr in pairs(Players:GetPlayers()) do
-			if highlights[plr] then
-				highlights[plr]:Destroy()
-				highlights[plr] = nil
+			if plr ~= player then
+				removeESP(plr)
 			end
 		end
 	end
-end)
+end
+btnESP.MouseButton1Click:Connect(toggleESP)
 
 -- ==========================================
--- Nút Warning
+-- Nút ESP Cảnh Báo Gần
 -- ==========================================
 local btnWarn = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
 local warnEnabled = false
-local warnDistance = 30
+local warnDistance = 30 -- khoảng cách cảnh báo
+
+-- Label cảnh báo (đặt trên cùng màn hình)
 local warnLabel = Instance.new("TextLabel")
-warnLabel.Size = UDim2.new(1,0,0,70)
+warnLabel.Size = UDim2.new(1,0,0,40)
 warnLabel.Position = UDim2.new(0,0,0,0)
 warnLabel.BackgroundTransparency = 0.3
 warnLabel.BackgroundColor3 = Color3.fromRGB(200,0,0)
@@ -231,17 +255,20 @@ warnLabel.Visible = false
 warnLabel.TextColor3 = Color3.new(1, 1, 1)
 warnLabel.Font = Enum.Font.GothamBold
 warnLabel.Parent = gui
-local warnConnection
 
-btnWarn.MouseButton1Click:Connect(function()
+local warnConnection = nil
+
+local function toggleWarn()
 	warnEnabled = not warnEnabled
 	if warnEnabled then
 		btnWarn.Text = "👤 Warning : ON"
 		btnWarn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
 		warnConnection = RunService.RenderStepped:Connect(function()
 			local char = player.Character
 			if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 			local hrp = char.HumanoidRootPart
+
 			local danger = false
 			for _,plr in pairs(Players:GetPlayers()) do
 				if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
@@ -252,18 +279,25 @@ btnWarn.MouseButton1Click:Connect(function()
 					end
 				end
 			end
-			warnLabel.Visible = danger
-			if danger then 
-				warnLabel.Text = "⚠️ Có người lại gần!\n⚠️ Someone is near!"
+
+			if danger then
+				warnLabel.Visible = true
+				warnLabel.Text = "⚠️ Cẩn thận! Có người lại gần!\n⚠️ Careful! Someone is near!"
+			else
+				warnLabel.Visible = false
 			end
 		end)
 	else
 		btnWarn.Text = "👤 Warning : OFF"
 		btnWarn.BackgroundColor3 = Color3.fromRGB(200,50,50)
-		if warnConnection then warnConnection:Disconnect() warnConnection=nil end
+		if warnConnection then
+			warnConnection:Disconnect()
+			warnConnection = nil
+		end
 		warnLabel.Visible = false
 	end
-end)
+end
+btnWarn.MouseButton1Click:Connect(toggleWarn)
 
 -- ==========================================
 -- Nút Nhảy cao
