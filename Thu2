@@ -1,15 +1,14 @@
--- InfinityJump + AntiDie (All-in-one) 
--- Gắn 1 script duy nhất vào StarterPlayer > StarterPlayerScripts
+-- Jump Cao + AntiDie + AntiKick (test trong game của bạn)
+-- Dán vào StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
--- Tạo RemoteEvent (nếu chưa có)
+-- RemoteEvent cho AntiDie
 local antiDieRE = ReplicatedStorage:FindFirstChild("AntiDieToggle")
 if not antiDieRE then
 	local newRE = Instance.new("RemoteEvent")
@@ -17,14 +16,13 @@ if not antiDieRE then
 	newRE.Parent = ReplicatedStorage
 	antiDieRE = newRE
 
-	-- Code server chạy ở đây (RunContext Server nếu script được publish trong StarterPlayerScripts)
+	-- Server xử lý AntiDie
 	antiDieRE.OnServerEvent:Connect(function(plr, wantOn)
 		local char = plr.Character
 		if not char then return end
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not hum then return end
 
-		-- Bật anti die
 		if wantOn then
 			hum.BreakJointsOnDeath = false
 			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
@@ -35,7 +33,6 @@ if not antiDieRE then
 				end
 			end)
 		else
-			-- Tắt anti die thì khôi phục trạng thái Dead
 			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
 		end
 	end)
@@ -43,7 +40,7 @@ end
 
 -- ===== GUI =====
 local gui = Instance.new("ScreenGui")
-gui.Name = "InfJumpGui"
+gui.Name = "JumpGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
@@ -51,7 +48,7 @@ local frame = Instance.new("Frame")
 frame.Name = "Panel"
 frame.AnchorPoint = Vector2.new(1,0)
 frame.Position = UDim2.new(1, -20, 0, 20)
-frame.Size = UDim2.new(0, 220, 0, 90)
+frame.Size = UDim2.new(0, 220, 0, 170)
 frame.BackgroundTransparency = 0.15
 frame.Parent = gui
 
@@ -89,45 +86,61 @@ local function makeButton(text, y)
 end
 
 -- Trạng thái
-local infJumpOn = false
+local jumpBoostOn = false
 local antiDieOn = false
+local antiKickOn = false
 
-local btnInf = makeButton("Nhảy vô hạn: OFF", 8)
-local btnAnti = makeButton("Anti die: OFF", 46)
+local btnJump = makeButton("Nhảy cao: OFF", 8)
+local btnAntiDie = makeButton("Anti die: OFF", 46)
+local btnAntiKick = makeButton("Anti kick: OFF", 84)
 
-btnInf.MouseButton1Click:Connect(function()
-	infJumpOn = not infJumpOn
-	btnInf.Text = infJumpOn and "Nhảy vô hạn: ON" or "Nhảy vô hạn: OFF"
-	StarterGui:SetCore("SendNotification", {
-		Title = "Infinity Jump", 
-		Text = infJumpOn and "Đã bật" or "Đã tắt", 
-		Duration = 1.5
-	})
-end)
-
-btnAnti.MouseButton1Click:Connect(function()
-	antiDieOn = not antiDieOn
-	btnAnti.Text = antiDieOn and "Anti die: ON" or "Anti die: OFF"
-	antiDieRE:FireServer(antiDieOn)
-end)
-
--- ===== Nhảy vô hạn =====
-local function getHumanoid()
-	local char = player.Character or player.CharacterAdded:Wait()
-	return char:FindFirstChildOfClass("Humanoid")
-end
-
-UserInputService.JumpRequest:Connect(function()
-	if not infJumpOn then return end
-	local hum = getHumanoid()
+-- Nhảy cao
+btnJump.MouseButton1Click:Connect(function()
+	jumpBoostOn = not jumpBoostOn
+	btnJump.Text = jumpBoostOn and "Nhảy cao: ON" or "Nhảy cao: OFF"
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if hum then
-		hum:ChangeState(Enum.HumanoidStateType.Jumping)
+		hum.UseJumpPower = true
+		hum.JumpPower = jumpBoostOn and 150 or 50
 	end
 end)
 
+-- Anti die
+btnAntiDie.MouseButton1Click:Connect(function()
+	antiDieOn = not antiDieOn
+	btnAntiDie.Text = antiDieOn and "Anti die: ON" or "Anti die: OFF"
+	antiDieRE:FireServer(antiDieOn)
+end)
+
+-- Anti kick (client test)
+btnAntiKick.MouseButton1Click:Connect(function()
+	antiKickOn = not antiKickOn
+	btnAntiKick.Text = antiKickOn and "Anti kick: ON" or "Anti kick: OFF"
+
+	if antiKickOn then
+		-- hook Kick
+		local mt = getrawmetatable(game)
+		setreadonly(mt, false)
+		local oldNamecall = mt.__namecall
+		mt.__namecall = function(self, ...)
+			local method = getnamecallmethod()
+			if tostring(method) == "Kick" and self == player then
+				warn("Đã chặn Kick thử nghiệm!")
+				return nil
+			end
+			return oldNamecall(self, ...)
+		end
+	end
+end)
+
+-- Giữ trạng thái khi respawn
 player.CharacterAdded:Connect(function(char)
+	if jumpBoostOn then
+		local hum = char:WaitForChild("Humanoid")
+		hum.UseJumpPower = true
+		hum.JumpPower = 150
+	end
 	if antiDieOn then
-		task.wait(1)
 		antiDieRE:FireServer(true)
 	end
 end)
