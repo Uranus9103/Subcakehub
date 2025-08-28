@@ -1,0 +1,47 @@
+-- ==========================================
+-- Nút Đi Trên Không (nâng 1s, hạ 1s)
+-- ==========================================
+local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
+local flyPart, flyEnabled, flyLoop = nil, false, nil
+local flyHeight = 5 -- chiều cao cơ bản
+
+btnFly.MouseButton1Click:Connect(function()
+	flyEnabled = not flyEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if flyEnabled then
+		-- Tạo sàn đi theo
+		flyPart = Instance.new("Part")
+		flyPart.Size = Vector3.new(8,1,8)
+		flyPart.Anchored = true
+		flyPart.CanCollide = true
+		flyPart.Color = Color3.fromRGB(100,150,250)
+		flyPart.Transparency = 0.2
+		flyPart.Parent = workspace
+
+		btnFly.Text = "🛑 Đi Trên Không : ON"
+		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		-- Bật vòng lặp nâng/hạ
+		flyLoop = task.spawn(function()
+			local up = true
+			while flyEnabled and task.wait(1) do
+				if hrp and flyPart then
+					-- Theo vị trí người chơi
+					local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
+					-- Nếu up thì nâng thêm 2, nếu down thì hạ 2
+					local offset = up and Vector3.new(0,2,0) or Vector3.new(0,-2,0)
+					flyPart.CFrame = CFrame.new(basePos + offset)
+					up = not up
+				end
+			end
+		end)
+
+	else
+		if flyPart then flyPart:Destroy() flyPart = nil end
+		btnFly.Text = "🛑 Đi Trên Không : OFF"
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		flyLoop = nil
+	end
+end)
