@@ -15,7 +15,7 @@ end
 
 -- Khung menu
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,220,0,250)
+frame.Size = UDim2.new(0,220,0,300)
 frame.Position = UDim2.new(0.05,0,0.2,0)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frame.Active = true
@@ -134,8 +134,7 @@ end)
 -- ==========================================
 local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
 local flyPart, flyEnabled, flyConnection = nil, false, nil
-local flyHeight, flyRange, switchTime = 3, 1, 1
-local goingUp, flyTimer = true, 0
+local flyHeight = 3
 
 btnFly.MouseButton1Click:Connect(function()
 	flyEnabled = not flyEnabled
@@ -154,16 +153,10 @@ btnFly.MouseButton1Click:Connect(function()
 		btnFly.Text = "🛑 Đi Trên Không : ON"
 		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		flyConnection = RunService.RenderStepped:Connect(function(dt)
+		flyConnection = RunService.RenderStepped:Connect(function()
 			if hrp and flyPart and flyEnabled then
-				flyTimer += dt
-				if flyTimer >= switchTime then
-					goingUp = not goingUp
-					flyTimer = 0
-				end
 				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
-				local offset = goingUp and flyRange or -flyRange
-				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
+				flyPart.CFrame = CFrame.new(basePos)
 			end
 		end)
 	else
@@ -228,7 +221,7 @@ local btnWarn = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
 local warnEnabled = false
 local warnDistance = 60
 local warnLabel = Instance.new("TextLabel")
-warnLabel.Size = UDim2.new(1,0,0,40)
+warnLabel.Size = UDim2.new(1,0,0,70)
 warnLabel.Position = UDim2.new(0,0,0,0)
 warnLabel.BackgroundTransparency = 0.3
 warnLabel.BackgroundColor3 = Color3.fromRGB(200,0,0)
@@ -260,7 +253,9 @@ btnWarn.MouseButton1Click:Connect(function()
 				end
 			end
 			warnLabel.Visible = danger
-			if danger then warnLabel.Text = "⚠️ Có người lại gần!" end
+			if danger then 
+				warnLabel.Text = "⚠️ Có người lại gần!\n⚠️ Someone is near!"
+			end
 		end)
 	else
 		btnWarn.Text = "👤 Warning : OFF"
@@ -310,6 +305,27 @@ btnServer.MouseButton1Click:Connect(function()
 		TeleportService:TeleportToPlaceInstance(gameId, randomServer, player)
 	else
 		TeleportService:Teleport(gameId, player)
+	end
+end)
+
+-- ==========================================
+-- Nút Shader & Fix lag
+-- ==========================================
+local btnShader = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
+local shaderOn = false
+local shaderGuiName = "Shader4_MainUI"
+
+btnShader.MouseButton1Click:Connect(function()
+	shaderOn = not shaderOn
+	if shaderOn then
+		btnShader.Text = "✨ Shader & Fix Lag : ON"
+		btnShader.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Shader4"))()
+	else
+		btnShader.Text = "✨ Shader & Fix Lag : OFF"
+		btnShader.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		local shaderGui = player:FindFirstChild("PlayerGui"):FindFirstChild(shaderGuiName)
+		if shaderGui then shaderGui:Destroy() end
 	end
 end)
 
