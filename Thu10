@@ -13,10 +13,10 @@ if not gui then
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
--- Khung menu
+-- Khung menu giống điện thoại
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,220,0,300)
-frame.Position = UDim2.new(0.05,0,0.2,0)
+frame.Size = UDim2.new(0,260,0,300)  -- hẹp dài giống điện thoại
+frame.Position = UDim2.new(0.05,0,0.1,0)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frame.Active = true
 frame.Draggable = true
@@ -24,7 +24,7 @@ frame.Visible = true
 frame.Parent = gui
 
 local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0,12)
+frameCorner.CornerRadius = UDim.new(0,20)
 frameCorner.Parent = frame
 
 -- ScrollingFrame chứa nút
@@ -34,14 +34,17 @@ scroll.Position = UDim2.new(0,5,0,5)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.CanvasSize = UDim2.new(0,0,0,0)
-scroll.ScrollBarThickness = 8
+scroll.ScrollBarThickness = 10
 scroll.Parent = frame
 
-local layout = Instance.new("UIListLayout")
-layout.Padding = UDim.new(0,10)
-layout.FillDirection = Enum.FillDirection.Vertical
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+-- Layout 2 cột
+local layout = Instance.new("UIGridLayout")
+layout.CellSize = UDim2.new(0.45,0,0,50)
+layout.CellPadding = UDim2.new(0.05,0,0.05,0)
+layout.FillDirection = Enum.FillDirection.Horizontal
 layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
 layout.Parent = scroll
 
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -51,7 +54,7 @@ end)
 -- Hàm tạo nút
 local function createButton(text, color)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0.9,0,0,40)
+	btn.Size = UDim2.new(0,0,0,0)  -- UIGridLayout tự quản lý
 	btn.Text = text
 	btn.TextScaled = true
 	btn.BackgroundColor3 = color
@@ -60,18 +63,16 @@ local function createButton(text, color)
 	btn.Parent = scroll
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,10)
+	corner.CornerRadius = UDim.new(0,12)
 	corner.Parent = btn
 
 	return btn
 end
 
--- ==========================================
 -- Nút Ẩn/Hiện Menu
--- ==========================================
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0,80,0,40)
-toggleBtn.Position = UDim2.new(0,10,0.05,0)
+toggleBtn.Size = UDim2.new(0,100,0,40)
+toggleBtn.Position = UDim2.new(0.75,0,0.05,0)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(80,80,200)
 toggleBtn.Text = "APEX HUB"
 toggleBtn.TextScaled = true
@@ -91,12 +92,21 @@ toggleBtn.MouseButton1Click:Connect(function()
 	frame.Visible = menuVisible
 end)
 
--- ==========================================
--- Nút Lift
--- ==========================================
+-- Tạo các nút
 local btnLift = createButton("⬆️ Lift : OFF", Color3.fromRGB(200,50,50))
-local liftPart, liftEnabled, connection = nil, false, nil
-local speed = 20
+local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
+local btnESP = createButton("👀 ESP OFF", Color3.fromRGB(200,50,50))
+local btnWarn = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
+local btnJump = createButton("🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
+local btnServer = createButton("🌍 Đổi Server", Color3.fromRGB(80,150,250))
+local btnShader = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
+local btnEsp2 = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0)) -- nút mới
+
+-- ==========================================
+-- Lift
+-- ==========================================
+local liftPart, liftEnabled, liftConnection = nil, false, nil
+local liftSpeed = 20
 
 btnLift.MouseButton1Click:Connect(function()
 	liftEnabled = not liftEnabled
@@ -115,29 +125,28 @@ btnLift.MouseButton1Click:Connect(function()
 		btnLift.Text = "⬆️ Lift : ON"
 		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
-		connection = RunService.RenderStepped:Connect(function(dt)
+		liftConnection = RunService.RenderStepped:Connect(function(dt)
 			if hrp and liftPart and liftEnabled then
 				local pos = hrp.Position - Vector3.new(0,3,0)
-				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, speed*dt, 0)
+				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, liftSpeed*dt, 0)
 			end
 		end)
 	else
 		if liftPart then liftPart:Destroy() liftPart = nil end
-		if connection then connection:Disconnect() connection = nil end
+		if liftConnection then liftConnection:Disconnect() liftConnection = nil end
 		btnLift.Text = "⬆️ Lift : OFF"
 		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end)
 
 -- ==========================================
--- Nút Đi Trên Không
+-- Fly
 -- ==========================================
-local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
 local flyPart, flyEnabled, flyConnection = nil, false, nil
 local flyHeight, flyRange, switchTime = 3, 1, 1
 local goingUp, flyTimer = true, 0
 
-local function toggleFly()
+btnFly.MouseButton1Click:Connect(function()
 	flyEnabled = not flyEnabled
 	local character = player.Character or player.CharacterAdded:Wait()
 	local hrp = character:WaitForChild("HumanoidRootPart")
@@ -166,7 +175,6 @@ local function toggleFly()
 					goingUp = not goingUp
 					flyTimer = 0
 				end
-
 				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
 				local offset = goingUp and flyRange or -flyRange
 				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
@@ -178,13 +186,11 @@ local function toggleFly()
 		btnFly.Text = "🛑 Đi Trên Không : OFF"
 		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
-end
-btnFly.MouseButton1Click:Connect(toggleFly)
+end)
 
 -- ==========================================
--- Nút ESP Highlight
+-- ESP Highlight
 -- ==========================================
-local btnESP = createButton("👀 ESP OFF", Color3.fromRGB(200,50,50))
 local espEnabled = false
 local highlights = {}
 
@@ -207,12 +213,11 @@ local function removeESP(targetPlayer)
 	end
 end
 
-local function toggleESP()
+btnESP.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 	if espEnabled then
 		btnESP.Text = "👀 ESP : ON"
 		btnESP.BackgroundColor3 = Color3.fromRGB(50,200,50)
-
 		for _,plr in pairs(Players:GetPlayers()) do
 			if plr ~= player then
 				addESP(plr)
@@ -233,17 +238,13 @@ local function toggleESP()
 			end
 		end
 	end
-end
-btnESP.MouseButton1Click:Connect(toggleESP)
+end)
 
 -- ==========================================
--- Nút ESP Cảnh Báo Gần
+-- Warning gần
 -- ==========================================
-local btnWarn = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
 local warnEnabled = false
-local warnDistance = 60 -- khoảng cách cảnh báo
-
--- Label cảnh báo (đặt trên cùng màn hình)
+local warnDistance = 60
 local warnLabel = Instance.new("TextLabel")
 warnLabel.Size = UDim2.new(1,0,0,40)
 warnLabel.Position = UDim2.new(0,0,0,0)
@@ -252,23 +253,20 @@ warnLabel.BackgroundColor3 = Color3.fromRGB(200,0,0)
 warnLabel.Text = ""
 warnLabel.TextScaled = true
 warnLabel.Visible = false
-warnLabel.TextColor3 = Color3.new(1, 1, 1)
+warnLabel.TextColor3 = Color3.new(1,1,1)
 warnLabel.Font = Enum.Font.GothamBold
 warnLabel.Parent = gui
-
 local warnConnection = nil
 
-local function toggleWarn()
+btnWarn.MouseButton1Click:Connect(function()
 	warnEnabled = not warnEnabled
 	if warnEnabled then
 		btnWarn.Text = "👤 Warning : ON"
 		btnWarn.BackgroundColor3 = Color3.fromRGB(50,200,50)
-
 		warnConnection = RunService.RenderStepped:Connect(function()
 			local char = player.Character
 			if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 			local hrp = char.HumanoidRootPart
-
 			local danger = false
 			for _,plr in pairs(Players:GetPlayers()) do
 				if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
@@ -279,32 +277,23 @@ local function toggleWarn()
 					end
 				end
 			end
-
+			warnLabel.Visible = danger
 			if danger then
-				warnLabel.Visible = true
 				warnLabel.Text = "⚠️ Cẩn thận! Có người lại gần!\n⚠️ Careful! Someone is near!"
-			else
-				warnLabel.Visible = false
 			end
 		end)
 	else
 		btnWarn.Text = "👤 Warning : OFF"
 		btnWarn.BackgroundColor3 = Color3.fromRGB(200,50,50)
-		if warnConnection then
-			warnConnection:Disconnect()
-			warnConnection = nil
-		end
-		warnLabel.Visible = false
+		if warnConnection then warnConnection:Disconnect() warnConnection=nil end
+		warnLabel.Visible=false
 	end
-end
-btnWarn.MouseButton1Click:Connect(toggleWarn)
+end)
 
 -- ==========================================
--- Nút Nhảy cao
+-- Jump Power
 -- ==========================================
-local btnJump = createButton("🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
 local jumpOn = false
-
 btnJump.MouseButton1Click:Connect(function()
 	jumpOn = not jumpOn
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -317,35 +306,32 @@ btnJump.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================
--- Nút Đổi server
+-- Đổi Server
 -- ==========================================
-local btnServer = createButton("🌍 Đổi Server", Color3.fromRGB(80,150,250))
-
 btnServer.MouseButton1Click:Connect(function()
 	local gameId = game.PlaceId
-	local servers, cursor = {}, nil
-	local success, result = pcall(function()
+	local servers = {}
+	local success,result = pcall(function()
 		return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..gameId.."/servers/Public?sortOrder=Asc&limit=100"))
 	end)
 	if success and result and result.data then
-		for _, srv in ipairs(result.data) do
+		for _,srv in ipairs(result.data) do
 			if srv.playing < srv.maxPlayers and srv.id ~= game.JobId then
-				table.insert(servers, srv.id)
+				table.insert(servers,srv.id)
 			end
 		end
 	end
-	if #servers > 0 then
+	if #servers>0 then
 		local randomServer = servers[math.random(1,#servers)]
-		TeleportService:TeleportToPlaceInstance(gameId, randomServer, player)
+		TeleportService:TeleportToPlaceInstance(gameId,randomServer,player)
 	else
-		TeleportService:Teleport(gameId, player)
+		TeleportService:Teleport(gameId,player)
 	end
 end)
 
 -- ==========================================
--- Nút Shader & Fix lag
+-- Shader & Fix Lag
 -- ==========================================
-local btnShader = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
 local shaderOn = false
 local shaderGuiName = "Shader4_MainUI"
 
@@ -364,6 +350,13 @@ btnShader.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================
+-- ESP v2 & Hitbox (nút mới)
+-- ==========================================
+btnEsp2.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/aimbotok"))()
+end)
+
+-- ==========================================
 -- Anti Kick
 -- ==========================================
 local mt = getrawmetatable(game)
@@ -372,7 +365,7 @@ local old = mt.__namecall
 mt.__namecall = newcclosure(function(self,...)
 	local method = getnamecallmethod()
 	if method=="Kick" or method=="kick" then
-		return nil -- chặn kick
+		return nil
 	end
 	return old(self,...)
 end)
