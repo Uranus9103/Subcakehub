@@ -47,8 +47,9 @@ layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.VerticalAlignment = Enum.VerticalAlignment.Top
 layout.Parent = scroll
 
+-- Tự động set CanvasSize để có thể cuộn
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
+	scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 20)
 end)
 
 -- Hàm tạo nút
@@ -92,19 +93,20 @@ toggleBtn.MouseButton1Click:Connect(function()
 	frame.Visible = menuVisible
 end)
 
--- Tạo các nút
-local btnLift = createButton("⬆️ Lift : OFF", Color3.fromRGB(200,50,50))
-local btnFly = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
-local btnESP = createButton("👀 ESP OFF", Color3.fromRGB(200,50,50))
-local btnWarn = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
-local btnJump = createButton("🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
+-- Các nút
+local btnLift   = createButton("⬆️ Lift : OFF", Color3.fromRGB(200,50,50))
+local btnFly    = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
+local btnESP    = createButton("👀 ESP OFF", Color3.fromRGB(200,50,50))
+local btnWarn   = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
+local btnJump   = createButton("🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
 local btnServer = createButton("🌍 Đổi Server", Color3.fromRGB(80,150,250))
 local btnShader = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
-local btnEsp2 = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0)) -- nút mới
+local btnEsp2   = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
+local btnLockBase = createButton("🔒 Khoá Base", Color3.fromRGB(180,100,250))
 
--- ==========================================
+--------------------------------------------------
 -- Lift
--- ==========================================
+--------------------------------------------------
 local liftPart, liftEnabled, liftConnection = nil, false, nil
 local liftSpeed = 20
 
@@ -139,9 +141,9 @@ btnLift.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ==========================================
+--------------------------------------------------
 -- Fly
--- ==========================================
+--------------------------------------------------
 local flyPart, flyEnabled, flyConnection = nil, false, nil
 local flyHeight, flyRange, switchTime = 3, 1, 1
 local goingUp, flyTimer = true, 0
@@ -188,9 +190,9 @@ btnFly.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ==========================================
+--------------------------------------------------
 -- ESP Highlight
--- ==========================================
+--------------------------------------------------
 local espEnabled = false
 local highlights = {}
 
@@ -240,9 +242,9 @@ btnESP.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ==========================================
+--------------------------------------------------
 -- Warning gần
--- ==========================================
+--------------------------------------------------
 local warnEnabled = false
 local warnDistance = 60
 local warnLabel = Instance.new("TextLabel")
@@ -290,9 +292,9 @@ btnWarn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ==========================================
+--------------------------------------------------
 -- Jump Power
--- ==========================================
+--------------------------------------------------
 local jumpOn = false
 btnJump.MouseButton1Click:Connect(function()
 	jumpOn = not jumpOn
@@ -305,9 +307,9 @@ btnJump.MouseButton1Click:Connect(function()
 	btnJump.BackgroundColor3 = jumpOn and Color3.fromRGB(50,200,50) or Color3.fromRGB(200,50,50)
 end)
 
--- ==========================================
+--------------------------------------------------
 -- Đổi Server
--- ==========================================
+--------------------------------------------------
 btnServer.MouseButton1Click:Connect(function()
 	local gameId = game.PlaceId
 	local servers = {}
@@ -329,9 +331,9 @@ btnServer.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ==========================================
+--------------------------------------------------
 -- Shader & Fix Lag
--- ==========================================
+--------------------------------------------------
 local shaderOn = false
 local shaderGuiName = "Shader4_MainUI"
 
@@ -349,16 +351,23 @@ btnShader.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ==========================================
--- ESP v2 & Hitbox (nút mới)
--- ==========================================
+--------------------------------------------------
+-- ESP v2 & Hitbox
+--------------------------------------------------
 btnEsp2.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/aimbotok"))()
 end)
 
--- ==========================================
+--------------------------------------------------
+-- Khoá Base
+--------------------------------------------------
+btnLockBase.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/SCVscript/refs/heads/main/Dk5"))()
+end)
+
+--------------------------------------------------
 -- Anti Kick
--- ==========================================
+--------------------------------------------------
 local mt = getrawmetatable(game)
 setreadonly(mt,false)
 local old = mt.__namecall
