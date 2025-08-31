@@ -1,7 +1,10 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
+local hum = char:WaitForChild("Humanoid")
 
 --=====================================
 -- GUI
@@ -22,7 +25,7 @@ button.Parent = ScreenGui
 local enabled = false
 local pushPart = nil
 local bodyVel = nil
-local pushForce = 50 -- lực đẩy (càng cao càng mạnh)
+local pushForce = 60 -- lực đẩy (tốc độ)
 
 --=====================================
 -- Hàm bật/tắt
@@ -31,16 +34,15 @@ local function togglePush()
 	enabled = not enabled
 	
 	if enabled then
-		-- Tạo Part gắn vào sau lưng
+		-- Tạo Part gắn sau lưng
 		if not pushPart then
 			pushPart = Instance.new("Part")
 			pushPart.Size = Vector3.new(2, 2, 0.5)
-			pushPart.Color = Color3.fromRGB(255, 100, 0)
+			pushPart.Color = Color3.fromRGB(0, 200, 255)
 			pushPart.Anchored = false
 			pushPart.CanCollide = false
 			pushPart.Name = "PushPart"
-			
-			-- Weld gắn vào nhân vật
+
 			local weld = Instance.new("WeldConstraint")
 			pushPart.Parent = char
 			pushPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -2)
@@ -49,15 +51,15 @@ local function togglePush()
 			weld.Part1 = pushPart
 			weld.Parent = pushPart
 		end
-		
-		-- Thêm BodyVelocity để đẩy nhân vật
+
+		-- Tạo BodyVelocity
 		if not bodyVel then
 			bodyVel = Instance.new("BodyVelocity")
-			bodyVel.MaxForce = Vector3.new(100000, 0, 100000) -- lực tối đa (X,Z), không đẩy lên Y
-			bodyVel.Velocity = hrp.CFrame.LookVector * pushForce
+			bodyVel.MaxForce = Vector3.new(100000, 0, 100000) -- chỉ X,Z
+			bodyVel.Velocity = Vector3.zero
 			bodyVel.Parent = hrp
 		end
-		
+
 		button.Text = "Tắt Đẩy"
 	else
 		-- Xoá Part + BodyVelocity
@@ -69,10 +71,25 @@ local function togglePush()
 			bodyVel:Destroy()
 			bodyVel = nil
 		end
-		
+
 		button.Text = "Bật Đẩy"
 	end
 end
+
+--=====================================
+-- Cập nhật hướng đẩy theo di chuyển
+--=====================================
+RunService.RenderStepped:Connect(function()
+	if enabled and bodyVel and hum then
+		-- MoveDirection = hướng người chơi đang nhấn phím
+		local moveDir = hum.MoveDirection
+		if moveDir.Magnitude > 0 then
+			bodyVel.Velocity = moveDir * pushForce
+		else
+			bodyVel.Velocity = Vector3.zero -- đứng yên khi không bấm phím
+		end
+	end
+end)
 
 --=====================================
 -- Kết nối nút
