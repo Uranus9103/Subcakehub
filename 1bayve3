@@ -31,22 +31,16 @@ local savedCFrame
 local flying = false
 local tween
 
--- Hàm reload nhân vật (respawn)
+-- Khi nhân vật respawn
 local function onCharacterAdded(char)
     character = char
     hrp = character:WaitForChild("HumanoidRootPart")
     humanoid = character:WaitForChild("Humanoid")
 
-    -- Anti chết
+    -- Anti chết: máu luôn full
     humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        humanoid.Health = humanoid.MaxHealth
-    end)
-
-    -- Sau khi respawn → trả về chỗ lưu
-    task.defer(function()
-        if savedCFrame then
-            task.wait(0.5) -- chờ nhân vật load
-            hrp.CFrame = savedCFrame
+        if humanoid.Health < humanoid.MaxHealth then
+            humanoid.Health = humanoid.MaxHealth
         end
     end)
 end
@@ -61,14 +55,13 @@ saveBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Hàm bay mượt (Tween)
+-- Hàm bay mượt bằng Tween
 local function flyTo(targetCFrame)
     if not hrp or not targetCFrame then return end
     flying = true
 
-    -- Tính khoảng cách
     local distance = (targetCFrame.Position - hrp.Position).Magnitude
-    local flyTime = math.clamp(distance / 80, 0.5, 8)
+    local flyTime = math.clamp(distance / 80, 0.5, 8) -- xa nhanh, gần chậm
 
     if tween then tween:Cancel() end
 
@@ -91,18 +84,16 @@ flyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Anti reset / anti về spawn 100%
+-- Anti reset về spawn (chỉ khi đang bay)
 RunService.Stepped:Connect(function()
-    if savedCFrame and hrp then
-        local distance = (hrp.Position - savedCFrame.Position).Magnitude
-
-        -- Nếu bị kéo về spawn hoặc quá xa → trả về ngay
-        if distance > 120 then
-            print("🚫 Anti Reset kích hoạt → đưa lại vị trí đã lưu!")
+    if flying and savedCFrame and hrp then
+        local distanceFromSaved = (hrp.Position - savedCFrame.Position).Magnitude
+        if distanceFromSaved > 120 then
+            print("🚫 Anti Reset kích hoạt → trả về vị trí đã lưu!")
             hrp.CFrame = savedCFrame
         end
     end
 end)
 
--- Kích hoạt lại anti khi nhân vật respawn
+-- Khởi động anti lần đầu
 onCharacterAdded(character)
