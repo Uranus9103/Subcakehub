@@ -1,5 +1,5 @@
---// FULL SCRIPT: Shield + Music + Aura + Fire
--- Đặt vào StarterPlayer > StarterPlayerScripts (LocalScript)
+--// SHIELD + MUSIC + FIRE + BACK SHIELD
+-- LocalScript trong StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -24,12 +24,12 @@ screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 200, 0, 250)
-frame.Position = UDim2.new(1, -210, 0, 20) -- góc phải trên
+frame.Position = UDim2.new(1, -210, 0, 20)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BackgroundTransparency = 0.3
 frame.Parent = screenGui
 
--- Tạo nút helper
+-- Helper tạo nút
 local function createButton(name, text, y)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -20, 0, 40)
@@ -43,10 +43,10 @@ local function createButton(name, text, y)
 end
 
 ------------------------------------------------------
--- 1. Shield
+-- 1. Shield (quay quanh người)
 ------------------------------------------------------
-local shieldBtn = createButton("ShieldBtn", "Bật Lá Chắn", 10)
-local numParts, radius, rotationSpeed, checkRadius, damagePerHit = 6, 5, 2, 4, 25
+local shieldBtn = createButton("ShieldBtn", "Bật Lá Chắn Quanh Người", 10)
+local numParts, radius, rotationSpeed, checkRadius = 6, 5, 2, 4
 local activeShield = false
 local orbitParts = {}
 
@@ -69,8 +69,8 @@ end
 
 shieldBtn.MouseButton1Click:Connect(function()
     activeShield = not activeShield
-    shieldBtn.Text = activeShield and "Tắt Lá Chắn" or "Bật Lá Chắn"
-    remote:FireServer(activeShield)
+    shieldBtn.Text = activeShield and "Tắt Lá Chắn Quanh Người" or "Bật Lá Chắn Quanh Người"
+    remote:FireServer("orbit", activeShield)
     if activeShield then
         orbitParts = createParts()
     else
@@ -127,46 +127,47 @@ musicBtn.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------
--- 3. Aura Donut
+-- 3. Back Shield (sau lưng)
 ------------------------------------------------------
-local auraBtn = createButton("AuraBtn", "Bật Hào Quang", 150)
-local auraActive = false
-local auraPart
+local backShieldBtn = createButton("BackShieldBtn", "Bật Lá Chắn Sau Lưng", 150)
+local backShieldActive = false
+local backShieldPart
 
-auraBtn.MouseButton1Click:Connect(function()
-    auraActive = not auraActive
-    auraBtn.Text = auraActive and "Tắt Hào Quang" or "Bật Hào Quang"
+backShieldBtn.MouseButton1Click:Connect(function()
+    backShieldActive = not backShieldActive
+    backShieldBtn.Text = backShieldActive and "Tắt Lá Chắn Sau Lưng" or "Bật Lá Chắn Sau Lưng"
+    remote:FireServer("back", backShieldActive)
 
-    if auraActive then
+    if backShieldActive then
         local char = player.Character or player.CharacterAdded:Wait()
         local hrp = char:WaitForChild("HumanoidRootPart")
-        auraPart = Instance.new("Part")
-        auraPart.Size = Vector3.new(6,1,6)
-        auraPart.Anchored = false
-        auraPart.CanCollide = false
-        auraPart.Transparency = 0.3
-        auraPart.Material = Enum.Material.Neon
-        auraPart.Color = Color3.fromRGB(255, 223, 0)
-        auraPart.Parent = hrp
-
-        local weld = Instance.new("WeldConstraint")
-        weld.Part0 = hrp
-        weld.Part1 = auraPart
-        weld.Parent = auraPart
-        auraPart.CFrame = hrp.CFrame * CFrame.new(0,0,-3)
+        backShieldPart = Instance.new("Part")
+        backShieldPart.Size = Vector3.new(6,1,6)
+        backShieldPart.Anchored = false
+        backShieldPart.CanCollide = false
+        backShieldPart.Transparency = 0.2
+        backShieldPart.Material = Enum.Material.Neon
+        backShieldPart.Color = Color3.fromRGB(0, 200, 255)
+        backShieldPart.Parent = hrp
 
         local mesh = Instance.new("SpecialMesh")
         mesh.MeshType = Enum.MeshType.Torus
         mesh.Scale = Vector3.new(5,1,5)
-        mesh.Parent = auraPart
+        mesh.Parent = backShieldPart
 
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = hrp
+        weld.Part1 = backShieldPart
+        weld.Parent = backShieldPart
+
+        backShieldPart.CFrame = hrp.CFrame * CFrame.new(0,0,-4)
         RunService.RenderStepped:Connect(function()
-            if auraPart and auraPart.Parent then
-                auraPart.CFrame = hrp.CFrame * CFrame.new(0,0,-3) * CFrame.Angles(0, tick()*2, 0)
+            if backShieldPart and backShieldPart.Parent then
+                backShieldPart.CFrame = hrp.CFrame * CFrame.new(0,0,-4) * CFrame.Angles(0, tick()*2, 0)
             end
         end)
     else
-        if auraPart then auraPart:Destroy() auraPart=nil end
+        if backShieldPart then backShieldPart:Destroy() backShieldPart=nil end
     end
 end)
 
@@ -193,41 +194,66 @@ fireBtn.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------
--- SERVER DAMAGE SHIELD
+-- SERVER DAMAGE HANDLER
 ------------------------------------------------------
-remote.OnServerEvent:Connect(function(plr, state)
-    if state then
-        if not plr.Character then return end
-        local connection
-        connection = RunService.Heartbeat:Connect(function()
-            if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
-                connection:Disconnect() return
-            end
-            local hrp = plr.Character.HumanoidRootPart
-            local time = tick() * rotationSpeed
-            for i = 1, numParts do
-                local angle = time + (i * (2*math.pi/numParts))
-                local pos = Vector3.new(
-                    hrp.Position.X + radius*math.cos(angle),
-                    hrp.Position.Y+2,
-                    hrp.Position.Z + radius*math.sin(angle)
-                )
-                for _, other in pairs(Players:GetPlayers()) do
-                    if other ~= plr and other.Character then
-                        local hum = other.Character:FindFirstChild("Humanoid")
-                        local ohrp = other.Character:FindFirstChild("HumanoidRootPart")
-                        if hum and ohrp then
-                            if (ohrp.Position - pos).Magnitude < checkRadius then
+remote.OnServerEvent:Connect(function(plr, shieldType, state)
+    if shieldType == "orbit" then
+        -- Damage bằng vòng tròn xoay quanh
+        if state then
+            local conn
+            conn = RunService.Heartbeat:Connect(function()
+                if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
+                    conn:Disconnect() return
+                end
+                local hrp = plr.Character.HumanoidRootPart
+                local time = tick() * rotationSpeed
+                for i = 1, numParts do
+                    local angle = time + (i * (2*math.pi/numParts))
+                    local pos = Vector3.new(
+                        hrp.Position.X + radius*math.cos(angle),
+                        hrp.Position.Y+2,
+                        hrp.Position.Z + radius*math.sin(angle)
+                    )
+                    for _, other in pairs(Players:GetPlayers()) do
+                        if other ~= plr and other.Character then
+                            local hum = other.Character:FindFirstChild("Humanoid")
+                            local ohrp = other.Character:FindFirstChild("HumanoidRootPart")
+                            if hum and ohrp and (ohrp.Position - pos).Magnitude < checkRadius then
                                 hum.Health = 0
                             end
                         end
                     end
                 end
-            end
-        end)
-        plr:SetAttribute("ShieldConn", connection)
-    else
-        local conn = plr:GetAttribute("ShieldConn")
-        if conn then conn:Disconnect() plr:SetAttribute("ShieldConn", nil) end
+            end)
+            plr:SetAttribute("OrbitConn", conn)
+        else
+            local conn = plr:GetAttribute("OrbitConn")
+            if conn then conn:Disconnect() plr:SetAttribute("OrbitConn", nil) end
+        end
+    elseif shieldType == "back" then
+        -- Damage bằng lá chắn sau lưng
+        if state then
+            local conn
+            conn = RunService.Heartbeat:Connect(function()
+                if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
+                    conn:Disconnect() return
+                end
+                local hrp = plr.Character.HumanoidRootPart
+                local shieldPos = (hrp.CFrame * CFrame.new(0,0,-4)).Position
+                for _, other in pairs(Players:GetPlayers()) do
+                    if other ~= plr and other.Character then
+                        local hum = other.Character:FindFirstChild("Humanoid")
+                        local ohrp = other.Character:FindFirstChild("HumanoidRootPart")
+                        if hum and ohrp and (ohrp.Position - shieldPos).Magnitude < 4 then
+                            hum.Health = 0
+                        end
+                    end
+                end
+            end)
+            plr:SetAttribute("BackConn", conn)
+        else
+            local conn = plr:GetAttribute("BackConn")
+            if conn then conn:Disconnect() plr:SetAttribute("BackConn", nil) end
+        end
     end
 end)
