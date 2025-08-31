@@ -29,59 +29,80 @@ flyBtn.Parent = ScreenGui
 -- Biến
 local savedCFrame
 local flying = false
-local tween -- giữ tween hiện tại
+local tween
+
+-- Hàm reload nhân vật (respawn)
+local function onCharacterAdded(char)
+    character = char
+    hrp = character:WaitForChild("HumanoidRootPart")
+    humanoid = character:WaitForChild("Humanoid")
+
+    -- Anti chết
+    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        humanoid.Health = humanoid.MaxHealth
+    end)
+
+    -- Sau khi respawn → trả về chỗ lưu
+    task.defer(function()
+        if savedCFrame then
+            task.wait(0.5) -- chờ nhân vật load
+            hrp.CFrame = savedCFrame
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
 
 -- Lưu vị trí
 saveBtn.MouseButton1Click:Connect(function()
     if hrp then
         savedCFrame = hrp.CFrame
-        print("✅ Đã lưu vị trí tại:", savedCFrame.Position)
+        print("✅ Đã lưu vị trí:", savedCFrame.Position)
     end
 end)
 
--- Anti chết
-humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-    if flying then
-        humanoid.Health = humanoid.MaxHealth
-    end
-end)
-
--- Hàm bay mượt dùng TweenService
+-- Hàm bay mượt (Tween)
 local function flyTo(targetCFrame)
     if not hrp or not targetCFrame then return end
+    flying = true
 
-    -- Tính thời gian bay dựa trên khoảng cách
+    -- Tính khoảng cách
     local distance = (targetCFrame.Position - hrp.Position).Magnitude
-    local flyTime = math.clamp(distance / 50, 0.5, 5) -- max 5 giây
+    local flyTime = math.clamp(distance / 80, 0.5, 8)
 
-    -- Tạo tween
-    local tweenInfo = TweenInfo.new(flyTime, Enum.EasingStyle.Linear)
+    if tween then tween:Cancel() end
+
+    local tweenInfo = TweenInfo.new(flyTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
     tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
     tween:Play()
 
-    -- Dừng khi hoàn tất
     tween.Completed:Connect(function()
         flying = false
+        hrp.CFrame = targetCFrame -- đứng chính xác tại chỗ lưu
     end)
 end
 
--- Kích hoạt bay
+-- Nút bay
 flyBtn.MouseButton1Click:Connect(function()
     if savedCFrame then
-        flying = true
         flyTo(savedCFrame)
     else
         warn("⚠️ Chưa lưu vị trí!")
     end
 end)
 
--- Anti reset + anti về chỗ cũ
+-- Anti reset / anti về spawn 100%
 RunService.Stepped:Connect(function()
-    if flying and savedCFrame and hrp then
+    if savedCFrame and hrp then
         local distance = (hrp.Position - savedCFrame.Position).Magnitude
-        if distance > 100 then -- nếu bị kéo về quá xa (spawn)
-            print("🚫 Anti reset kích hoạt, đưa lại vị trí đã lưu")
+
+        -- Nếu bị kéo về spawn hoặc quá xa → trả về ngay
+        if distance > 120 then
+            print("🚫 Anti Reset kích hoạt → đưa lại vị trí đã lưu!")
             hrp.CFrame = savedCFrame
         end
     end
 end)
+
+-- Kích hoạt lại anti khi nhân vật respawn
+onCharacterAdded(character)
