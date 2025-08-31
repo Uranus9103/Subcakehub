@@ -1,21 +1,20 @@
--- GỌP CHO DỄ: Shield Client+Server
+--// SHIELD MŨI TÊN VỚI DAMAGE
 
--- SERVICES
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 -- Tạo RemoteEvent nếu chưa có
-local remote = ReplicatedStorage:FindFirstChild("ShieldToggleEvent")
+local remote = ReplicatedStorage:FindFirstChild("ArrowShieldEvent")
 if not remote then
     remote = Instance.new("RemoteEvent")
-    remote.Name = "ShieldToggleEvent"
+    remote.Name = "ArrowShieldEvent"
     remote.Parent = ReplicatedStorage
 end
 
 -- SETTINGS
-local numParts = 6
+local numArrows = 6
 local radius = 5
 local rotationSpeed = 2
 local checkRadius = 4
@@ -23,7 +22,7 @@ local damagePerHit = 25
 
 -- TRANG THÁI
 local active = false
-local orbitParts = {}
+local arrows = {}
 
 -- GUI
 local screenGui = Instance.new("ScreenGui")
@@ -32,46 +31,50 @@ screenGui.Parent = player:WaitForChild("PlayerGui")
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0,150,0,50)
 button.Position = UDim2.new(0.5,-75,0.9,0)
-button.Text = "Bật Lá Chắn"
+button.Text = "Bật Shield Mũi Tên"
 button.Parent = screenGui
 
--- HÀM TẠO PART
-local function createParts()
-    local parts = {}
-    for i = 1, numParts do
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(2,2,2)
-        part.Shape = Enum.PartType.Ball
-        part.Anchored = true
-        part.CanCollide = false
-        part.Material = Enum.Material.Neon
-        part.BrickColor = BrickColor.Random()
-        part.Parent = workspace
-        table.insert(parts, part)
-    end
-    return parts
+-- HÀM TẠO MŨI TÊN
+local function createArrow()
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(1,1,4)
+    part.Anchored = true
+    part.CanCollide = false
+    part.Material = Enum.Material.Neon
+    part.BrickColor = BrickColor.Random()
+
+    -- Tạo trail
+    local trail = Instance.new("Trail")
+    trail.Attachment0 = Instance.new("Attachment", part)
+    trail.Attachment1 = Instance.new("Attachment", part)
+    trail.Lifetime = 0.3
+    trail.Color = ColorSequence.new(part.Color)
+    trail.Parent = part
+
+    part.Parent = workspace
+    return part
 end
 
 -- Bật/Tắt shield
 button.MouseButton1Click:Connect(function()
     active = not active
-    button.Text = active and "Tắt Lá Chắn" or "Bật Lá Chắn"
-
-    -- Gửi lệnh server
+    button.Text = active and "Tắt Shield Mũi Tên" or "Bật Shield Mũi Tên"
     remote:FireServer(active)
-    
-    -- Client tạo part hiển thị
+
+    -- Client tạo visual mũi tên
     if active then
-        orbitParts = createParts()
-    else
-        for _, p in pairs(orbitParts) do
-            p:Destroy()
+        for i = 1, numArrows do
+            table.insert(arrows, createArrow())
         end
-        orbitParts = {}
+    else
+        for _, a in pairs(arrows) do
+            a:Destroy()
+        end
+        arrows = {}
     end
 end)
 
--- CẬP NHẬT PART QUAY (CLIENT chỉ hiển thị cho bạn)
+-- Client update mũi tên quay quanh
 RunService.RenderStepped:Connect(function()
     if not active then return end
     local char = player.Character
@@ -79,24 +82,22 @@ RunService.RenderStepped:Connect(function()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     local time = tick() * rotationSpeed
-    for i, part in ipairs(orbitParts) do
-        local angle = time + (i * (2*math.pi/numParts))
+    for i, arrow in ipairs(arrows) do
+        local angle = time + (i * (2*math.pi/numArrows))
         local x = hrp.Position.X + radius * math.cos(angle)
         local z = hrp.Position.Z + radius * math.sin(angle)
-        part.Position = Vector3.new(x, hrp.Position.Y + 2, z)
+        arrow.Position = Vector3.new(x, hrp.Position.Y + 2, z)
+        arrow.CFrame = CFrame.lookAt(arrow.Position, hrp.Position)
     end
 end)
 
--- SERVER SIDE: quản lý gây damage và chết thật
+-- SERVER SIDE: damage người khác
 remote.OnServerEvent:Connect(function(plr, state)
     if state then
-        -- bật shield server-side cho người chơi này
         if not plr.Character then return end
-        local char = plr.Character
-        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then return end
 
-        -- RunService server loop
         local connection
         connection = RunService.Heartbeat:Connect(function()
             if not plr or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
@@ -106,35 +107,31 @@ remote.OnServerEvent:Connect(function(plr, state)
             local hrp = plr.Character.HumanoidRootPart
             local time = tick() * rotationSpeed
 
-            for i = 1, numParts do
-                local angle = time + (i * (2*math.pi/numParts))
+            for i = 1, numArrows do
+                local angle = time + (i * (2*math.pi/numArrows))
                 local x = hrp.Position.X + radius * math.cos(angle)
                 local z = hrp.Position.Z + radius * math.sin(angle)
-                local partPos = Vector3.new(x, hrp.Position.Y + 2, z)
+                local pos = Vector3.new(x, hrp.Position.Y + 2, z)
 
-                -- Kiểm tra người chơi khác
                 for _, other in pairs(Players:GetPlayers()) do
                     if other ~= plr and other.Character then
-                        local otherHum = other.Character:FindFirstChild("Humanoid")
-                        local otherHRP = other.Character:FindFirstChild("HumanoidRootPart")
-                        if otherHum and otherHRP then
-                            if (otherHRP.Position - partPos).Magnitude < checkRadius then
-                                otherHum.Health = 0 -- chết thật
+                        local hum = other.Character:FindFirstChild("Humanoid")
+                        local oHRP = other.Character:FindFirstChild("HumanoidRootPart")
+                        if hum and oHRP then
+                            if (oHRP.Position - pos).Magnitude < checkRadius then
+                                hum:TakeDamage(damagePerHit)
                             end
                         end
                     end
                 end
             end
         end)
-
-        -- lưu connection để có thể tắt shield sau
-        plr:SetAttribute("ShieldConnection", connection)
+        plr:SetAttribute("ArrowShieldConnection", connection)
     else
-        -- tắt shield
-        local conn = plr:GetAttribute("ShieldConnection")
+        local conn = plr:GetAttribute("ArrowShieldConnection")
         if conn then
             conn:Disconnect()
-            plr:SetAttribute("ShieldConnection", nil)
+            plr:SetAttribute("ArrowShieldConnection", nil)
         end
     end
 end)
