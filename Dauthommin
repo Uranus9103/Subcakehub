@@ -2,20 +2,18 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local hum = char:WaitForChild("Humanoid")
 
 --=====================================
--- GUI
+-- Tạo GUI (chỉ 1 lần, không mất khi reset)
 --=====================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PushPartGUI"
+ScreenGui.ResetOnSpawn = false -- GIỮ LẠI khi reset nhân vật
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 150, 0, 50)
-button.Position = UDim2.new(0.5, -75, 0.8, 0)
+button.Position = UDim2.new(1, -160, 0, 20) -- góc PHẢI TRÊN màn hình
 button.Text = "Bật Đẩy"
 button.Parent = ScreenGui
 
@@ -25,14 +23,14 @@ button.Parent = ScreenGui
 local enabled = false
 local pushPart = nil
 local linearVel = nil
-local pushForce = 45 -- tốc độ đẩy
+local pushForce = 35 -- tốc độ đẩy
 local safeCFrame = nil -- chỗ an toàn hiện tại
-local antiCheckDistance = 10 -- khoảng lệch tối đa cho phép
+local antiCheckDistance = 25 -- cho phép lệch nhiều hơn trước
 
 --=====================================
--- Hàm đưa về chỗ an toàn
+-- Hàm trả về chỗ an toàn
 --=====================================
-local function returnToSafe()
+local function returnToSafe(hrp)
 	if safeCFrame and hrp then
 		hrp.CFrame = safeCFrame
 	end
@@ -42,6 +40,12 @@ end
 -- Hàm bật/tắt
 --=====================================
 local function togglePush()
+	local char = player.Character
+	if not char then return end
+
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local hum = char:WaitForChild("Humanoid")
+
 	enabled = not enabled
 	
 	if enabled then
@@ -78,7 +82,7 @@ local function togglePush()
 
 		button.Text = "Tắt Đẩy"
 	else
-		-- Khi tắt → chỉ xoá lực đẩy và part, KHÔNG về chỗ ban đầu
+		-- Xoá Part + LinearVelocity
 		if pushPart then
 			pushPart:Destroy()
 			pushPart = nil
@@ -93,25 +97,30 @@ local function togglePush()
 end
 
 --=====================================
--- Cập nhật hướng đi + Anti giật
+-- Cập nhật liên tục
 --=====================================
 RunService.RenderStepped:Connect(function()
-	if enabled and linearVel and hum then
+	local char = player.Character
+	if not char then return end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChild("Humanoid")
+	if not hrp or not hum then return end
+
+	if enabled and linearVel then
 		local moveDir = hum.MoveDirection
 
-		-- Anti giật: nếu lệch quá xa thì trả về chỗ an toàn
+		-- Anti giật: chỉ khi lệch quá xa mới về chỗ an toàn
 		if (hrp.Position - safeCFrame.Position).Magnitude > antiCheckDistance then
-			returnToSafe()
+			returnToSafe(hrp)
 		end
 
 		-- Cập nhật hướng đi
 		if moveDir.Magnitude > 0 then
 			linearVel.VectorVelocity = moveDir * pushForce
-			-- cập nhật vị trí an toàn mới
-			safeCFrame = hrp.CFrame
+			safeCFrame = hrp.CFrame -- cập nhật chỗ an toàn mới
 		else
 			linearVel.VectorVelocity = Vector3.zero
-			-- đứng yên thì cập nhật chỗ hiện tại làm safe
 			safeCFrame = hrp.CFrame
 		end
 	end
