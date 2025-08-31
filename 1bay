@@ -1,0 +1,83 @@
+-- LocalScript trong StarterPlayerScripts hoặc GUI
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(0, 150, 0, 50)
+saveBtn.Position = UDim2.new(0, 50, 1, -120)
+saveBtn.Text = "Lưu vị trí"
+saveBtn.Parent = ScreenGui
+
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0, 150, 0, 50)
+flyBtn.Position = UDim2.new(0, 220, 1, -120)
+flyBtn.Text = "Bay về"
+flyBtn.Parent = ScreenGui
+
+-- Biến lưu vị trí
+local savedCFrame
+local flying = false
+
+-- Lưu vị trí
+saveBtn.MouseButton1Click:Connect(function()
+    if hrp then
+        savedCFrame = hrp.CFrame
+        print("Đã lưu vị trí!")
+    end
+end)
+
+-- Chống chết thật sự
+humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+    if flying then
+        humanoid.Health = humanoid.MaxHealth
+    end
+end)
+
+-- Tạo BodyVelocity để bay mượt
+local bv = Instance.new("BodyVelocity")
+bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+bv.P = 1e4
+bv.Velocity = Vector3.new(0,0,0)
+bv.Parent = hrp
+bv.Enabled = false
+
+-- Hàm bay
+local function flyTo(targetCFrame)
+    flying = true
+    bv.Enabled = true
+
+    while flying and hrp and targetCFrame do
+        local direction = targetCFrame.Position - hrp.Position
+        local distance = direction.Magnitude
+
+        if distance < 1 then
+            flying = false
+            break
+        end
+
+        bv.Velocity = direction.Unit * math.clamp(distance*5, 20, 100) + Vector3.new(0,2,0) -- thêm chút lift để không kẹt
+        RunService.RenderStepped:Wait()
+    end
+
+    bv.Enabled = false
+    bv.Velocity = Vector3.new(0,0,0)
+end
+
+-- Kích hoạt bay
+flyBtn.MouseButton1Click:Connect(function()
+    if savedCFrame then
+        flyTo(savedCFrame)
+    else
+        warn("Chưa lưu vị trí!")
+    end
+end)
