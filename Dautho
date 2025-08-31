@@ -8,12 +8,12 @@ local player = Players.LocalPlayer
 --=====================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PushPartGUI"
-ScreenGui.ResetOnSpawn = false -- GIỮ LẠI khi reset nhân vật
+ScreenGui.ResetOnSpawn = false -- giữ lại GUI khi reset
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 150, 0, 50)
-button.Position = UDim2.new(1, -160, 0, 20) -- góc PHẢI TRÊN
+button.Position = UDim2.new(1, -160, 0, 20) -- góc phải trên
 button.Text = "Bật Đẩy"
 button.Parent = ScreenGui
 
@@ -23,10 +23,10 @@ button.Parent = ScreenGui
 local enabled = false
 local pushPart = nil
 local linearVel = nil
-local pushForce = 35 -- tốc độ đẩy thấp hơn chút
-local safeCFrame = nil -- chỗ an toàn
-local antiCheckDistance = 700 -- cho phép lệch trước khi kéo về
-local wasEnabledBeforeReset = false -- lưu trạng thái khi reset
+local pushForce = 35 -- tốc độ đẩy
+local safeCFrame = nil -- vị trí an toàn hiện tại
+local antiCheckDistance = 700 -- giới hạn lệch
+local wasEnabledBeforeReset = false
 
 --=====================================
 -- Hàm tạo part + LinearVelocity
@@ -34,7 +34,6 @@ local wasEnabledBeforeReset = false -- lưu trạng thái khi reset
 local function createPush(char)
 	local hrp = char:WaitForChild("HumanoidRootPart")
 
-	-- Part gắn sau lưng
 	pushPart = Instance.new("Part")
 	pushPart.Size = Vector3.new(2, 2, 0.5)
 	pushPart.Color = Color3.fromRGB(0, 200, 255)
@@ -49,7 +48,6 @@ local function createPush(char)
 	weld.Part1 = pushPart
 	weld.Parent = pushPart
 
-	-- LinearVelocity
 	linearVel = Instance.new("LinearVelocity")
 	linearVel.Attachment0 = Instance.new("Attachment", hrp)
 	linearVel.MaxForce = 1e6
@@ -60,17 +58,11 @@ local function createPush(char)
 end
 
 --=====================================
--- Hàm xoá part + LinearVelocity
+-- Hàm xoá part
 --=====================================
 local function destroyPush()
-	if pushPart then
-		pushPart:Destroy()
-		pushPart = nil
-	end
-	if linearVel then
-		linearVel:Destroy()
-		linearVel = nil
-	end
+	if pushPart then pushPart:Destroy() pushPart = nil end
+	if linearVel then linearVel:Destroy() linearVel = nil end
 end
 
 --=====================================
@@ -80,13 +72,11 @@ local function togglePush()
 	local char = player.Character
 	if not char then return end
 
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	local hum = char:WaitForChild("Humanoid")
+	local hrp = char:WaitForChild("Humanoid")
 
 	enabled = not enabled
-	
 	if enabled then
-		safeCFrame = hrp.CFrame
+		safeCFrame = char:WaitForChild("HumanoidRootPart").CFrame
 		if not pushPart and not linearVel then
 			createPush(char)
 		end
@@ -98,12 +88,11 @@ local function togglePush()
 end
 
 --=====================================
--- Anti giật + cập nhật di chuyển
+-- Cập nhật di chuyển + anti giật
 --=====================================
 RunService.RenderStepped:Connect(function()
 	local char = player.Character
 	if not char then return end
-
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChild("Humanoid")
 	if not hrp or not hum then return end
@@ -111,15 +100,15 @@ RunService.RenderStepped:Connect(function()
 	if enabled and linearVel then
 		local moveDir = hum.MoveDirection
 
-		-- Anti giật: nếu lệch quá xa thì kéo về
+		-- anti giật
 		if (hrp.Position - safeCFrame.Position).Magnitude > antiCheckDistance then
 			hrp.CFrame = safeCFrame
 		end
 
-		-- Cập nhật hướng đi
+		-- di chuyển
 		if moveDir.Magnitude > 0 then
 			linearVel.VectorVelocity = moveDir * pushForce
-			safeCFrame = hrp.CFrame -- cập nhật chỗ an toàn mới
+			safeCFrame = hrp.CFrame
 		else
 			linearVel.VectorVelocity = Vector3.zero
 			safeCFrame = hrp.CFrame
@@ -128,24 +117,33 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --=====================================
--- Anti reset
+-- Anti reset + anti die
 --=====================================
+player.CharacterRemoving:Connect(function()
+	-- lưu trạng thái
+	wasEnabledBeforeReset = enabled
+end)
+
 player.CharacterAdded:Connect(function(char)
-	char:WaitForChild("HumanoidRootPart")
+	local hrp = char:WaitForChild("HumanoidRootPart")
 	char:WaitForChild("Humanoid")
 
+	-- hồi sinh ngay chỗ cũ (anti die / anti reset)
+	if safeCFrame then
+		task.wait(0.2)
+		hrp.CFrame = safeCFrame
+	end
+
+	-- bật lại push nếu đang bật
 	if wasEnabledBeforeReset then
-		task.wait(0.2) -- chờ nhân vật load xong
+		task.wait(0.2)
 		createPush(char)
 		enabled = true
 		button.Text = "Tắt Đẩy"
+	else
+		enabled = false
+		button.Text = "Bật Đẩy"
 	end
-end)
-
-player.CharacterRemoving:Connect(function()
-	-- Lưu lại trạng thái khi reset
-	wasEnabledBeforeReset = enabled
-	destroyPush()
 end)
 
 --=====================================
