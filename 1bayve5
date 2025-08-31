@@ -1,0 +1,80 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+--=====================================
+-- GUI
+--=====================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PushPartGUI"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 150, 0, 50)
+button.Position = UDim2.new(0.5, -75, 0.8, 0)
+button.Text = "Bật Đẩy"
+button.Parent = ScreenGui
+
+--=====================================
+-- Biến
+--=====================================
+local enabled = false
+local pushPart = nil
+local bodyVel = nil
+local pushForce = 50 -- lực đẩy (càng cao càng mạnh)
+
+--=====================================
+-- Hàm bật/tắt
+--=====================================
+local function togglePush()
+	enabled = not enabled
+	
+	if enabled then
+		-- Tạo Part gắn vào sau lưng
+		if not pushPart then
+			pushPart = Instance.new("Part")
+			pushPart.Size = Vector3.new(2, 2, 0.5)
+			pushPart.Color = Color3.fromRGB(255, 100, 0)
+			pushPart.Anchored = false
+			pushPart.CanCollide = false
+			pushPart.Name = "PushPart"
+			
+			-- Weld gắn vào nhân vật
+			local weld = Instance.new("WeldConstraint")
+			pushPart.Parent = char
+			pushPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -2)
+			pushPart.Position = hrp.Position - Vector3.new(0, 0, 2)
+			weld.Part0 = hrp
+			weld.Part1 = pushPart
+			weld.Parent = pushPart
+		end
+		
+		-- Thêm BodyVelocity để đẩy nhân vật
+		if not bodyVel then
+			bodyVel = Instance.new("BodyVelocity")
+			bodyVel.MaxForce = Vector3.new(100000, 0, 100000) -- lực tối đa (X,Z), không đẩy lên Y
+			bodyVel.Velocity = hrp.CFrame.LookVector * pushForce
+			bodyVel.Parent = hrp
+		end
+		
+		button.Text = "Tắt Đẩy"
+	else
+		-- Xoá Part + BodyVelocity
+		if pushPart then
+			pushPart:Destroy()
+			pushPart = nil
+		end
+		if bodyVel then
+			bodyVel:Destroy()
+			bodyVel = nil
+		end
+		
+		button.Text = "Bật Đẩy"
+	end
+end
+
+--=====================================
+-- Kết nối nút
+--=====================================
+button.MouseButton1Click:Connect(togglePush)
