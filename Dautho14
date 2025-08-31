@@ -11,11 +11,59 @@ ScreenGui.Name = "PushPartGUI"
 ScreenGui.ResetOnSpawn = false -- giữ lại GUI khi reset
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
+-- Nút chính
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 150, 0, 50)
-button.Position = UDim2.new(1, -160, 0, 20) -- góc phải trên
+button.Position = UDim2.new(1, -160, 0, 20) -- mặc định góc phải trên
 button.Text = "Bật Đẩy"
+button.TextColor3 = Color3.fromRGB(255,255,255)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 20
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+button.AutoButtonColor = true
 button.Parent = ScreenGui
+
+-- Làm nút bo tròn + gradient đẹp
+local corner = Instance.new("UICorner", button)
+corner.CornerRadius = UDim.new(0, 12)
+
+local gradient = Instance.new("UIGradient", button)
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 120, 200))
+}
+
+-- Cho phép kéo nút
+local dragging = false
+local dragStart, startPos
+
+button.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = button.Position
+	end
+end)
+
+button.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		if dragging then
+			local delta = input.Position - dragStart
+			button.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
 
 --=====================================
 -- Biến
@@ -23,9 +71,9 @@ button.Parent = ScreenGui
 local enabled = false
 local pushPart = nil
 local linearVel = nil
-local pushForce = 40 -- tốc độ đẩy
-local safeCFrame = nil -- vị trí an toàn hiện tại
-local antiCheckDistance = 700 -- giới hạn lệch
+local pushForce = 40 -- tốc độ đẩy (đã hạ xuống)
+local safeCFrame = nil
+local antiCheckDistance = 700 -- khoảng cách lệch cao hơn
 local wasEnabledBeforeReset = false
 
 --=====================================
@@ -120,7 +168,6 @@ end)
 -- Anti reset + anti die
 --=====================================
 player.CharacterRemoving:Connect(function()
-	-- lưu trạng thái
 	wasEnabledBeforeReset = enabled
 end)
 
@@ -128,13 +175,11 @@ player.CharacterAdded:Connect(function(char)
 	local hrp = char:WaitForChild("HumanoidRootPart")
 	char:WaitForChild("Humanoid")
 
-	-- hồi sinh ngay chỗ cũ (anti die / anti reset)
 	if safeCFrame then
 		task.wait(0.2)
 		hrp.CFrame = safeCFrame
 	end
 
-	-- bật lại push nếu đang bật
 	if wasEnabledBeforeReset then
 		task.wait(0.2)
 		createPush(char)
