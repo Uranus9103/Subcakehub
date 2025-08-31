@@ -23,9 +23,9 @@ button.Parent = ScreenGui
 local enabled = false
 local pushPart = nil
 local linearVel = nil
-local pushForce = 28 -- tốc độ đẩy thấp hơn chút
+local pushForce = 35 -- tốc độ đẩy thấp hơn chút
 local safeCFrame = nil -- chỗ an toàn
-local antiCheckDistance = 30 -- cho phép lệch trước khi kéo về
+local antiCheckDistance = 700 -- cho phép lệch trước khi kéo về
 local wasEnabledBeforeReset = false -- lưu trạng thái khi reset
 
 --=====================================
