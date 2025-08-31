@@ -25,18 +25,16 @@ button.Parent = ScreenGui
 local enabled = false
 local pushPart = nil
 local linearVel = nil
-local pushForce = 60 -- tốc độ
-local savedCFrame = nil
-local antiCheckDistance = 10 -- nếu lệch quá xa thì đưa về
+local pushForce = 35 -- tốc độ đẩy
+local safeCFrame = nil -- chỗ an toàn hiện tại
+local antiCheckDistance = 8 -- khoảng lệch tối đa cho phép
 
 --=====================================
--- Hàm chống lệch
+-- Hàm đưa về chỗ an toàn
 --=====================================
-local function antiCheck()
-	if savedCFrame and hrp then
-		if (hrp.Position - savedCFrame.Position).Magnitude > antiCheckDistance then
-			hrp.CFrame = savedCFrame
-		end
+local function returnToSafe()
+	if safeCFrame and hrp then
+		hrp.CFrame = safeCFrame
 	end
 end
 
@@ -47,8 +45,8 @@ local function togglePush()
 	enabled = not enabled
 	
 	if enabled then
-		-- Lưu chỗ đứng ban đầu để anti giật
-		savedCFrame = hrp.CFrame
+		-- Đặt vị trí an toàn ban đầu
+		safeCFrame = hrp.CFrame
 
 		-- Tạo Part gắn sau lưng
 		if not pushPart then
@@ -67,7 +65,7 @@ local function togglePush()
 			weld.Parent = pushPart
 		end
 
-		-- LinearVelocity cho mượt
+		-- LinearVelocity
 		if not linearVel then
 			linearVel = Instance.new("LinearVelocity")
 			linearVel.Attachment0 = Instance.new("Attachment", hrp)
@@ -80,7 +78,7 @@ local function togglePush()
 
 		button.Text = "Tắt Đẩy"
 	else
-		-- Xoá Part + LinearVelocity (KHÔNG trả về chỗ cũ)
+		-- Khi tắt → chỉ xoá lực đẩy và part, KHÔNG về chỗ ban đầu
 		if pushPart then
 			pushPart:Destroy()
 			pushPart = nil
@@ -95,20 +93,26 @@ local function togglePush()
 end
 
 --=====================================
--- Cập nhật + Anti giật
+-- Cập nhật hướng đi + Anti giật
 --=====================================
 RunService.RenderStepped:Connect(function()
 	if enabled and linearVel and hum then
 		local moveDir = hum.MoveDirection
 
-		-- Anti giật: giữ nhân vật không lệch quá xa
-		antiCheck()
+		-- Anti giật: nếu lệch quá xa thì trả về chỗ an toàn
+		if (hrp.Position - safeCFrame.Position).Magnitude > antiCheckDistance then
+			returnToSafe()
+		end
 
 		-- Cập nhật hướng đi
 		if moveDir.Magnitude > 0 then
 			linearVel.VectorVelocity = moveDir * pushForce
+			-- cập nhật vị trí an toàn mới
+			safeCFrame = hrp.CFrame
 		else
 			linearVel.VectorVelocity = Vector3.zero
+			-- đứng yên thì cập nhật chỗ hiện tại làm safe
+			safeCFrame = hrp.CFrame
 		end
 	end
 end)
