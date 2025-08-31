@@ -128,10 +128,10 @@ local function togglePush()
 		if not pushPart and not linearVel then
 			createPush(char)
 		end
-		button.Text = "Tắt Đẩy"
+		button.Text = "Tắt : Chạy"
 	else
 		destroyPush()
-		button.Text = "Bật Đẩy"
+		button.Text = "Bật : Chạy"
 	end
 end
 
@@ -184,10 +184,10 @@ player.CharacterAdded:Connect(function(char)
 		task.wait(0.2)
 		createPush(char)
 		enabled = true
-		button.Text = "Tắt Đẩy"
+		button.Text = "Tắt : Chạy"
 	else
 		enabled = false
-		button.Text = "Bật Đẩy"
+		button.Text = "Bật : Chạy"
 	end
 end)
 
