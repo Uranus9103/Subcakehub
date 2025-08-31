@@ -1,0 +1,69 @@
+-- LocalScript trong StarterPlayerScripts hoặc GUI
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(0, 150, 0, 50)
+saveBtn.Position = UDim2.new(0, 50, 1, -120)
+saveBtn.Text = "Lưu vị trí"
+saveBtn.Parent = ScreenGui
+
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0, 150, 0, 50)
+flyBtn.Position = UDim2.new(0, 220, 1, -120)
+flyBtn.Text = "Bay về"
+flyBtn.Parent = ScreenGui
+
+-- Biến lưu vị trí
+local savedCFrame
+local flying = false
+
+-- Lưu vị trí
+saveBtn.MouseButton1Click:Connect(function()
+    if hrp then
+        savedCFrame = hrp.CFrame
+        print("Đã lưu vị trí!")
+    end
+end)
+
+-- Anti chết thật sự
+humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+    if flying then
+        humanoid.Health = humanoid.MaxHealth
+    end
+end)
+
+-- Anti reset + bay mượt
+RunService.RenderStepped:Connect(function()
+    if flying and savedCFrame and hrp then
+        local direction = savedCFrame.Position - hrp.Position
+        local distance = direction.Magnitude
+        if distance > 0.1 then
+            -- Di chuyển mượt mà bằng CFrame
+            local moveVector = direction.Unit * math.clamp(distance*0.2, 0.5, 50)
+            local targetCFrame = hrp.CFrame + moveVector
+            hrp.CFrame = CFrame.new(targetCFrame.Position, savedCFrame.Position)
+        else
+            flying = false
+        end
+    end
+end)
+
+-- Kích hoạt bay
+flyBtn.MouseButton1Click:Connect(function()
+    if savedCFrame then
+        flying = true
+    else
+        warn("Chưa lưu vị trí!")
+    end
+end)
