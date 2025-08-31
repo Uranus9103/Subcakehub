@@ -103,7 +103,7 @@ local btnServer   = createButton("🌍 Đổi Server", Color3.fromRGB(80,150,250
 local btnShader   = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
 local btnEsp2     = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
 local btnLockBase = createButton("🔒 Khoá Base", Color3.fromRGB(180,100,250))
-local btnRun      = createButton("🏃 Chạy : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
+local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
 
 --------------------------------------------------
 -- Lift
@@ -372,11 +372,11 @@ local runOn = false
 btnRun.MouseButton1Click:Connect(function()
 	runOn = not runOn
 	if runOn then
-		btnRun.Text = "🏃 Chạy : ON"
+		btnRun.Text = "Chạy : ON"
 		btnRun.BackgroundColor3 = Color3.fromRGB(50,200,50)
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/Subcakehub/refs/heads/main/Dautho15"))()
 	else
-		btnRun.Text = "🏃 Chạy : OFF"
+		btnRun.Text = "Chạy : OFF"
 		btnRun.BackgroundColor3 = Color3.fromRGB(200,50,50)
 		-- Nếu script kia có GUI riêng thì xoá
 		local runGui = player:FindFirstChild("PlayerGui"):FindFirstChild("RunGui")
