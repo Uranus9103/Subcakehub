@@ -24,8 +24,21 @@ button.Parent = ScreenGui
 --=====================================
 local enabled = false
 local pushPart = nil
-local bodyVel = nil
-local pushForce = 60 -- lực đẩy (tốc độ)
+local linearVel = nil
+local pushForce = 60 -- tốc độ
+local savedCFrame = nil
+local antiCheckDistance = 10 -- nếu lệch quá xa thì đưa về
+
+--=====================================
+-- Hàm chống lệch
+--=====================================
+local function antiCheck()
+	if savedCFrame and hrp then
+		if (hrp.Position - savedCFrame.Position).Magnitude > antiCheckDistance then
+			hrp.CFrame = savedCFrame
+		end
+	end
+end
 
 --=====================================
 -- Hàm bật/tắt
@@ -34,6 +47,9 @@ local function togglePush()
 	enabled = not enabled
 	
 	if enabled then
+		-- Lưu chỗ đứng ban đầu để anti giật
+		savedCFrame = hrp.CFrame
+
 		-- Tạo Part gắn sau lưng
 		if not pushPart then
 			pushPart = Instance.new("Part")
@@ -46,30 +62,32 @@ local function togglePush()
 			local weld = Instance.new("WeldConstraint")
 			pushPart.Parent = char
 			pushPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -2)
-			pushPart.Position = hrp.Position - Vector3.new(0, 0, 2)
 			weld.Part0 = hrp
 			weld.Part1 = pushPart
 			weld.Parent = pushPart
 		end
 
-		-- Tạo BodyVelocity
-		if not bodyVel then
-			bodyVel = Instance.new("BodyVelocity")
-			bodyVel.MaxForce = Vector3.new(100000, 0, 100000) -- chỉ X,Z
-			bodyVel.Velocity = Vector3.zero
-			bodyVel.Parent = hrp
+		-- LinearVelocity cho mượt
+		if not linearVel then
+			linearVel = Instance.new("LinearVelocity")
+			linearVel.Attachment0 = Instance.new("Attachment", hrp)
+			linearVel.MaxForce = 1e6
+			linearVel.RelativeTo = Enum.ActuatorRelativeTo.World
+			linearVel.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+			linearVel.VectorVelocity = Vector3.zero
+			linearVel.Parent = hrp
 		end
 
 		button.Text = "Tắt Đẩy"
 	else
-		-- Xoá Part + BodyVelocity
+		-- Xoá Part + LinearVelocity (KHÔNG trả về chỗ cũ)
 		if pushPart then
 			pushPart:Destroy()
 			pushPart = nil
 		end
-		if bodyVel then
-			bodyVel:Destroy()
-			bodyVel = nil
+		if linearVel then
+			linearVel:Destroy()
+			linearVel = nil
 		end
 
 		button.Text = "Bật Đẩy"
@@ -77,16 +95,20 @@ local function togglePush()
 end
 
 --=====================================
--- Cập nhật hướng đẩy theo di chuyển
+-- Cập nhật + Anti giật
 --=====================================
 RunService.RenderStepped:Connect(function()
-	if enabled and bodyVel and hum then
-		-- MoveDirection = hướng người chơi đang nhấn phím
+	if enabled and linearVel and hum then
 		local moveDir = hum.MoveDirection
+
+		-- Anti giật: giữ nhân vật không lệch quá xa
+		antiCheck()
+
+		-- Cập nhật hướng đi
 		if moveDir.Magnitude > 0 then
-			bodyVel.Velocity = moveDir * pushForce
+			linearVel.VectorVelocity = moveDir * pushForce
 		else
-			bodyVel.Velocity = Vector3.zero -- đứng yên khi không bấm phím
+			linearVel.VectorVelocity = Vector3.zero
 		end
 	end
 end)
