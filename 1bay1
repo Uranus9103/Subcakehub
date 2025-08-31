@@ -36,47 +36,33 @@ saveBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Chống chết thật sự
+-- Anti chết thật sự
 humanoid:GetPropertyChangedSignal("Health"):Connect(function()
     if flying then
         humanoid.Health = humanoid.MaxHealth
     end
 end)
 
--- Tạo BodyVelocity để bay mượt
-local bv = Instance.new("BodyVelocity")
-bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-bv.P = 1e4
-bv.Velocity = Vector3.new(0,0,0)
-bv.Parent = hrp
-bv.Enabled = false
-
--- Hàm bay
-local function flyTo(targetCFrame)
-    flying = true
-    bv.Enabled = true
-
-    while flying and hrp and targetCFrame do
-        local direction = targetCFrame.Position - hrp.Position
+-- Anti reset + bay mượt
+RunService.RenderStepped:Connect(function()
+    if flying and savedCFrame and hrp then
+        local direction = savedCFrame.Position - hrp.Position
         local distance = direction.Magnitude
-
-        if distance < 1 then
+        if distance > 0.1 then
+            -- Di chuyển mượt mà bằng CFrame
+            local moveVector = direction.Unit * math.clamp(distance*0.2, 0.5, 50)
+            local targetCFrame = hrp.CFrame + moveVector
+            hrp.CFrame = CFrame.new(targetCFrame.Position, savedCFrame.Position)
+        else
             flying = false
-            break
         end
-
-        bv.Velocity = direction.Unit * math.clamp(distance*5, 20, 100) + Vector3.new(0,2,0) -- thêm chút lift để không kẹt
-        RunService.RenderStepped:Wait()
     end
-
-    bv.Enabled = false
-    bv.Velocity = Vector3.new(0,0,0)
-end
+end)
 
 -- Kích hoạt bay
 flyBtn.MouseButton1Click:Connect(function()
     if savedCFrame then
-        flyTo(savedCFrame)
+        flying = true
     else
         warn("Chưa lưu vị trí!")
     end
