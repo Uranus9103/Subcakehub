@@ -1,0 +1,193 @@
+--// HELPER SCRIPT: Hitbox + ESP Box + Auto AntiAFK + Draggable Menu + Toggle Button
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+--====================================================
+-- GUI
+--====================================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HelperGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Menu Frame
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0,240,0,160)
+Frame.Position = UDim2.new(0.5, -120,0.5, -80)
+Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Frame.BackgroundTransparency = 0.1
+Frame.Active = true
+Frame.Draggable = true
+Frame.Visible = false
+Frame.Parent = ScreenGui
+
+local FrameCorner = Instance.new("UICorner")
+FrameCorner.CornerRadius = UDim.new(0,10)
+FrameCorner.Parent = Frame
+
+-- Title
+local TitleBar = Instance.new("TextLabel")
+TitleBar.Size = UDim2.new(1,0,0,35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
+TitleBar.TextColor3 = Color3.fromRGB(255,255,255)
+TitleBar.Font = Enum.Font.GothamBold
+TitleBar.Text = "⚡ APEX HUB ⚡"
+TitleBar.TextScaled = true
+TitleBar.Parent = Frame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0,10)
+TitleCorner.Parent = TitleBar
+
+-- Toggle Button (ẩn/hiện menu) góc phải trên
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0,120,0,35)
+ToggleBtn.Position = UDim2.new(1, -130, 0, 10)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
+ToggleBtn.Text = "📂 Menu"
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 16
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0,8)
+ToggleCorner.Parent = ToggleBtn
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+-- Layout menu
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Frame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.Padding = UDim.new(0,6)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+--====================================================
+-- Function tạo nút đẹp
+--====================================================
+local function createToggle(name, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,200,0,45)
+    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.Text = "[OFF] "..name
+    btn.Parent = Frame
+    local state = false
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0,8)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = (state and "[ON] " or "[OFF] ")..name
+        callback(state)
+    end)
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(90,90,90)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    end)
+end
+
+--====================================================
+-- Hitbox
+--====================================================
+local HITBOX_Enabled = false
+local HitboxSize = 80
+
+local function updateHitbox(v)
+    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = v.Character.HumanoidRootPart
+        hrp.Size = Vector3.new(HitboxSize,HitboxSize,HitboxSize)
+        hrp.Transparency = 0.7
+        hrp.BrickColor = BrickColor.new("Really red")
+        hrp.Material = Enum.Material.Neon
+        hrp.CanCollide = false -- tránh bị chặn di chuyển khi bị trói/kéo
+    end
+end
+
+--====================================================
+-- ESP Box
+--====================================================
+local ESP_Enabled = false
+local Boxes = {}
+
+local function createBox(character)
+    local box = Instance.new("Highlight")
+    box.FillTransparency = 1
+    box.OutlineColor = Color3.fromRGB(0,255,0)
+    box.OutlineTransparency = 0
+    box.Adornee = character
+    box.Parent = character
+    return box
+end
+
+local function updateESP()
+    for _,v in ipairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            if ESP_Enabled then
+                if not Boxes[v] or not Boxes[v].Parent then
+                    Boxes[v] = createBox(v.Character)
+                end
+            else
+                if Boxes[v] then
+                    Boxes[v]:Destroy()
+                    Boxes[v] = nil
+                end
+            end
+        end
+    end
+end
+
+--====================================================
+-- Connections
+--====================================================
+RunService.RenderStepped:Connect(function()
+    for _,v in ipairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = v.Character.HumanoidRootPart
+            if HITBOX_Enabled then
+                pcall(function() updateHitbox(v) end)
+            else
+                hrp.Size = Vector3.new(2,2,1)
+                hrp.Transparency = 0
+                hrp.Material = Enum.Material.Plastic
+                hrp.BrickColor = BrickColor.new("Medium stone grey")
+                hrp.CanCollide = false
+            end
+        end
+    end
+    if ESP_Enabled then
+        updateESP()
+    end
+end)
+
+--====================================================
+-- Auto Anti AFK (luôn bật)
+--====================================================
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+end)
+
+--====================================================
+-- Gắn nút chức năng
+--====================================================
+createToggle("Hitbox", function(state) HITBOX_Enabled = state end)
+createToggle("ESP Box", function(state) ESP_Enabled = state end)
