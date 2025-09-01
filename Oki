@@ -1,0 +1,61 @@
+local Players = game:GetService("Players")
+
+-- thời gian tối đa cho mỗi căn cứ (giây)
+local MAX_TIME = 120  
+
+-- danh sách plot
+local plots = workspace.Plots:GetChildren()
+
+-- bảng lưu Player → Plot
+local playerPlots = {}
+
+-- hàm gán plot cho player
+local function assignPlot(player)
+	for _, plot in ipairs(plots) do
+		if not playerPlots[plot] then
+			playerPlots[plot] = player
+			return plot
+		end
+	end
+	return nil
+end
+
+-- hàm đếm ngược cho 1 plot
+local function startCountdown(plot, player)
+	local label = plot.Purchases.PlotBlock.Main.BillboardGui:FindFirstChild("Remaining Time")
+	if not label then return end
+	
+	local timeLeft = MAX_TIME
+	label.Text = "Thời gian của " .. player.Name .. ": " .. timeLeft .. "s"
+	
+	while timeLeft > 0 and player.Parent == Players do
+		wait(1)
+		timeLeft -= 1
+		label.Text = "Thời gian của " .. player.Name .. ": " .. timeLeft .. "s"
+	end
+	
+	label.Text = "Hết thời gian cho " .. player.Name .. "!"
+end
+
+-- khi player join
+Players.PlayerAdded:Connect(function(player)
+	local plot = assignPlot(player)
+	if plot then
+		task.spawn(function()
+			startCountdown(plot, player)
+		end)
+	end
+end)
+
+-- khi player thoát thì giải phóng plot
+Players.PlayerRemoving:Connect(function(player)
+	for plot, owner in pairs(playerPlots) do
+		if owner == player then
+			playerPlots[plot] = nil
+			local label = plot.Purchases.PlotBlock.Main.BillboardGui:FindFirstChild("Remaining Time")
+			if label then
+				label.Text = "Chưa có chủ"
+			end
+		end
+	end
+end)
