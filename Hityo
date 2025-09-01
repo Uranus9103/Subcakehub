@@ -34,13 +34,35 @@ TitleBar.Size = UDim2.new(1,0,0,35)
 TitleBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
 TitleBar.TextColor3 = Color3.fromRGB(255,255,255)
 TitleBar.Font = Enum.Font.GothamBold
-TitleBar.Text = "⚡ APEX HUB ⚡"
+TitleBar.Text = "APEX HUB"
 TitleBar.TextScaled = true
 TitleBar.Parent = Frame
 
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0,10)
 TitleCorner.Parent = TitleBar
+
+--====================================================
+-- Nút X đóng hẳn menu + toggle
+--====================================================
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0,30,0,30)
+CloseBtn.Position = UDim2.new(1,-35,0,5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+CloseBtn.TextColor3 = Color3.new(1,1,1)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 18
+CloseBtn.Parent = Frame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0,6)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    Frame:Destroy()        -- xoá menu
+    ToggleBtn:Destroy()    -- xoá nút ẩn/hiện menu
+end)
 
 -- Toggle Button (ẩn/hiện menu)
 local ToggleBtn = Instance.new("TextButton")
