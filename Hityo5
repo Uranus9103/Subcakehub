@@ -117,7 +117,7 @@ RunService.RenderStepped:Connect(function()
                 pcall(function()
                     local hrp = v.Character.HumanoidRootPart
                     hrp.Size = Vector3.new(HitboxSize,HitboxSize,HitboxSize)
-                    hrp.Transparency = 0   -- trong suốt
+                    hrp.Transparency = 0.8  -- trong suốt
                     hrp.BrickColor = BrickColor.new("Really black")
                     hrp.Material = Enum.Material.Neon
                     hrp.CanCollide = false
