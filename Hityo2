@@ -1,4 +1,4 @@
---// HELPER SCRIPT: Hitbox + ESP Box 3D + Auto AntiAFK + Draggable Menu + Toggle Button
+--// HELPER SCRIPT: Aimbot + ESP Box 3D + Auto AntiAFK + Draggable Menu + Toggle Button
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
@@ -42,13 +42,13 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0,10)
 TitleCorner.Parent = TitleBar
 
--- Toggle Button (ẩn/hiện menu)
+-- Toggle Button (ẩn/hiện menu) - vừa chữ
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0,120,0,35)
-ToggleBtn.Position = UDim2.new(1, -130, 0, 10)
+ToggleBtn.Size = UDim2.new(0,150,0,40) -- vừa với chữ
+ToggleBtn.Position = UDim2.new(1, -160, 0, 10)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 ToggleBtn.TextColor3 = Color3.new(1,1,1)
-ToggleBtn.Text = "📂 Menu"
+ToggleBtn.Text = "Aimbot & ESP Box"
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 16
 ToggleBtn.Parent = ScreenGui
@@ -105,19 +105,19 @@ local function createToggle(name, callback)
 end
 
 --====================================================
--- Hitbox
+-- Aimbot (trước là Hitbox)
 --====================================================
-local HITBOX_Enabled = false
+local AIMBOT_Enabled = false
 local HitboxSize = 100
 
-local function updateHitbox(v)
+local function updateAimbot(v)
     if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = v.Character.HumanoidRootPart
         hrp.Size = Vector3.new(HitboxSize,HitboxSize,HitboxSize)
         hrp.Transparency = 0.7
         hrp.BrickColor = BrickColor.new("Really red")
         hrp.Material = Enum.Material.Neon
-        hrp.CanCollide = false -- tránh bị chặn khi bị trói
+        hrp.CanCollide = false
     end
 end
 
@@ -248,8 +248,8 @@ end)
 RunService.RenderStepped:Connect(function()
     for _,v in ipairs(Players:GetPlayers()) do
         if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            if HITBOX_Enabled then
-                pcall(function() updateHitbox(v) end)
+            if AIMBOT_Enabled then
+                pcall(function() updateAimbot(v) end)
             else
                 local hrp = v.Character.HumanoidRootPart
                 hrp.Size = Vector3.new(2,2,1)
@@ -265,5 +265,5 @@ end)
 --====================================================
 -- Buttons
 --====================================================
-createToggle("Hitbox", function(state) HITBOX_Enabled = state end)
+createToggle("Aimbot", function(state) AIMBOT_Enabled = state end)
 createToggle("ESP Box 3D", function(state) ESP_Enabled = state end)
