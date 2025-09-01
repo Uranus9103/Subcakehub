@@ -105,21 +105,42 @@ local function createToggle(name, callback)
 end
 
 --====================================================
--- Aimbot (trước là Hitbox)
+-- Aimbot (Hitbox expander thật ra)
 --====================================================
 local AIMBOT_Enabled = false
-local HitboxSize = 100
+local HitboxSize = 120
 
-local function updateAimbot(v)
-    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = v.Character.HumanoidRootPart
-        hrp.Size = Vector3.new(HitboxSize,HitboxSize,HitboxSize)
-        hrp.Transparency = 0
-        hrp.BrickColor = BrickColor.new("Really red")
-        hrp.Material = Enum.Material.Neon
-        hrp.CanCollide = false
+RunService.RenderStepped:Connect(function()
+    if AIMBOT_Enabled then
+        for _,v in ipairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                pcall(function()
+                    local hrp = v.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(HitboxSize,HitboxSize,HitboxSize)
+                    hrp.Transparency = 0   -- trong suốt
+                    hrp.BrickColor = BrickColor.new("Really black")
+                    hrp.Material = Enum.Material.Neon
+                    hrp.CanCollide = false
+                end)
+            end
+        end
     end
-end
+end)
+
+--====================================================
+-- Notifications
+--====================================================
+game.StarterGui:SetCore("SendNotification", {
+    Title = "APEX HUB";
+    Text = "Đã Bật";
+    Duration = 1;
+})
+task.wait(1)
+game.StarterGui:SetCore("SendNotification", {
+    Title = "APEX HUB";
+    Text = "Tiktok:@thekinmentit";
+    Duration = 2;
+})
 
 --====================================================
 -- ESP Box (Drawing API)
