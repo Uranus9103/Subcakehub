@@ -114,7 +114,7 @@ local function updateAimbot(v)
     if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = v.Character.HumanoidRootPart
         hrp.Size = Vector3.new(HitboxSize,HitboxSize,HitboxSize)
-        hrp.Transparency = 0.7
+        hrp.Transparency = 0
         hrp.BrickColor = BrickColor.new("Really red")
         hrp.Material = Enum.Material.Neon
         hrp.CanCollide = false
