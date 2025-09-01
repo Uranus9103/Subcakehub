@@ -13,9 +13,9 @@ if not gui then
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
--- Khung menu giống điện thoại
+-- Khung menu
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,260,0,300)  -- hẹp dài giống điện thoại
+frame.Size = UDim2.new(0,260,0,300)
 frame.Position = UDim2.new(0.05,0,0.1,0)
 frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frame.Active = true
@@ -27,7 +27,7 @@ local frameCorner = Instance.new("UICorner")
 frameCorner.CornerRadius = UDim.new(0,20)
 frameCorner.Parent = frame
 
--- ScrollingFrame chứa nút
+-- ScrollingFrame
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, -10, 1, -10)
 scroll.Position = UDim2.new(0,5,0,5)
@@ -37,7 +37,6 @@ scroll.CanvasSize = UDim2.new(0,0,0,0)
 scroll.ScrollBarThickness = 10
 scroll.Parent = frame
 
--- Layout 2 cột
 local layout = Instance.new("UIGridLayout")
 layout.CellSize = UDim2.new(0.45,0,0,50)
 layout.CellPadding = UDim2.new(0.05,0,0.05,0)
@@ -47,7 +46,6 @@ layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.VerticalAlignment = Enum.VerticalAlignment.Top
 layout.Parent = scroll
 
--- Tự động set CanvasSize để có thể cuộn
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 20)
 end)
@@ -55,7 +53,7 @@ end)
 -- Hàm tạo nút
 local function createButton(text, color)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0,0,0,0)  -- UIGridLayout tự quản lý
+	btn.Size = UDim2.new(0,0,0,0)
 	btn.Text = text
 	btn.TextScaled = true
 	btn.BackgroundColor3 = color
@@ -70,7 +68,7 @@ local function createButton(text, color)
 	return btn
 end
 
--- Nút Ẩn/Hiện Menu
+-- Toggle menu
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0,100,0,40)
 toggleBtn.Position = UDim2.new(0.75,0,0.05,0)
@@ -94,16 +92,17 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- Các nút
-local btnLift     = createButton("⬆️ Lift : OFF", Color3.fromRGB(200,50,50))
+local btnLift     = createButton("⬆️ Nâng : OFF", Color3.fromRGB(200,50,50))
 local btnFly      = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
-local btnESP      = createButton("👀 ESP OFF", Color3.fromRGB(200,50,50))
-local btnWarn     = createButton("👤 Warning : OFF", Color3.fromRGB(200,50,50))
+local btnESP      = createButton("👀 ESP : OFF", Color3.fromRGB(200,50,50))
+local btnWarn     = createButton("👤 Cảnh báo : OFF", Color3.fromRGB(200,50,50))
 local btnJump     = createButton("🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
 local btnServer   = createButton("🌍 Đổi Server", Color3.fromRGB(80,150,250))
 local btnShader   = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
 local btnEsp2     = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
 local btnLockBase = createButton("🔒 Khoá Base", Color3.fromRGB(180,100,250))
-local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
+local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50))
+local btnAimbot   = createButton("Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
 
 --------------------------------------------------
 -- Lift
@@ -381,6 +380,22 @@ btnRun.MouseButton1Click:Connect(function()
 		-- Nếu script kia có GUI riêng thì xoá
 		local runGui = player:FindFirstChild("PlayerGui"):FindFirstChild("RunGui")
 		if runGui then runGui:Destroy() end
+	end
+end)
+
+-- Aimbot & ESP Box
+local aimbotOn = false
+btnAimbot.MouseButton1Click:Connect(function()
+	aimbotOn = not aimbotOn
+	if aimbotOn then
+		btnAimbot.Text = "Aimbot & ESP Box : ON"
+		btnAimbot.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/Subcakehub/refs/heads/main/Hityo6"))()
+	else
+		btnAimbot.Text = "Aimbot & ESP Box : OFF"
+		btnAimbot.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		local aimGui = player:FindFirstChild("PlayerGui"):FindFirstChild("AimbotGui")
+		if aimGui then aimGui:Destroy() end
 	end
 end)
 
