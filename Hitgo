@@ -1,4 +1,4 @@
---// HELPER SCRIPT: Hitbox + ESP Box + Auto AntiAFK + Draggable Menu + Toggle Button
+--// HELPER SCRIPT: Hitbox + ESP Box 3D + Auto AntiAFK + Draggable Menu + Toggle Button
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
@@ -42,7 +42,7 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0,10)
 TitleCorner.Parent = TitleBar
 
--- Toggle Button (ẩn/hiện menu) góc phải trên
+-- Toggle Button (ẩn/hiện menu)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0,120,0,35)
 ToggleBtn.Position = UDim2.new(1, -130, 0, 10)
@@ -108,7 +108,7 @@ end
 -- Hitbox
 --====================================================
 local HITBOX_Enabled = false
-local HitboxSize = 80
+local HitboxSize = 100
 
 local function updateHitbox(v)
     if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
@@ -117,42 +117,130 @@ local function updateHitbox(v)
         hrp.Transparency = 0.7
         hrp.BrickColor = BrickColor.new("Really red")
         hrp.Material = Enum.Material.Neon
-        hrp.CanCollide = false -- tránh bị chặn di chuyển khi bị trói/kéo
+        hrp.CanCollide = false -- tránh bị chặn khi bị trói
     end
 end
 
 --====================================================
--- ESP Box
+-- ESP Box (Drawing API)
 --====================================================
 local ESP_Enabled = false
-local Boxes = {}
+local drawings = {}
 
-local function createBox(character)
-    local box = Instance.new("Highlight")
-    box.FillTransparency = 1
-    box.OutlineColor = Color3.fromRGB(0,255,0)
-    box.OutlineTransparency = 0
-    box.Adornee = character
-    box.Parent = character
-    return box
+local Box_Color = Color3.fromRGB(255, 0, 0)
+local Box_Thickness = 1.4
+local Box_Transparency = 1
+local Tracers = true
+local Tracer_Color = Color3.fromRGB(255, 255, 255)
+local Tracer_Thickness = 1.4
+local Tracer_Transparency = 1
+local Autothickness = false
+local Team_Check = false
+local red = Color3.fromRGB(227, 52, 52)
+local green = Color3.fromRGB(88, 217, 24)
+
+local function NewLine()
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.Color = Box_Color
+    line.Thickness = Box_Thickness
+    line.Transparency = Box_Transparency
+    return line
 end
 
-local function updateESP()
-    for _,v in ipairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character then
-            if ESP_Enabled then
-                if not Boxes[v] or not Boxes[v].Parent then
-                    Boxes[v] = createBox(v.Character)
+local function createESP(plr)
+    local lines = {
+        line1 = NewLine(), line2 = NewLine(), line3 = NewLine(), line4 = NewLine(),
+        line5 = NewLine(), line6 = NewLine(), line7 = NewLine(), line8 = NewLine(),
+        line9 = NewLine(), line10 = NewLine(), line11 = NewLine(), line12 = NewLine(),
+        Tracer = NewLine()
+    }
+    lines.Tracer.Color = Tracer_Color
+    lines.Tracer.Thickness = Tracer_Thickness
+    lines.Tracer.Transparency = Tracer_Transparency
+
+    local conn
+    conn = RunService.RenderStepped:Connect(function()
+        if ESP_Enabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid").Health > 0 and plr ~= LocalPlayer then
+            local pos, vis = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+            if vis then
+                local Scale = plr.Character.Head.Size.Y/2
+                local Size = Vector3.new(2, 3, 1.5) * (Scale * 2)
+
+                local function wtv(v3) return Camera:WorldToViewportPoint(v3).X, Camera:WorldToViewportPoint(v3).Y end
+
+                local Top1X, Top1Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(-Size.X, Size.Y, -Size.Z).p)
+                local Top2X, Top2Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(-Size.X, Size.Y, Size.Z).p)
+                local Top3X, Top3Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(Size.X, Size.Y, Size.Z).p)
+                local Top4X, Top4Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(Size.X, Size.Y, -Size.Z).p)
+
+                local Bottom1X, Bottom1Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(-Size.X, -Size.Y, -Size.Z).p)
+                local Bottom2X, Bottom2Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(-Size.X, -Size.Y, Size.Z).p)
+                local Bottom3X, Bottom3Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(Size.X, -Size.Y, Size.Z).p)
+                local Bottom4X, Bottom4Y = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(Size.X, -Size.Y, -Size.Z).p)
+
+                -- Top
+                lines.line1.From, lines.line1.To = Vector2.new(Top1X,Top1Y), Vector2.new(Top2X,Top2Y)
+                lines.line2.From, lines.line2.To = Vector2.new(Top2X,Top2Y), Vector2.new(Top3X,Top3Y)
+                lines.line3.From, lines.line3.To = Vector2.new(Top3X,Top3Y), Vector2.new(Top4X,Top4Y)
+                lines.line4.From, lines.line4.To = Vector2.new(Top4X,Top4Y), Vector2.new(Top1X,Top1Y)
+
+                -- Bottom
+                lines.line5.From, lines.line5.To = Vector2.new(Bottom1X,Bottom1Y), Vector2.new(Bottom2X,Bottom2Y)
+                lines.line6.From, lines.line6.To = Vector2.new(Bottom2X,Bottom2Y), Vector2.new(Bottom3X,Bottom3Y)
+                lines.line7.From, lines.line7.To = Vector2.new(Bottom3X,Bottom3Y), Vector2.new(Bottom4X,Bottom4Y)
+                lines.line8.From, lines.line8.To = Vector2.new(Bottom4X,Bottom4Y), Vector2.new(Bottom1X,Bottom1Y)
+
+                -- Sides
+                lines.line9.From, lines.line9.To = Vector2.new(Bottom1X,Bottom1Y), Vector2.new(Top1X,Top1Y)
+                lines.line10.From, lines.line10.To = Vector2.new(Bottom2X,Bottom2Y), Vector2.new(Top2X,Top2Y)
+                lines.line11.From, lines.line11.To = Vector2.new(Bottom3X,Bottom3Y), Vector2.new(Top3X,Top3Y)
+                lines.line12.From, lines.line12.To = Vector2.new(Bottom4X,Bottom4Y), Vector2.new(Top4X,Top4Y)
+
+                -- Tracer
+                if Tracers then
+                    local traceX, traceY = wtv(plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, -Size.Y, 0).p)
+                    lines.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                    lines.Tracer.To = Vector2.new(traceX, traceY)
                 end
+
+                -- Team Check
+                if Team_Check then
+                    local col = (plr.TeamColor == LocalPlayer.TeamColor) and green or red
+                    for _,x in pairs(lines) do x.Color = col end
+                end
+
+                -- Autothickness
+                if Autothickness then
+                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                    local value = math.clamp(1/dist*100, 0.1, 4)
+                    for _,x in pairs(lines) do x.Thickness = value end
+                else
+                    for _,x in pairs(lines) do x.Thickness = Box_Thickness end
+                end
+
+                for _,x in pairs(lines) do x.Visible = true end
             else
-                if Boxes[v] then
-                    Boxes[v]:Destroy()
-                    Boxes[v] = nil
-                end
+                for _,x in pairs(lines) do x.Visible = false end
             end
+        else
+            for _,x in pairs(lines) do x.Visible = false end
         end
-    end
+    end)
+    drawings[plr] = {lines=lines,conn=conn}
 end
+
+Players.PlayerAdded:Connect(createESP)
+for _,plr in ipairs(Players:GetPlayers()) do if plr ~= LocalPlayer then createESP(plr) end end
+
+--====================================================
+-- Auto Anti AFK
+--====================================================
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0,0),Camera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0,0),Camera.CFrame)
+end)
 
 --====================================================
 -- Connections
@@ -160,10 +248,10 @@ end
 RunService.RenderStepped:Connect(function()
     for _,v in ipairs(Players:GetPlayers()) do
         if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = v.Character.HumanoidRootPart
             if HITBOX_Enabled then
                 pcall(function() updateHitbox(v) end)
             else
+                local hrp = v.Character.HumanoidRootPart
                 hrp.Size = Vector3.new(2,2,1)
                 hrp.Transparency = 0
                 hrp.Material = Enum.Material.Plastic
@@ -172,22 +260,10 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
-    if ESP_Enabled then
-        updateESP()
-    end
 end)
 
 --====================================================
--- Auto Anti AFK (luôn bật)
---====================================================
-LocalPlayer.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-end)
-
---====================================================
--- Gắn nút chức năng
+-- Buttons
 --====================================================
 createToggle("Hitbox", function(state) HITBOX_Enabled = state end)
-createToggle("ESP Box", function(state) ESP_Enabled = state end)
+createToggle("ESP Box 3D", function(state) ESP_Enabled = state end)
