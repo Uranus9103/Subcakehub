@@ -1,6 +1,5 @@
--- Orb Combat Script (1 file) 
--- Tác giả: ChatGPT
--- Dùng cho executor (loadstring từ GitHub)
+-- Orb Combat Script (1 Hit Kill)
+-- Load bằng executor: loadstring(game:HttpGet("RAW_LINK"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -13,7 +12,6 @@ local ORBIT_HEIGHT = 2             -- cao hơn HRP
 local ORBIT_SPEED = 2.5            -- tốc độ quay
 local DETECT_RADIUS = 12           -- phạm vi phát hiện
 local LAUNCH_SPEED = 90            -- tốc độ lao tới
-local DAMAGE = 15                  -- damage (15 máu mỗi hit)
 local RETURN_DELAY = 0.25          -- thời gian chờ để quay lại
 
 -- Lưu orb
@@ -65,7 +63,8 @@ local function createOrb(index)
         if orb:GetAttribute("State") ~= "launched" then return end
         local char = hit:FindFirstAncestorOfClass("Model")
         if char and char:FindFirstChild("Humanoid") and char ~= player.Character then
-            char.Humanoid:TakeDamage(DAMAGE)
+            -- 👇 1 hit chết + reset
+            char.Humanoid.Health = 0 
             orb:SetAttribute("State", "orbit")
             orb:SetAttribute("Target", nil)
         end
