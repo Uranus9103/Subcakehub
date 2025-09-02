@@ -1,0 +1,120 @@
+-- ⚙️ Cấu hình
+local ESP_CONFIG = {
+    Size = UDim2.new(0,120,0,40),            -- Kích thước GUI
+    Offset = Vector3.new(0,7,0),             -- Vị trí so với part
+
+    Text = {
+        Font = Enum.Font.Arcade,             -- Font chữ
+        Color = Color3.fromRGB(85,255,85),   -- Màu chữ
+        StrokeColor = Color3.fromRGB(0,0,0), -- Màu viền chữ
+        StrokeTransparency = 0,
+    },
+
+    Background = {
+        Color = Color3.fromRGB(0,0,0),
+        Transparency = 0.4,
+    },
+
+    Border = {
+        Enabled = true,
+        Thickness = 2,
+        Color = Color3.fromRGB(0,0,0),
+    }
+}
+
+-- 🛠️ Chính
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local localPlayer = Players.LocalPlayer
+
+_G.runBrainrotESP = true 
+local plotsFolder = Workspace:WaitForChild("Plots")
+local espList = {}
+
+local function clearESP()
+    for _, esp in pairs(espList) do
+        if esp and esp.Parent then esp:Destroy() end
+    end
+    table.clear(espList)
+end
+
+-- 🔍 Lấy tên brainrot
+local function getBrainrotName(plot)
+    local info = plot:FindFirstChild("Part")
+    if info and info:FindFirstChild("Info") then
+        local overhead = info.Info:FindFirstChild("AnimalOverhead")
+        if overhead and overhead:FindFirstChild("DisplayName") and overhead.DisplayName:IsA("TextLabel") then
+            return overhead.DisplayName.Text
+        end
+    end
+    return nil
+end
+
+-- 🔍 Tìm part để bám ESP
+local function findESPPart(plot)
+    local part = plot:FindFirstChild("Part")
+    if part and part:IsA("BasePart") then
+        return part
+    end
+    -- nếu không có Part chính, fallback part bất kỳ
+    for _, p in ipairs(plot:GetDescendants()) do
+        if p:IsA("BasePart") then return p end
+    end
+    return nil
+end
+
+-- 🟩 Tạo ESP GUI
+local function createBrainrotESP(part, text)
+    local gui = Instance.new("BillboardGui")
+    gui.Name="BrainrotESP"
+    gui.Adornee=part
+    gui.Size=ESP_CONFIG.Size
+    gui.StudsOffset=ESP_CONFIG.Offset
+    gui.AlwaysOnTop=true
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1,0,1,0)
+    bg.BackgroundColor3 = ESP_CONFIG.Background.Color
+    bg.BackgroundTransparency = ESP_CONFIG.Background.Transparency
+    bg.BorderSizePixel = 0
+    bg.Parent = gui
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.Font = ESP_CONFIG.Text.Font
+    label.TextColor3 = ESP_CONFIG.Text.Color
+    label.TextStrokeTransparency = ESP_CONFIG.Text.StrokeTransparency
+    label.TextStrokeColor3 = ESP_CONFIG.Text.StrokeColor
+    label.Text = text
+    label.Parent = bg
+
+    if ESP_CONFIG.Border.Enabled then
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = ESP_CONFIG.Border.Thickness
+        stroke.Color = ESP_CONFIG.Border.Color
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = bg
+    end
+
+    gui.Parent = part
+    table.insert(espList,gui)
+end
+
+-- 🔁 Vòng lặp ESP
+while _G.runBrainrotESP do
+    clearESP()
+    for _, plot in ipairs(plotsFolder:GetChildren()) do
+        if plot:IsA("Model") then
+            local part = findESPPart(plot)
+            local brainrotName = getBrainrotName(plot)
+            if part and brainrotName then
+                createBrainrotESP(part, brainrotName)
+            end
+        end
+    end
+    task.wait(0.3)
+end
+
+clearESP()
