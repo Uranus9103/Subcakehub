@@ -8,7 +8,7 @@ local plotsFolder = Workspace:WaitForChild("Plots")
 --// Biến trạng thái
 local scriptEnabled = false
 
---// Giao diện nút bật/tắt
+--// Tạo nút bật/tắt
 local gui = Instance.new("ScreenGui")
 gui.Name = "BaseLockGui"
 gui.ResetOnSpawn = false
@@ -39,11 +39,11 @@ local function getMyBase()
 	return nil
 end
 
---// Hàm reset base (khóa lại, giữ bảng SurfaceGui)
+--// Hàm reset base (khóa lại, SurfaceGui vẫn còn)
 local function resetBase(plot)
 	local yourBase = plot:FindFirstChild("PlotSign"):FindFirstChild("YourBase")
 	if yourBase and yourBase:FindFirstChild("TextLabel") then
-		yourBase.TextLabel.Text = "Locked" -- để lại bảng, chỉ đổi chữ
+		yourBase.TextLabel.Text = "Locked" -- đổi chữ, không xoá bảng
 	end
 end
 
@@ -59,30 +59,32 @@ toggleButton.MouseButton1Click:Connect(function()
 	end
 end)
 
+--// Lấy RemainingTime từ base
+local function getRemainingTime(plot)
+	for _, part in ipairs(plot:GetDescendants()) do
+		if part:IsA("TextLabel") and part.Name == "RemainingTime" then
+			return tonumber(part.Text:gsub("s",""))
+		end
+	end
+	return nil
+end
+
 --// Vòng lặp chính
 task.spawn(function()
 	while task.wait(1) do
 		if scriptEnabled then
 			local myBase = getMyBase()
 			if myBase then
-				-- Kiểm tra thời gian còn lại
-				local remainTime
-				for _, part in ipairs(myBase:GetDescendants()) do
-					if part:IsA("TextLabel") and part.Name == "RemainingTime" then
-						remainTime = tonumber(part.Text:gsub("s",""))
-						break
-					end
-				end
-				
-				-- Khi hết giờ
+				local remainTime = getRemainingTime(myBase)
 				if remainTime and remainTime <= 0 then
+					-- Teleport về base
 					local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 					local spawnPart = myBase:FindFirstChild("Main") or myBase:FindFirstChild("Base") or myBase:FindFirstChildWhichIsA("BasePart")
 					if root and spawnPart then
-						root.CFrame = spawnPart.CFrame + Vector3.new(0,5,0) -- Teleport về base
+						root.CFrame = spawnPart.CFrame + Vector3.new(0,5,0)
 					end
 					
-					-- Reset base (chỉ đổi chữ, bảng SurfaceGui vẫn còn)
+					-- Reset base về Locked
 					resetBase(myBase)
 				end
 			end
