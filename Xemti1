@@ -102,8 +102,136 @@ local btnShader   = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(20
 local btnEsp2     = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
 local btnLockBase = createButton("🔒 Khoá Base", Color3.fromRGB(180,100,250))
 local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50))
-local btnAimbot   = createButton("Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50)) 
-local btnESPBase = createButton("ESP Base : OFF", Color3.fromRGB(200,50,50))   -- Nút mới
+local btnAimbot   = createButton("Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
+local btnESPBase = createButton("ESP Base : OFF", Color3.fromRGB(200,50,50))
+
+local espBaseOn = false
+local espLoop = nil
+local espList = {}
+
+-- Config ESP
+local ESP_CONFIG = {
+    Size = UDim2.new(0,120,0,40),
+    Offset = Vector3.new(0,7,0),
+
+    Text = {
+        Font = Enum.Font.GothamBold,
+        Color = Color3.fromRGB(0,255,128),
+        StrokeColor = Color3.fromRGB(0,0,0),
+        StrokeTransparency = 0,
+    },
+
+    Background = {
+        Color = Color3.fromRGB(20,20,20),
+        Transparency = 0.3,
+    },
+
+    Border = {
+        Enabled = true,
+        Thickness = 3,
+        Color = Color3.fromRGB(0,255,128),
+    }
+}
+
+local Workspace = game:GetService("Workspace")
+local plotsFolder = Workspace:WaitForChild("Plots")
+
+local function clearESP()
+    for _, esp in pairs(espList) do
+        if esp and esp.Parent then esp:Destroy() end
+    end
+    table.clear(espList)
+end
+
+local function getRemainingTimeText(plot)
+    for _, part in ipairs(plot:GetDescendants()) do
+        if part:IsA("TextLabel") and part.Name=="RemainingTime" then
+            return part.Text:gsub("s","")
+        end
+    end
+    return nil
+end
+
+local function findESPPart(plot)
+    for _, part in ipairs(plot:GetDescendants()) do
+        if part:IsA("BasePart") and (part.Name=="Main" or part.Name=="Hitbox") then 
+            return part 
+        end
+    end
+    for _, part in ipairs(plot:GetDescendants()) do
+        if part:IsA("BasePart") then return part end
+    end
+    return nil
+end
+
+local function createMinecraftESP(part, text)
+    local gui = Instance.new("BillboardGui")
+    gui.Name="MinecraftESP"
+    gui.Adornee=part
+    gui.Size=ESP_CONFIG.Size
+    gui.StudsOffset=ESP_CONFIG.Offset
+    gui.AlwaysOnTop=true
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1,0,1,0)
+    bg.BackgroundColor3 = ESP_CONFIG.Background.Color
+    bg.BackgroundTransparency = ESP_CONFIG.Background.Transparency
+    bg.BorderSizePixel = 0
+    bg.Parent = gui
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.Font = ESP_CONFIG.Text.Font
+    label.TextColor3 = ESP_CONFIG.Text.Color
+    label.TextStrokeTransparency = ESP_CONFIG.Text.StrokeTransparency
+    label.TextStrokeColor3 = ESP_CONFIG.Text.StrokeColor
+    label.Text = text
+    label.Parent = bg
+
+    if ESP_CONFIG.Border.Enabled then
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = ESP_CONFIG.Border.Thickness
+        stroke.Color = ESP_CONFIG.Border.Color
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = bg
+    end
+
+    gui.Parent = part
+    table.insert(espList,gui)
+end
+
+btnESPBase.MouseButton1Click:Connect(function()
+    espBaseOn = not espBaseOn
+    if espBaseOn then
+        btnESPBase.Text = "ESP Base : ON"
+        btnESPBase.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+        espLoop = task.spawn(function()
+            while espBaseOn do
+                clearESP()
+                for _, plot in ipairs(plotsFolder:GetChildren()) do
+                    if plot:IsA("Model") then
+                        local part = findESPPart(plot)
+                        local seconds = getRemainingTimeText(plot)
+                        if part and seconds then
+                            createMinecraftESP(part, seconds.."s")
+                        end
+                    end
+                end
+                task.wait(0.3)
+            end
+            clearESP()
+        end)
+
+    else
+        btnESPBase.Text = "ESP Base : OFF"
+        btnESPBase.BackgroundColor3 = Color3.fromRGB(200,50,50)
+        espBaseOn = false
+        clearESP()
+    end
+end)
 
 --------------------------------------------------
 -- Lift
@@ -399,137 +527,6 @@ btnAimbot.MouseButton1Click:Connect(function()
 		if aimGui then aimGui:Destroy() end
 	end
 end)
-
---------------------------------------------------
--- Esp base
---------------------------------------------------
-
-local espBaseOn = false
-local espLoop = nil
-local espList = {}
-
--- Config ESP
-local ESP_CONFIG = {
-    Size = UDim2.new(0,120,0,40),
-    Offset = Vector3.new(0,7,0),
-
-    Text = {
-        Font = Enum.Font.GothamBold,
-        Color = Color3.fromRGB(0,255,128),
-        StrokeColor = Color3.fromRGB(0,0,0),
-        StrokeTransparency = 0,
-    },
-
-    Background = {
-        Color = Color3.fromRGB(20,20,20),
-        Transparency = 0.3,
-    },
-
-    Border = {
-        Enabled = true,
-        Thickness = 3,
-        Color = Color3.fromRGB(0,255,128),
-    }
-}
-
-local Workspace = game:GetService("Workspace")
-local plotsFolder = Workspace:WaitForChild("Plots")
-
-local function clearESP()
-    for _, esp in pairs(espList) do
-        if esp and esp.Parent then esp:Destroy() end
-    end
-    table.clear(espList)
-end
-
-local function getRemainingTimeText(plot)
-    for _, part in ipairs(plot:GetDescendants()) do
-        if part:IsA("TextLabel") and part.Name=="RemainingTime" then
-            return part.Text:gsub("s","")
-        end
-    end
-    return nil
-end
-
-local function findESPPart(plot)
-    for _, part in ipairs(plot:GetDescendants()) do
-        if part:IsA("BasePart") and (part.Name=="Main" or part.Name=="Hitbox") then 
-            return part 
-        end
-    end
-    for _, part in ipairs(plot:GetDescendants()) do
-        if part:IsA("BasePart") then return part end
-    end
-    return nil
-end
-
-local function createMinecraftESP(part, text)
-    local gui = Instance.new("BillboardGui")
-    gui.Name="MinecraftESP"
-    gui.Adornee=part
-    gui.Size=ESP_CONFIG.Size
-    gui.StudsOffset=ESP_CONFIG.Offset
-    gui.AlwaysOnTop=true
-
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1,0,1,0)
-    bg.BackgroundColor3 = ESP_CONFIG.Background.Color
-    bg.BackgroundTransparency = ESP_CONFIG.Background.Transparency
-    bg.BorderSizePixel = 0
-    bg.Parent = gui
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.TextScaled = true
-    label.Font = ESP_CONFIG.Text.Font
-    label.TextColor3 = ESP_CONFIG.Text.Color
-    label.TextStrokeTransparency = ESP_CONFIG.Text.StrokeTransparency
-    label.TextStrokeColor3 = ESP_CONFIG.Text.StrokeColor
-    label.Text = text
-    label.Parent = bg
-
-    if ESP_CONFIG.Border.Enabled then
-        local stroke = Instance.new("UIStroke")
-        stroke.Thickness = ESP_CONFIG.Border.Thickness
-        stroke.Color = ESP_CONFIG.Border.Color
-        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        stroke.Parent = bg
-    end
-
-    gui.Parent = part
-    table.insert(espList,gui)
-end
-
-btnESPBase.MouseButton1Click:Connect(function()
-    espBaseOn = not espBaseOn
-    if espBaseOn then
-        btnESPBase.Text = "ESP Base : ON"
-        btnESPBase.BackgroundColor3 = Color3.fromRGB(50,200,50)
-
-        espLoop = task.spawn(function()
-            while espBaseOn do
-                clearESP()
-                for _, plot in ipairs(plotsFolder:GetChildren()) do
-                    if plot:IsA("Model") then
-                        local part = findESPPart(plot)
-                        local seconds = getRemainingTimeText(plot)
-                        if part and seconds then
-                            createMinecraftESP(part, seconds.."s")
-                        end
-                    end
-                end
-                task.wait(0.3)
-            end
-            clearESP()
-        end)
-
-    else
-        btnESPBase.Text = "ESP Base : OFF"
-        btnESPBase.BackgroundColor3 = Color3.fromRGB(200,50,50)
-        espBaseOn = false
-        clearESP()
-    end
 
 --------------------------------------------------
 -- Anti Kick
