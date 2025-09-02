@@ -1,0 +1,91 @@
+--// Dịch vụ
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+local plotsFolder = Workspace:WaitForChild("Plots")
+
+--// Biến trạng thái
+local scriptEnabled = false
+
+--// Giao diện nút bật/tắt
+local gui = Instance.new("ScreenGui")
+gui.Name = "BaseLockGui"
+gui.ResetOnSpawn = false
+gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0,160,0,50)
+toggleButton.Position = UDim2.new(1,-170,1,-60) -- góc phải dưới
+toggleButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
+toggleButton.TextColor3 = Color3.fromRGB(0,255,128)
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.TextSize = 18
+toggleButton.Text = "🔒 Base Lock: OFF"
+toggleButton.Parent = gui
+
+--// Hàm tìm base của chính mình
+local function getMyBase()
+	for _, plot in ipairs(plotsFolder:GetChildren()) do
+		if plot:FindFirstChild("PlotSign") then
+			local yourBase = plot.PlotSign:FindFirstChild("YourBase")
+			if yourBase and yourBase:FindFirstChild("TextLabel") then
+				if yourBase.TextLabel.Text == LocalPlayer.Name then
+					return plot
+				end
+			end
+		end
+	end
+	return nil
+end
+
+--// Hàm reset base (khóa lại, giữ bảng SurfaceGui)
+local function resetBase(plot)
+	local yourBase = plot:FindFirstChild("PlotSign"):FindFirstChild("YourBase")
+	if yourBase and yourBase:FindFirstChild("TextLabel") then
+		yourBase.TextLabel.Text = "Locked" -- để lại bảng, chỉ đổi chữ
+	end
+end
+
+--// Toggle nút
+toggleButton.MouseButton1Click:Connect(function()
+	scriptEnabled = not scriptEnabled
+	if scriptEnabled then
+		toggleButton.Text = "🔓 Base Lock: ON"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(0,100,0)
+	else
+		toggleButton.Text = "🔒 Base Lock: OFF"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	end
+end)
+
+--// Vòng lặp chính
+task.spawn(function()
+	while task.wait(1) do
+		if scriptEnabled then
+			local myBase = getMyBase()
+			if myBase then
+				-- Kiểm tra thời gian còn lại
+				local remainTime
+				for _, part in ipairs(myBase:GetDescendants()) do
+					if part:IsA("TextLabel") and part.Name == "RemainingTime" then
+						remainTime = tonumber(part.Text:gsub("s",""))
+						break
+					end
+				end
+				
+				-- Khi hết giờ
+				if remainTime and remainTime <= 0 then
+					local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+					local spawnPart = myBase:FindFirstChild("Main") or myBase:FindFirstChild("Base") or myBase:FindFirstChildWhichIsA("BasePart")
+					if root and spawnPart then
+						root.CFrame = spawnPart.CFrame + Vector3.new(0,5,0) -- Teleport về base
+					end
+					
+					-- Reset base (chỉ đổi chữ, bảng SurfaceGui vẫn còn)
+					resetBase(myBase)
+				end
+			end
+		end
+	end
+end)
