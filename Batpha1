@@ -1,0 +1,124 @@
+--[[ 
+⚡ Script gộp: Đẩy người chơi về base khi bấm nút GUI
+Cấu trúc:
+- ReplicatedStorage.PushToBase (RemoteEvent)
+- StarterGui -> sẽ tự tạo ScreenGui + Button nếu chưa có
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Tạo RemoteEvent nếu chưa có
+local remote = ReplicatedStorage:FindFirstChild("PushToBase")
+if not remote then
+	remote = Instance.new("RemoteEvent")
+	remote.Name = "PushToBase"
+	remote.Parent = ReplicatedStorage
+end
+
+-- Hàm tìm base
+local function getPlayerBase(player)
+	local plots = workspace:FindFirstChild("Plots")
+	if not plots then return nil end
+
+	for _, plot in pairs(plots:GetChildren()) do
+		local plotSign = plot:FindFirstChild("PlotSign")
+		if plotSign and plotSign:FindFirstChild("YourBase") then
+			local label = plotSign.YourBase:FindFirstChild("TextLabel")
+			if label and label.Text == player.Name then
+				if plot:FindFirstChild("Base") then
+					return plot.Base
+				end
+			end
+		end
+	end
+	return nil
+end
+
+-- Hàm đẩy
+local function pushPlayerToBase(player, character, base)
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	-- Xóa cũ
+	if hrp:FindFirstChild("BasePush") then
+		hrp.BasePush:Destroy()
+	end
+
+	local bv = Instance.new("BodyVelocity")
+	bv.Name = "BasePush"
+	bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+	bv.Velocity = Vector3.zero
+	bv.Parent = hrp
+
+	task.spawn(function()
+		while bv.Parent do
+			if not character.Parent then
+				bv:Destroy()
+				break
+			end
+
+			local direction = (base.Position - hrp.Position)
+			local distance = direction.Magnitude
+			if distance < 5 then
+				bv:Destroy()
+				break
+			end
+
+			local dir = direction.Unit
+			bv.Velocity = dir * math.clamp(distance * 2, 30, 60)
+
+			task.wait(0.1)
+		end
+	end)
+end
+
+-- Nhận lệnh từ client
+remote.OnServerEvent:Connect(function(player)
+	local character = player.Character
+	if character and character:FindFirstChild("HumanoidRootPart") then
+		local base = getPlayerBase(player)
+		if base then
+			pushPlayerToBase(player, character, base)
+		end
+	end
+end)
+
+-- Tạo GUI cho mỗi người chơi
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		-- Tạo GUI sau khi vào game
+		task.wait(1)
+		if player:FindFirstChild("PlayerGui") then
+			local gui = player.PlayerGui:FindFirstChild("BaseGui")
+			if not gui then
+				gui = Instance.new("ScreenGui")
+				gui.Name = "BaseGui"
+				gui.ResetOnSpawn = true
+				gui.Parent = player.PlayerGui
+
+				local button = Instance.new("TextButton")
+				button.Name = "PushButton"
+				button.Text = "Về Nhà"
+				button.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+				button.TextColor3 = Color3.fromRGB(255, 255, 255)
+				button.Size = UDim2.new(0, 120, 0, 50)
+				button.Position = UDim2.new(1, -130, 1, -60)
+				button.Parent = gui
+
+				-- LocalScript auto tạo
+				local localScript = Instance.new("LocalScript")
+				localScript.Source = [[
+					local ReplicatedStorage = game:GetService("ReplicatedStorage")
+					local remote = ReplicatedStorage:WaitForChild("PushToBase")
+					local button = script.Parent
+
+					button.MouseButton1Click:Connect(function()
+						remote:FireServer()
+					end)
+				]]
+				localScript.Parent = button
+			end
+		end
+	end)
+end)
