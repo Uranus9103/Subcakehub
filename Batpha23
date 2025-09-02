@@ -1,0 +1,49 @@
+-- LocalScript gắn vào StarterPlayerScripts
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Lấy Character và HumanoidRootPart
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- Chọn đại một Plot
+local plot = workspace.Plots:FindFirstChildWhichIsA("Folder") -- hoặc đổi thành "Plot1"
+local yourBasePart = plot and plot:FindFirstChild("PlotSign") and plot.PlotSign:FindFirstChild("YourBase")
+if not yourBasePart then
+    warn("Không tìm thấy YourBase Part!")
+    return
+end
+
+-- Tạo GUI nút bật/tắt
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "PushHomeGui"
+
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Size = UDim2.new(0,150,0,50)
+toggleButton.Position = UDim2.new(0.85,0,0.9,0)
+toggleButton.Text = "Đẩy về Home: OFF"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleButton.TextColor3 = Color3.new(1,1,1)
+
+local pushing = false
+toggleButton.MouseButton1Click:Connect(function()
+    pushing = not pushing
+    toggleButton.Text = "Đẩy về Home: " .. (pushing and "ON" or "OFF")
+end)
+
+-- Tạo BodyVelocity
+local bv = Instance.new("BodyVelocity")
+bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+bv.Velocity = Vector3.new(0,0,0)
+bv.Parent = hrp
+
+-- Cập nhật vị trí liên tục
+RunService.RenderStepped:Connect(function()
+    if pushing and hrp and yourBasePart then
+        local direction = (yourBasePart.Position - hrp.Position)
+        bv.Velocity = direction * 5 -- tốc độ đẩy
+    else
+        bv.Velocity = Vector3.new(0,0,0)
+    end
+end)
