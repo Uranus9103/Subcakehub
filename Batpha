@@ -1,0 +1,172 @@
+--// OrbSystem (LocalScript) - gộp hết lại + có nút bật tắt
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+
+--=== TẠO RemoteEvent ===--
+local folder = ReplicatedStorage:FindFirstChild("OrbSystem") or Instance.new("Folder", ReplicatedStorage)
+folder.Name = "OrbSystem"
+local OrbAttackEvent = folder:FindFirstChild("OrbAttack") or Instance.new("RemoteEvent", folder)
+OrbAttackEvent.Name = "OrbAttack"
+
+--=== CONFIG ===--
+local CONFIG = {
+	NUM_ORBS = 4,
+	ORBIT_RADIUS = 4.5,
+	ORBIT_HEIGHT = 2.5,
+	ORBIT_SPEED = 1.2,
+	ORB_SIZE = Vector3.new(0.9,0.9,0.9),
+
+	TARGET_RANGE = 20,
+	DASH_SPEED = 48,
+	RETURN_SPEED = 36,
+	ATTACK_TOUCH_TIME = 0.1,
+
+	SERVER_DAMAGE = 22,
+	SERVER_RANGE = 22,
+	COOLDOWN = 1.2
+}
+
+--=== SERVER XỬ LÝ DAMAGE (chạy khi client FireServer) ===--
+if player == Players.LocalPlayer then
+	OrbAttackEvent.OnServerEvent:Connect(function(attacker, targetCharacter)
+		if typeof(targetCharacter) ~= "Instance" then return end
+		if not attacker.Character or not targetCharacter then return end
+		if targetCharacter == attacker.Character then return end
+
+		local aHRP = attacker.Character:FindFirstChild("HumanoidRootPart")
+		local aHum = attacker.Character:FindFirstChildOfClass("Humanoid")
+		local tHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
+		local tHum = targetCharacter:FindFirstChildOfClass("Humanoid")
+
+		if not aHRP or not aHum or not tHRP or not tHum then return end
+		if aHum.Health <= 0 or tHum.Health <= 0 then return end
+
+		if (aHRP.Position - tHRP.Position).Magnitude > CONFIG.SERVER_RANGE then return end
+
+		-- Damage
+		tHum:TakeDamage(CONFIG.SERVER_DAMAGE)
+	end)
+end
+
+--=== ORB CLIENT CODE ===--
+local orbs, angles, busy = {}, {}, {}
+local enabled = false
+local conRender
+
+local function makeOrb()
+	local p = Instance.new("Part")
+	p.Shape = Enum.PartType.Ball
+	p.Size = CONFIG.ORB_SIZE
+	p.CanCollide = false
+	p.Anchored = true
+	p.Material = Enum.Material.Neon
+	p.Color = Color3.fromRGB(85,255,255)
+	p.Parent = Workspace
+	return p
+end
+
+local function cleanup()
+	for _,orb in ipairs(orbs) do orb:Destroy() end
+	orbs, angles, busy = {}, {}, {}
+	if conRender then conRender:Disconnect() end
+end
+
+local function initOrbs()
+	cleanup()
+	for i=1,CONFIG.NUM_ORBS do
+		orbs[i] = makeOrb()
+		angles[i] = (i/CONFIG.NUM_ORBS)*math.pi*2
+		busy[i] = false
+	end
+end
+
+local function getHRP(char) return char and char:FindFirstChild("HumanoidRootPart") end
+local function getHum(char) return char and char:FindFirstChildOfClass("Humanoid") end
+
+local function tweenTo(orb,pos,speed)
+	local dist = (pos - orb.Position).Magnitude
+	local t = dist/speed
+	local tw = TweenService:Create(orb,TweenInfo.new(t),{CFrame=CFrame.new(pos)})
+	tw:Play() return tw,t
+end
+
+local function attack(orbIndex,targetChar)
+	local orb = orbs[orbIndex]
+	local hrp = getHRP(player.Character)
+	local thrp = getHRP(targetChar)
+	if not orb or not hrp or not thrp then busy[orbIndex]=false return end
+
+	local dash,dt = tweenTo(orb,thrp.Position,CONFIG.DASH_SPEED)
+	task.delay(dt,function()
+		OrbAttackEvent:FireServer(targetChar)
+		task.wait(CONFIG.ATTACK_TOUCH_TIME)
+		local back = hrp.Position + Vector3.new(math.cos(angles[orbIndex])*CONFIG.ORBIT_RADIUS, CONFIG.ORBIT_HEIGHT, math.sin(angles[orbIndex])*CONFIG.ORBIT_RADIUS)
+		local backTween,_ = tweenTo(orb,back,CONFIG.RETURN_SPEED)
+		backTween.Completed:Connect(function() busy[orbIndex]=false end)
+	end)
+end
+
+local function startLoop()
+	local last=0
+	conRender = RunService.RenderStepped:Connect(function(dt)
+		local hrp = getHRP(player.Character)
+		if not hrp then return end
+		for i,orb in ipairs(orbs) do
+			angles[i]+=CONFIG.ORBIT_SPEED*dt
+			if not busy[i] then
+				local pos = hrp.Position + Vector3.new(math.cos(angles[i])*CONFIG.ORBIT_RADIUS, CONFIG.ORBIT_HEIGHT, math.sin(angles[i])*CONFIG.ORBIT_RADIUS)
+				orb.CFrame = CFrame.new(pos)
+			end
+		end
+		if time()-last>0.3 then
+			last=time()
+			for _,plr in ipairs(Players:GetPlayers()) do
+				if plr~=player then
+					local c=plr.Character
+					local thrp=getHRP(c)
+					local thum=getHum(c)
+					if thrp and thum and thum.Health>0 then
+						local dist=(hrp.Position-thrp.Position).Magnitude
+						if dist<CONFIG.TARGET_RANGE then
+							for i=1,#orbs do
+								if not busy[i] then busy[i]=true attack(i,c) break end
+							end
+							break
+						end
+					end
+				end
+			end
+		end
+	end)
+end
+
+--=== UI NÚT BẬT TẮT ===--
+local gui = Instance.new("ScreenGui")
+gui.Name = "OrbToggleGui"
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0,120,0,40)
+btn.Position = UDim2.new(1,-130,1,-60)
+btn.Text = "Bật Orb"
+btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+btn.TextColor3 = Color3.new(1,1,1)
+btn.Parent = gui
+
+btn.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	if enabled then
+		btn.Text = "Tắt Orb"
+		initOrbs()
+		startLoop()
+	else
+		btn.Text = "Bật Orb"
+		cleanup()
+	end
+end)
