@@ -1,0 +1,59 @@
+-- LocalScript gắn vào StarterPlayerScripts
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- Lấy GUI base
+local plotSign = workspace.Plots:FindFirstChildWhichIsA("Folder") -- chọn đại 1 plot
+local yourBaseLabel = plotSign and plotSign:FindFirstChild("PlotSign") and plotSign.PlotSign:FindFirstChild("YourBase") and plotSign.PlotSign.YourBase:FindFirstChild("TextLabel")
+if not yourBaseLabel then
+    warn("Không tìm thấy YourBase TextLabel!")
+    return
+end
+
+-- Lấy vị trí base từ TextLabel
+local basePos = CFrame.new(tonumber(yourBaseLabel.Text)) -- giả sử TextLabel.Text là "x,y,z"
+-- Nếu TextLabel.Text là dạng "x,y,z", cần parse:
+local coords = {}
+for num in string.gmatch(yourBaseLabel.Text, "[%d%.%-]+") do
+    table.insert(coords, tonumber(num))
+end
+if #coords == 3 then
+    basePos = Vector3.new(coords[1], coords[2], coords[3])
+else
+    warn("TextLabel.Text không đúng định dạng x,y,z")
+    return
+end
+
+-- Tạo nút bật/tắt GUI
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "PushHomeGui"
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Size = UDim2.new(0,120,0,50)
+toggleButton.Position = UDim2.new(0.85,0,0.9,0)
+toggleButton.Text = "Đẩy về Home: OFF"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleButton.TextColor3 = Color3.new(1,1,1)
+
+local pushing = false
+toggleButton.MouseButton1Click:Connect(function()
+    pushing = not pushing
+    toggleButton.Text = "Đẩy về Home: " .. (pushing and "ON" or "OFF")
+end)
+
+-- Tạo BodyVelocity để đẩy mượt
+local bv = Instance.new("BodyVelocity")
+bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+bv.Velocity = Vector3.new(0,0,0)
+bv.Parent = hrp
+
+RunService.RenderStepped:Connect(function()
+    if pushing then
+        local direction = (basePos - hrp.Position)
+        bv.Velocity = direction * 5 -- 5 là tốc độ, chỉnh tùy ý
+    else
+        bv.Velocity = Vector3.new(0,0,0)
+    end
+end)
