@@ -104,6 +104,11 @@ local btnLockBase = createButton("🔒 Khoá Base", Color3.fromRGB(180,100,250))
 local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50))
 local btnAimbot   = createButton("Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
 local btnESPBase = createButton("ESP Base : OFF", Color3.fromRGB(200,50,50))
+local btnEspCam = createButton("Esp Camera", Color3.fromRGB(100,200,255))
+
+btnEspCam.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espcamera"))()
+end)
 
 local espBaseOn = false
 local espLoop = nil
@@ -542,3 +547,4 @@ mt.__namecall = newcclosure(function(self,...)
 	return old(self,...)
 end)
 setreadonly(mt,true)
+
