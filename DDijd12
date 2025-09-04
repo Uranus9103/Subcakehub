@@ -1,0 +1,65 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FallGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0,180,0,50)
+button.Position = UDim2.new(0.4,0,0.85,0)
+button.Text = "Bật Xuyên Xuống"
+button.TextScaled = true
+button.BackgroundColor3 = Color3.fromRGB(50,150,255)
+button.Parent = screenGui
+
+-- Trạng thái bật/tắt
+local isFalling = false
+local connection
+
+button.MouseButton1Click:Connect(function()
+	if not isFalling then
+		-- Bật xuyên xuống
+		isFalling = true
+		button.Text = "Tắt Xuyên Xuống"
+
+		-- Tạo part dưới chân
+		local part = Instance.new("Part")
+		part.Size = Vector3.new(6,1,6)
+		part.Anchored = true
+		part.CanCollide = false
+		part.Transparency = 1
+		part.Name = "FallPart"
+		part.Parent = workspace
+
+		-- Liên tục đẩy player xuống
+		connection = RunService.Heartbeat:Connect(function()
+			if player.Character and humanoidRootPart then
+				humanoidRootPart.Velocity = Vector3.new(0,-100,0)
+				part.CFrame = humanoidRootPart.CFrame * CFrame.new(0,-3,0)
+			end
+		end)
+
+	else
+		-- Tắt xuyên xuống
+		isFalling = false
+		button.Text = "Bật Xuyên Xuống"
+
+		-- Ngừng đẩy
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
+
+		-- Xóa part
+		local fallPart = workspace:FindFirstChild("FallPart")
+		if fallPart then
+			fallPart:Destroy()
+		end
+	end
+end)
