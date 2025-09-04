@@ -1,0 +1,98 @@
+-- Orb System with Toggle Button
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Cấu hình Orb
+local ORB_COUNT = 6              -- số lượng orb quay quanh
+local ORB_DISTANCE = 6           -- bán kính quay quanh
+local ORB_SIZE = Vector3.new(2,2,2) -- kích thước orb
+local PUSH_FORCE = 50            -- lực đẩy
+local DETECT_RADIUS = 20          -- bán kính phát hiện người chơi khác
+
+-- Trạng thái
+local orbs = {}
+local angle = 0
+local enabled = false
+
+-- Tạo nút UI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "OrbGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 120, 0, 50)
+toggleButton.Position = UDim2.new(1, -130, 1, -60)
+toggleButton.AnchorPoint = Vector2.new(0,0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+toggleButton.TextColor3 = Color3.new(1,1,1)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 20
+toggleButton.Text = "Bật Orb"
+toggleButton.Parent = screenGui
+toggleButton.Active = true
+toggleButton.Draggable = true -- có thể kéo nút đi chỗ khác
+
+-- Tạo orb
+local function createOrb(index)
+	local orb = Instance.new("Part")
+	orb.Shape = Enum.PartType.Ball
+	orb.Size = ORB_SIZE
+	orb.Anchored = true
+	orb.CanCollide = false
+	orb.Color = Color3.fromRGB(100, 200, 255)
+	orb.Material = Enum.Material.Neon
+	orb.Name = "Orb_"..index
+	orb.Parent = workspace
+	orb.Transparency = 1 -- ẩn khi mới tạo
+	table.insert(orbs, orb)
+end
+
+-- Hiển thị/ẩn orb
+local function setOrbVisible(state)
+	for _, orb in ipairs(orbs) do
+		orb.Transparency = state and 0 or 1
+	end
+end
+
+-- Tạo tất cả orb ban đầu
+for i = 1, ORB_COUNT do
+	createOrb(i)
+end
+
+-- Nút bật/tắt
+toggleButton.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	toggleButton.Text = enabled and "Tắt Orb" or "Bật Orb"
+	setOrbVisible(enabled)
+end)
+
+-- Quay quanh và đẩy người chơi
+RunService.RenderStepped:Connect(function(dt)
+	if enabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local root = LocalPlayer.Character.HumanoidRootPart
+		angle = angle + dt * 2 -- tốc độ quay
+		
+		for i, orb in ipairs(orbs) do
+			local offsetAngle = angle + (math.pi * 2 / ORB_COUNT) * i
+			local x = math.cos(offsetAngle) * ORB_DISTANCE
+			local z = math.sin(offsetAngle) * ORB_DISTANCE
+			local orbPos = root.Position + Vector3.new(x, 2, z)
+			orb.Position = orbPos
+			
+			-- Kiểm tra người chơi khác
+			for _, plr in ipairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					local dist = (plr.Character.HumanoidRootPart.Position - orbPos).Magnitude
+					if dist < DETECT_RADIUS then
+						local hrp = plr.Character.HumanoidRootPart
+						local dir = (hrp.Position - root.Position).Unit
+						hrp.Velocity = dir * PUSH_FORCE
+					end
+				end
+			end
+		end
+	end
+end)
