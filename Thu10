@@ -105,6 +105,82 @@ local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50))
 local btnAimbot   = createButton("Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
 local btnESPBase = createButton("ESP Base : OFF", Color3.fromRGB(200,50,50))
 local btnEspCam = createButton("Esp Camera", Color3.fromRGB(100,200,255))
+--------------------------------------------------
+-- Gravity (mới thêm)
+--------------------------------------------------
+
+--------------------------------------------------
+-- Gravity (fix theo yêu cầu)
+--------------------------------------------------
+local gravityOn = false
+local btnGravity = createButton("Gravity : OFF", Color3.fromRGB(200,50,50))
+
+-- Frame chứa TextBox
+local gravityFrame = Instance.new("Frame")
+gravityFrame.Size = UDim2.new(1, -10, 0, 40)
+gravityFrame.BackgroundColor3 = Color3.fromRGB(60,60,60)
+gravityFrame.Visible = false -- mặc định ẩn
+gravityFrame.Parent = scroll
+
+local gravityCorner = Instance.new("UICorner")
+gravityCorner.CornerRadius = UDim.new(0,10)
+gravityCorner.Parent = gravityFrame
+
+-- Label
+local gravityLabel = Instance.new("TextLabel")
+gravityLabel.Size = UDim2.new(0.4,0,1,0)
+gravityLabel.Position = UDim2.new(0,5,0,0)
+gravityLabel.BackgroundTransparency = 1
+gravityLabel.Text = "Gravity:"
+gravityLabel.Font = Enum.Font.GothamBold
+gravityLabel.TextColor3 = Color3.new(1,1,1)
+gravityLabel.TextScaled = true
+gravityLabel.Parent = gravityFrame
+
+-- TextBox nhập số
+local gravityBox = Instance.new("TextBox")
+gravityBox.Size = UDim2.new(0.55,0,0.8,0)
+gravityBox.Position = UDim2.new(0.42,0,0.1,0)
+gravityBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+gravityBox.Text = "" -- mặc định để trống
+gravityBox.PlaceholderText = "Nhập số..." -- gợi ý cho người chơi
+gravityBox.TextColor3 = Color3.new(1,1,1)
+gravityBox.Font = Enum.Font.GothamBold
+gravityBox.TextScaled = true
+gravityBox.ClearTextOnFocus = false
+gravityBox.Parent = gravityFrame
+
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0,8)
+boxCorner.Parent = gravityBox
+
+-- Khi nhập số và nhấn Enter
+gravityBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed and gravityOn then
+		local value = tonumber(gravityBox.Text)
+		if value then
+			workspace.Gravity = value
+		else
+			gravityBox.Text = ""
+		end
+	end
+end)
+
+-- Toggle nút Gravity
+btnGravity.MouseButton1Click:Connect(function()
+	gravityOn = not gravityOn
+	if gravityOn then
+		btnGravity.Text = "Gravity : ON"
+		btnGravity.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		gravityFrame.Visible = true
+	else
+		btnGravity.Text = "Gravity : OFF"
+		btnGravity.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		gravityFrame.Visible = false
+		workspace.Gravity = 196.2 -- trả về mặc định Roblox
+		gravityBox.Text = ""
+	end
+end)
 
 btnEspCam.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espcamera"))()
@@ -116,8 +192,8 @@ local espList = {}
 
 -- Config ESP
 local ESP_CONFIG = {
-    Size = UDim2.new(0,120,0,40),
-    Offset = Vector3.new(0,7,0),
+    Size = UDim2.new(0,80,0,25),
+    Offset = Vector3.new(0,6,0),
 
     Text = {
         Font = Enum.Font.GothamBold,
@@ -547,4 +623,3 @@ mt.__namecall = newcclosure(function(self,...)
 	return old(self,...)
 end)
 setreadonly(mt,true)
-
