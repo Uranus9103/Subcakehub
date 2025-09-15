@@ -1,7 +1,4 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
 -- GUI
@@ -13,11 +10,11 @@ if not gui then
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
--- Khung menu
+-- Khung menu chính
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,260,0,300)
+frame.Size = UDim2.new(0,280,0,340)
 frame.Position = UDim2.new(0.05,0,0.1,0)
-frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 frame.Active = true
 frame.Draggable = true
 frame.Visible = true
@@ -27,31 +24,73 @@ local frameCorner = Instance.new("UICorner")
 frameCorner.CornerRadius = UDim.new(0,20)
 frameCorner.Parent = frame
 
--- ScrollingFrame
-local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -10, 1, -10)
-scroll.Position = UDim2.new(0,5,0,5)
-scroll.BackgroundTransparency = 1
-scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0,0,0,0)
-scroll.ScrollBarThickness = 10
-scroll.Parent = frame
+-- Tabs
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1,0,0,40)
+tabFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+tabFrame.Parent = frame
 
-local layout = Instance.new("UIGridLayout")
-layout.CellSize = UDim2.new(0.45,0,0,50)
-layout.CellPadding = UDim2.new(0.05,0,0.05,0)
-layout.FillDirection = Enum.FillDirection.Horizontal
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.VerticalAlignment = Enum.VerticalAlignment.Top
-layout.Parent = scroll
+local tabCorner = Instance.new("UICorner")
+tabCorner.CornerRadius = UDim.new(0,12)
+tabCorner.Parent = tabFrame
 
-layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 20)
+-- Scroll cho Main
+local scrollMain = Instance.new("ScrollingFrame")
+scrollMain.Size = UDim2.new(1,-10,1,-50)
+scrollMain.Position = UDim2.new(0,5,0,45)
+scrollMain.BackgroundColor3 = Color3.fromRGB(45,45,45)
+scrollMain.BorderSizePixel = 0
+scrollMain.CanvasSize = UDim2.new(0,0,0,0)
+scrollMain.ScrollBarThickness = 6
+scrollMain.Parent = frame
+
+local scrollMainCorner = Instance.new("UICorner")
+scrollMainCorner.CornerRadius = UDim.new(0,12)
+scrollMainCorner.Parent = scrollMain
+
+local layoutMain = Instance.new("UIGridLayout")
+layoutMain.CellSize = UDim2.new(0.45,0,0,45)
+layoutMain.CellPadding = UDim2.new(0.05,0,0.05,0)
+layoutMain.FillDirection = Enum.FillDirection.Horizontal
+layoutMain.SortOrder = Enum.SortOrder.LayoutOrder
+layoutMain.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layoutMain.VerticalAlignment = Enum.VerticalAlignment.Top
+layoutMain.Parent = scrollMain
+
+layoutMain:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollMain.CanvasSize = UDim2.new(0,0,0,layoutMain.AbsoluteContentSize.Y + 15)
+end)
+
+-- Scroll cho All Script
+local scrollAll = Instance.new("ScrollingFrame")
+scrollAll.Size = UDim2.new(1,-10,1,-50)
+scrollAll.Position = UDim2.new(0,5,0,45)
+scrollAll.BackgroundColor3 = Color3.fromRGB(45,45,45)
+scrollAll.BorderSizePixel = 0
+scrollAll.CanvasSize = UDim2.new(0,0,0,0)
+scrollAll.ScrollBarThickness = 6
+scrollAll.Visible = false
+scrollAll.Parent = frame
+
+local scrollAllCorner = Instance.new("UICorner")
+scrollAllCorner.CornerRadius = UDim.new(0,12)
+scrollAllCorner.Parent = scrollAll
+
+local layoutAll = Instance.new("UIGridLayout")
+layoutAll.CellSize = UDim2.new(0.9,0,0,45)
+layoutAll.CellPadding = UDim2.new(0,0,0.05,0)
+layoutAll.FillDirection = Enum.FillDirection.Vertical
+layoutAll.SortOrder = Enum.SortOrder.LayoutOrder
+layoutAll.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layoutAll.VerticalAlignment = Enum.VerticalAlignment.Top
+layoutAll.Parent = scrollAll
+
+layoutAll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollAll.CanvasSize = UDim2.new(0,0,0,layoutAll.AbsoluteContentSize.Y + 15)
 end)
 
 -- Hàm tạo nút
-local function createButton(text, color)
+local function createButton(parent,text,color)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0,0,0,0)
 	btn.Text = text
@@ -59,18 +98,58 @@ local function createButton(text, color)
 	btn.BackgroundColor3 = color
 	btn.TextColor3 = Color3.fromRGB(255,255,255)
 	btn.Font = Enum.Font.GothamBold
-	btn.Parent = scroll
-
+	btn.Parent = parent
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,12)
+	corner.CornerRadius = UDim.new(0,10)
 	corner.Parent = btn
-
 	return btn
 end
 
+-- Nút chọn Tab
+local btnMain = Instance.new("TextButton")
+btnMain.Size = UDim2.new(0.5,0,1,0)
+btnMain.Text = "MAIN"
+btnMain.TextScaled = true
+btnMain.BackgroundColor3 = Color3.fromRGB(70,180,70)
+btnMain.TextColor3 = Color3.fromRGB(255,255,255)
+btnMain.Font = Enum.Font.GothamBold
+btnMain.Parent = tabFrame
+
+local btnAll = Instance.new("TextButton")
+btnAll.Size = UDim2.new(0.5,0,1,0)
+btnAll.Position = UDim2.new(0.5,0,0,0)
+btnAll.Text = "ALL SCRIPT"
+btnAll.TextScaled = true
+btnAll.BackgroundColor3 = Color3.fromRGB(80,80,200)
+btnAll.TextColor3 = Color3.fromRGB(255,255,255)
+btnAll.Font = Enum.Font.GothamBold
+btnAll.Parent = tabFrame
+
+local btnMainCorner = Instance.new("UICorner")
+btnMainCorner.CornerRadius = UDim.new(0,12)
+btnMainCorner.Parent = btnMain
+
+local btnAllCorner = Instance.new("UICorner")
+btnAllCorner.CornerRadius = UDim.new(0,12)
+btnAllCorner.Parent = btnAll
+
+btnMain.MouseButton1Click:Connect(function()
+	btnMain.BackgroundColor3 = Color3.fromRGB(70,180,70)
+	btnAll.BackgroundColor3 = Color3.fromRGB(80,80,200)
+	scrollMain.Visible = true
+	scrollAll.Visible = false
+end)
+
+btnAll.MouseButton1Click:Connect(function()
+	btnAll.BackgroundColor3 = Color3.fromRGB(70,180,70)
+	btnMain.BackgroundColor3 = Color3.fromRGB(80,80,200)
+	scrollAll.Visible = true
+	scrollMain.Visible = false
+end)
+
 -- Toggle menu
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0,100,0,40)
+toggleBtn.Size = UDim2.new(0,110,0,40)
 toggleBtn.Position = UDim2.new(0.75,0,0.05,0)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(80,80,200)
 toggleBtn.Text = "APEX HUB"
@@ -91,20 +170,73 @@ toggleBtn.MouseButton1Click:Connect(function()
 	frame.Visible = menuVisible
 end)
 
--- Các nút
-local btnLift     = createButton("⬆️ Nâng : OFF", Color3.fromRGB(200,50,50))
-local btnFly      = createButton("🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
-local btnESP      = createButton("👀 ESP : OFF", Color3.fromRGB(200,50,50))
-local btnWarn     = createButton("👤 Cảnh báo : OFF", Color3.fromRGB(200,50,50))
-local btnJump     = createButton("🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
-local btnServer   = createButton("🌍 Đổi Server", Color3.fromRGB(80,150,250))
-local btnShader   = createButton("✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
-local btnEsp2     = createButton("ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
-local btnLockBase = createButton("🔒 Khoá Base", Color3.fromRGB(180,100,250))
-local btnRun      = createButton("Chạy : OFF", Color3.fromRGB(200,50,50))
-local btnAimbot   = createButton("Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50)) -- Nút mới
-local btnESPBase = createButton("ESP Base : OFF", Color3.fromRGB(200,50,50))
-local btnEspCam = createButton("Esp Camera", Color3.fromRGB(100,200,255))
+--------------------------------------------------
+-- MAIN TAB (nút cũ)
+--------------------------------------------------
+local btnLift     = createButton(scrollMain,"⬆️ Nâng : OFF", Color3.fromRGB(200,50,50))
+local btnFly      = createButton(scrollMain,"🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
+local btnESP      = createButton(scrollMain,"👀 ESP : OFF", Color3.fromRGB(200,50,50))
+local btnWarn     = createButton(scrollMain,"👤 Cảnh báo : OFF", Color3.fromRGB(200,50,50))
+local btnJump     = createButton(scrollMain,"🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
+local btnServer   = createButton(scrollMain,"🌍 Đổi Server", Color3.fromRGB(80,150,250))
+local btnShader   = createButton(scrollMain,"✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
+local btnEsp2     = createButton(scrollMain,"ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
+local btnLockBase = createButton(scrollMain,"🔒 Khoá Base", Color3.fromRGB(180,100,250))
+local btnRun      = createButton(scrollMain,"Chạy : OFF", Color3.fromRGB(200,50,50))
+local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50))
+local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200,50,50))
+local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100,200,255))
+local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200,50,50))
+
+--------------------------------------------------
+-- ALL SCRIPT TAB (Krud + Ajjans)
+--------------------------------------------------
+local function showNotify(msg)
+	local note = Instance.new("TextLabel")
+	note.Size = UDim2.new(0,260,0,40)
+	note.Position = UDim2.new(0.5,-130,0.85,0)
+	note.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	note.BackgroundTransparency = 0.2
+	note.Text = msg
+	note.TextScaled = true
+	note.TextColor3 = Color3.fromRGB(0,255,100)
+	note.Font = Enum.Font.GothamBold
+	note.Parent = gui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,8)
+	corner.Parent = note
+
+	game:GetService("TweenService"):Create(note,TweenInfo.new(0.5),{BackgroundTransparency=0.2}):Play()
+	task.delay(2,function()
+		note:Destroy()
+	end)
+end
+
+local btnKrudHub = createButton(scrollAll,"🔥 Krud Hub", Color3.fromRGB(250,120,80))
+btnKrudHub.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))()
+	showNotify("✅ Krud Hub đã bật!")
+end)
+
+local btnAjjans = createButton(scrollAll,"⚡ Ajjans GUI", Color3.fromRGB(120,200,250))
+btnAjjans.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/onliengamerop/Steal-a-brainrot/refs/heads/main/Protected_3771863424757750.lua.txt"))()
+	showNotify("✅ Ajjans GUI đã bật!")
+end)
+
+--------------------------------------------------
+--
+--------------------------------------------------
+
+--------------------------------------------------
+--
+--------------------------------------------------
+
+--------------------------------------------------
+--
+--------------------------------------------------
+
 --------------------------------------------------
 -- Gravity (mới thêm)
 --------------------------------------------------
@@ -112,15 +244,17 @@ local btnEspCam = createButton("Esp Camera", Color3.fromRGB(100,200,255))
 --------------------------------------------------
 -- Gravity (fix theo yêu cầu)
 --------------------------------------------------
-local gravityOn = false
-local btnGravity = createButton("Gravity : OFF", Color3.fromRGB(200,50,50))
 
+--------------------------------------------------
+-- Gravity (fix)
+--------------------------------------------------
+local gravityOn = false
 -- Frame chứa TextBox
 local gravityFrame = Instance.new("Frame")
 gravityFrame.Size = UDim2.new(1, -10, 0, 40)
 gravityFrame.BackgroundColor3 = Color3.fromRGB(60,60,60)
 gravityFrame.Visible = false -- mặc định ẩn
-gravityFrame.Parent = scroll
+gravityFrame.Parent = scrollMain -- ⚡ ĐÚNG: cho vào tab MAIN
 
 local gravityCorner = Instance.new("UICorner")
 gravityCorner.CornerRadius = UDim.new(0,10)
@@ -142,8 +276,8 @@ local gravityBox = Instance.new("TextBox")
 gravityBox.Size = UDim2.new(0.55,0,0.8,0)
 gravityBox.Position = UDim2.new(0.42,0,0.1,0)
 gravityBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
-gravityBox.Text = "" -- mặc định để trống
-gravityBox.PlaceholderText = "Nhập số..." -- gợi ý cho người chơi
+gravityBox.Text = ""
+gravityBox.PlaceholderText = "Nhập số..."
 gravityBox.TextColor3 = Color3.new(1,1,1)
 gravityBox.Font = Enum.Font.GothamBold
 gravityBox.TextScaled = true
