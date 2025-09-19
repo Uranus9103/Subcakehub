@@ -1,5 +1,9 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local TweenService = game:GetService("TweenService")
 
 -- GUI
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
@@ -10,47 +14,162 @@ if not gui then
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
--- Khung menu chính
+-- Màu sắc chủ đạo
+local colorPalette = {
+	primary = Color3.fromRGB(70, 180, 70),
+	secondary = Color3.fromRGB(80, 80, 200),
+	accent1 = Color3.fromRGB(255, 140, 0),
+	accent2 = Color3.fromRGB(180, 100, 250),
+	accent3 = Color3.fromRGB(100, 200, 255),
+	danger = Color3.fromRGB(220, 80, 80),
+	success = Color3.fromRGB(80, 200, 120),
+	warning = Color3.fromRGB(255, 180, 66),
+	dark = Color3.fromRGB(25, 25, 25),
+	light = Color3.fromRGB(240, 240, 240)
+}
+
+-- Tạo gradient color function
+local function getRainbowColor(t)
+	local frequency = 0.3
+	local r = math.sin(frequency * t + 0) * 127 + 128
+	local g = math.sin(frequency * t + 2) * 127 + 128
+	local b = math.sin(frequency * t + 4) * 127 + 128
+	return Color3.fromRGB(r, g, b)
+end
+
+-- Toggle button với icon - SỬA LẠI PHẦN NÀY
+local toggleBtn = Instance.new("ImageButton")
+toggleBtn.Size = UDim2.new(0, 60, 0, 60)
+toggleBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+toggleBtn.BackgroundColor3 = colorPalette.dark
+toggleBtn.BackgroundTransparency = 0.4
+toggleBtn.Image = "rbxassetid://131679774975668" -- Icon mặc định
+toggleBtn.ScaleType = Enum.ScaleType.Fit
+toggleBtn.Parent = gui
+toggleBtn.Active = true
+toggleBtn.Draggable = true
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 15)
+btnCorner.Parent = toggleBtn
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnStroke.Thickness = 2
+btnStroke.Color = colorPalette.secondary
+btnStroke.Parent = toggleBtn
+
+-- Thêm một ImageLabel để hiển thị icon thay thế khi ẩn menu
+local toggleIcon = Instance.new("ImageLabel")
+toggleIcon.Size = UDim2.new(0.7, 0, 0.7, 0)
+toggleIcon.Position = UDim2.new(0.15, 0, 0.15, 0)
+toggleIcon.BackgroundTransparency = 1
+toggleIcon.Image = "rbxassetid://131679774975668" -- Giữ nguyên icon
+toggleIcon.Parent = toggleBtn
+
+-- Khung menu chính với background trong suốt và viền đẹp
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,280,0,340)
-frame.Position = UDim2.new(0.05,0,0.1,0)
-frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+frame.Size = UDim2.new(0, 320, 0, 380)
+frame.Position = UDim2.new(0.05, 0, 0.1, 0)
+frame.BackgroundColor3 = colorPalette.dark
+frame.BackgroundTransparency = 0.2
 frame.Active = true
 frame.Draggable = true
-frame.Visible = true
+frame.Visible = false
 frame.Parent = gui
 
 local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0,20)
+frameCorner.CornerRadius = UDim.new(0, 15)
 frameCorner.Parent = frame
 
--- Tabs
+local frameStroke = Instance.new("UIStroke")
+frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+frameStroke.Thickness = 3
+frameStroke.Color = colorPalette.secondary
+frameStroke.Parent = frame
+
+-- Tabs container với gradient
 local tabFrame = Instance.new("Frame")
-tabFrame.Size = UDim2.new(1,0,0,40)
-tabFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+tabFrame.Size = UDim2.new(1, -20, 0, 40)
+tabFrame.Position = UDim2.new(0, 10, 0, 10)
+tabFrame.BackgroundColor3 = colorPalette.dark
+tabFrame.BackgroundTransparency = 0.4
 tabFrame.Parent = frame
 
 local tabCorner = Instance.new("UICorner")
-tabCorner.CornerRadius = UDim.new(0,12)
+tabCorner.CornerRadius = UDim.new(0, 10)
 tabCorner.Parent = tabFrame
+
+local tabStroke = Instance.new("UIStroke")
+tabStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+tabStroke.Thickness = 2
+tabStroke.Color = colorPalette.secondary
+tabStroke.Parent = tabFrame
+
+-- Nút chọn Tab
+local btnMain = Instance.new("TextButton")
+btnMain.Size = UDim2.new(0.45, 0, 0.8, 0)
+btnMain.Position = UDim2.new(0.025, 0, 0.1, 0)
+btnMain.Text = "MAIN"
+btnMain.TextScaled = true
+btnMain.BackgroundColor3 = colorPalette.primary
+btnMain.BackgroundTransparency = 0.3
+btnMain.TextColor3 = colorPalette.light
+btnMain.Font = Enum.Font.GothamBold
+btnMain.ZIndex = 2
+btnMain.Parent = tabFrame
+
+local btnMainCorner = Instance.new("UICorner")
+btnMainCorner.CornerRadius = UDim.new(0, 8)
+btnMainCorner.Parent = btnMain
+
+local btnMainStroke = Instance.new("UIStroke")
+btnMainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnMainStroke.Thickness = 2
+btnMainStroke.Color = Color3.fromRGB(100, 220, 100)
+btnMainStroke.Parent = btnMain
+
+local btnAll = Instance.new("TextButton")
+btnAll.Size = UDim2.new(0.45, 0, 0.8, 0)
+btnAll.Position = UDim2.new(0.525, 0, 0.1, 0)
+btnAll.Text = "ALL SCRIPT"
+btnAll.TextScaled = true
+btnAll.BackgroundColor3 = colorPalette.secondary
+btnAll.BackgroundTransparency = 0.3
+btnAll.TextColor3 = colorPalette.light
+btnAll.Font = Enum.Font.GothamBold
+btnAll.ZIndex = 2
+btnAll.Parent = tabFrame
+
+local btnAllCorner = Instance.new("UICorner")
+btnAllCorner.CornerRadius = UDim.new(0, 8)
+btnAllCorner.Parent = btnAll
+
+local btnAllStroke = Instance.new("UIStroke")
+btnAllStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnAllStroke.Thickness = 2
+btnAllStroke.Color = Color3.fromRGB(120, 120, 220)
+btnAllStroke.Parent = btnAll
 
 -- Scroll cho Main
 local scrollMain = Instance.new("ScrollingFrame")
-scrollMain.Size = UDim2.new(1,-10,1,-50)
-scrollMain.Position = UDim2.new(0,5,0,45)
-scrollMain.BackgroundColor3 = Color3.fromRGB(45,45,45)
+scrollMain.Size = UDim2.new(1, -20, 1, -60)
+scrollMain.Position = UDim2.new(0, 10, 0, 55)
+scrollMain.BackgroundColor3 = colorPalette.dark
+scrollMain.BackgroundTransparency = 0.6
 scrollMain.BorderSizePixel = 0
-scrollMain.CanvasSize = UDim2.new(0,0,0,0)
+scrollMain.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollMain.ScrollBarThickness = 6
+scrollMain.ScrollBarImageColor3 = colorPalette.secondary
 scrollMain.Parent = frame
 
 local scrollMainCorner = Instance.new("UICorner")
-scrollMainCorner.CornerRadius = UDim.new(0,12)
+scrollMainCorner.CornerRadius = UDim.new(0, 12)
 scrollMainCorner.Parent = scrollMain
 
 local layoutMain = Instance.new("UIGridLayout")
-layoutMain.CellSize = UDim2.new(0.45,0,0,45)
-layoutMain.CellPadding = UDim2.new(0.05,0,0.05,0)
+layoutMain.CellSize = UDim2.new(0.45, 0, 0, 45)
+layoutMain.CellPadding = UDim2.new(0.05, 0, 0.05, 0)
 layoutMain.FillDirection = Enum.FillDirection.Horizontal
 layoutMain.SortOrder = Enum.SortOrder.LayoutOrder
 layoutMain.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -58,27 +177,29 @@ layoutMain.VerticalAlignment = Enum.VerticalAlignment.Top
 layoutMain.Parent = scrollMain
 
 layoutMain:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scrollMain.CanvasSize = UDim2.new(0,0,0,layoutMain.AbsoluteContentSize.Y + 15)
+	scrollMain.CanvasSize = UDim2.new(0, 0, 0, layoutMain.AbsoluteContentSize.Y + 15)
 end)
 
 -- Scroll cho All Script
 local scrollAll = Instance.new("ScrollingFrame")
-scrollAll.Size = UDim2.new(1,-10,1,-50)
-scrollAll.Position = UDim2.new(0,5,0,45)
-scrollAll.BackgroundColor3 = Color3.fromRGB(45,45,45)
+scrollAll.Size = UDim2.new(1, -20, 1, -60)
+scrollAll.Position = UDim2.new(0, 10, 0, 55)
+scrollAll.BackgroundColor3 = colorPalette.dark
+scrollAll.BackgroundTransparency = 0.6
 scrollAll.BorderSizePixel = 0
-scrollAll.CanvasSize = UDim2.new(0,0,0,0)
+scrollAll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollAll.ScrollBarThickness = 6
+scrollAll.ScrollBarImageColor3 = colorPalette.secondary
 scrollAll.Visible = false
 scrollAll.Parent = frame
 
 local scrollAllCorner = Instance.new("UICorner")
-scrollAllCorner.CornerRadius = UDim.new(0,12)
+scrollAllCorner.CornerRadius = UDim.new(0, 12)
 scrollAllCorner.Parent = scrollAll
 
 local layoutAll = Instance.new("UIGridLayout")
-layoutAll.CellSize = UDim2.new(0.9,0,0,45)
-layoutAll.CellPadding = UDim2.new(0,0,0.05,0)
+layoutAll.CellSize = UDim2.new(0.9, 0, 0, 45)
+layoutAll.CellPadding = UDim2.new(0, 0, 0.05, 0)
 layoutAll.FillDirection = Enum.FillDirection.Vertical
 layoutAll.SortOrder = Enum.SortOrder.LayoutOrder
 layoutAll.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -86,107 +207,136 @@ layoutAll.VerticalAlignment = Enum.VerticalAlignment.Top
 layoutAll.Parent = scrollAll
 
 layoutAll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scrollAll.CanvasSize = UDim2.new(0,0,0,layoutAll.AbsoluteContentSize.Y + 15)
+	scrollAll.CanvasSize = UDim2.new(0, 0, 0, layoutAll.AbsoluteContentSize.Y + 15)
 end)
 
--- Hàm tạo nút
-local function createButton(parent,text,color)
+-- Hàm tạo nút đẹp với hiệu ứng trong suốt và hover
+local function createButton(parent, text, color)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0,0,0,0)
+	btn.Size = UDim2.new(0, 0, 0, 0)
 	btn.Text = text
 	btn.TextScaled = true
 	btn.BackgroundColor3 = color
-	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.BackgroundTransparency = 0.4  -- Trong suốt
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.GothamBold
+	btn.TextStrokeTransparency = 0.8
+	btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	btn.AutoButtonColor = false
 	btn.Parent = parent
+	
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,10)
+	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = btn
+	
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Thickness = 2
+	stroke.Color = Color3.fromRGB(255, 255, 255)
+	stroke.Transparency = 0.7
+	stroke.Parent = btn
+	
+	local highlight = Instance.new("Frame")
+	highlight.Size = UDim2.new(1, 0, 1, 0)
+	highlight.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	highlight.BackgroundTransparency = 0.9
+	highlight.BorderSizePixel = 0
+	highlight.ZIndex = 2
+	highlight.Visible = false
+	highlight.Parent = btn
+	
+	local highlightCorner = Instance.new("UICorner")
+	highlightCorner.CornerRadius = UDim.new(0, 10)
+	highlightCorner.Parent = highlight
+	
+	-- Hiệu ứng hover
+	btn.MouseEnter:Connect(function()
+		highlight.Visible = true
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
+	end)
+	
+	btn.MouseLeave:Connect(function()
+		highlight.Visible = false
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.7}):Play()
+	end)
+	
+	btn.MouseButton1Down:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
+	end)
+	
+	btn.MouseButton1Up:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.2}):Play()
+	end)
+	
 	return btn
 end
 
--- Nút chọn Tab
-local btnMain = Instance.new("TextButton")
-btnMain.Size = UDim2.new(0.5,0,1,0)
-btnMain.Text = "MAIN"
-btnMain.TextScaled = true
-btnMain.BackgroundColor3 = Color3.fromRGB(70,180,70)
-btnMain.TextColor3 = Color3.fromRGB(255,255,255)
-btnMain.Font = Enum.Font.GothamBold
-btnMain.Parent = tabFrame
-
-local btnAll = Instance.new("TextButton")
-btnAll.Size = UDim2.new(0.5,0,1,0)
-btnAll.Position = UDim2.new(0.5,0,0,0)
-btnAll.Text = "ALL SCRIPT"
-btnAll.TextScaled = true
-btnAll.BackgroundColor3 = Color3.fromRGB(80,80,200)
-btnAll.TextColor3 = Color3.fromRGB(255,255,255)
-btnAll.Font = Enum.Font.GothamBold
-btnAll.Parent = tabFrame
-
-local btnMainCorner = Instance.new("UICorner")
-btnMainCorner.CornerRadius = UDim.new(0,12)
-btnMainCorner.Parent = btnMain
-
-local btnAllCorner = Instance.new("UICorner")
-btnAllCorner.CornerRadius = UDim.new(0,12)
-btnAllCorner.Parent = btnAll
-
+-- Kết nối sự kiện tab
 btnMain.MouseButton1Click:Connect(function()
-	btnMain.BackgroundColor3 = Color3.fromRGB(70,180,70)
-	btnAll.BackgroundColor3 = Color3.fromRGB(80,80,200)
+	btnMain.BackgroundColor3 = colorPalette.primary
+	btnAll.BackgroundColor3 = colorPalette.secondary
 	scrollMain.Visible = true
 	scrollAll.Visible = false
 end)
 
 btnAll.MouseButton1Click:Connect(function()
-	btnAll.BackgroundColor3 = Color3.fromRGB(70,180,70)
-	btnMain.BackgroundColor3 = Color3.fromRGB(80,80,200)
+	btnAll.BackgroundColor3 = colorPalette.primary
+	btnMain.BackgroundColor3 = colorPalette.secondary
 	scrollAll.Visible = true
 	scrollMain.Visible = false
 end)
 
--- Toggle menu
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0,110,0,40)
-toggleBtn.Position = UDim2.new(0.75,0,0.05,0)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(80,80,200)
-toggleBtn.Text = "APEX HUB"
-toggleBtn.TextScaled = true
-toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.Parent = gui
-toggleBtn.Active = true
-toggleBtn.Draggable = true
-
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0,8)
-btnCorner.Parent = toggleBtn
-
-local menuVisible = true
+-- Toggle menu - SỬA LẠI PHẦN NÀY
+local menuVisible = false
 toggleBtn.MouseButton1Click:Connect(function()
 	menuVisible = not menuVisible
 	frame.Visible = menuVisible
+	-- Chỉ thay đổi ảnh của ImageLabel bên trong, không thay đổi ImageButton
+	toggleIcon.Image = menuVisible and "rbxassetid://131679774975668" or "rbxassetid://131679774975668"
 end)
 
+-- Hiệu ứng đổi màu viền liên tục
+local t = 0
+RunService.RenderStepped:Connect(function(delta)
+	t += delta
+	local rainbowColor = getRainbowColor(t)
+	frameStroke.Color = rainbowColor
+	btnStroke.Color = rainbowColor
+end)
+
+--------------------------------------
+
 --------------------------------------------------
--- MAIN TAB (nút cũ)
+-- MAIN TAB (nút chức năng với màu sắc đẹp)
 --------------------------------------------------
-local btnLift     = createButton(scrollMain,"⬆️ Nâng : OFF", Color3.fromRGB(200,50,50))
-local btnFly      = createButton(scrollMain,"🛑 Đi Trên Không : OFF", Color3.fromRGB(200,50,50))
-local btnESP      = createButton(scrollMain,"👀 ESP : OFF", Color3.fromRGB(200,50,50))
-local btnWarn     = createButton(scrollMain,"👤 Cảnh báo : OFF", Color3.fromRGB(200,50,50))
-local btnJump     = createButton(scrollMain,"🟢 JumpPower : OFF", Color3.fromRGB(200,50,50))
-local btnServer   = createButton(scrollMain,"🌍 Đổi Server", Color3.fromRGB(80,150,250))
-local btnShader   = createButton(scrollMain,"✨ Shader & Fix Lag : OFF", Color3.fromRGB(200,50,50))
-local btnEsp2     = createButton(scrollMain,"ESP v2 & Hitbox", Color3.fromRGB(255,140,0))
-local btnLockBase = createButton(scrollMain,"🔒 Khoá Base", Color3.fromRGB(180,100,250))
-local btnRun      = createButton(scrollMain,"Chạy : OFF", Color3.fromRGB(200,50,50))
-local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(200,50,50))
-local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200,50,50))
-local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100,200,255))
-local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200,50,50))
+local btnLift     = createButton(scrollMain,"Nâng : OFF", Color3.fromRGB(200, 80, 80))
+local btnFly      = createButton(scrollMain,"Đi Trên Không : OFF", Color3.fromRGB(200, 100, 80))
+local btnESP      = createButton(scrollMain,"ESP : OFF", Color3.fromRGB(80, 150, 200))
+local btnWarn     = createButton(scrollMain,"Cảnh báo : OFF", Color3.fromRGB(200, 160, 80))
+local btnJump     = createButton(scrollMain,"JumpPower : OFF", Color3.fromRGB(80, 200, 120))
+local btnServer   = createButton(scrollMain,"Đổi Server", Color3.fromRGB(80, 150, 250))
+local btnShader   = createButton(scrollMain,"Shader & Fix Lag : OFF", Color3.fromRGB(180, 100, 220))
+local btnEsp2     = createButton(scrollMain,"ESP v2 & Hitbox", Color3.fromRGB(255, 140, 0))
+local btnLockBase = createButton(scrollMain,"Khoá Base", Color3.fromRGB(180, 100, 250))
+local btnRun      = createButton(scrollMain,"Chạy : OFF", Color3.fromRGB(80, 180, 220))
+local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(220, 80, 160))
+local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(120, 200, 100))
+local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
+local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(150, 150, 200))
+
+-- Nút Đẩy Trọng Lực & Gây Lag
+local btnGravityLag = createButton(scrollMain,"Đẩy Trọng Lực & Gây Lag", Color3.fromRGB(255, 120, 120))
+btnGravityLag.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/j1K3XGTt/raw"))()
+end)
+
+-- Nút All Anti 99%
+local btnAllAnti = createButton(scrollMain,"All Anti 99%", Color3.fromRGB(120, 255, 150))
+btnAllAnti.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/xDLJS1JV/raw"))()
+end)
 
 --------------------------------------------------
 -- ALL SCRIPT TAB (Krud + Ajjans)
@@ -213,17 +363,26 @@ local function showNotify(msg)
 	end)
 end
 
-local btnKrudHub = createButton(scrollAll,"🔥 Krud Hub", Color3.fromRGB(250,120,80))
+local btnKrudHub = createButton(scrollAll,"Krud Hub", Color3.fromRGB(250, 120, 80))
 btnKrudHub.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))()
 	showNotify("✅ Krud Hub đã bật!")
 end)
 
-local btnAjjans = createButton(scrollAll,"⚡ Ajjans GUI", Color3.fromRGB(120,200,250))
+local btnAjjans = createButton(scrollAll,"Ajjans GUI", Color3.fromRGB(120, 200, 250))
 btnAjjans.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/onliengamerop/Steal-a-brainrot/refs/heads/main/Protected_3771863424757750.lua.txt"))()
 	showNotify("✅ Ajjans GUI đã bật!")
 end)
+
+-- [Các phần code về Gravity, Lift, Fly, ESP, Warning, Jump Power, Server, Shader, ESP v2, Lock Base, Run, Aimbot, ESP Base, Esp Camera, Anti Kick]
+-- [Vui lòng giữ nguyên các phần này từ code gốc của bạn]
+
+-- ... (giữ nguyên tất cả các phần code chức năng từ bản gốc)
+
+--------------------------------------------------
+-- Kết thúc code
+--------------------------------------------------
 
 --------------------------------------------------
 --
@@ -468,7 +627,7 @@ btnLift.MouseButton1Click:Connect(function()
 		liftPart.Transparency = 0.2
 		liftPart.Parent = workspace
 
-		btnLift.Text = "⬆️ Lift : ON"
+		btnLift.Text = "Lift : ON"
 		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
 		liftConnection = RunService.RenderStepped:Connect(function(dt)
@@ -480,7 +639,7 @@ btnLift.MouseButton1Click:Connect(function()
 	else
 		if liftPart then liftPart:Destroy() liftPart = nil end
 		if liftConnection then liftConnection:Disconnect() liftConnection = nil end
-		btnLift.Text = "⬆️ Lift : OFF"
+		btnLift.Text = "Lift : OFF"
 		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end)
@@ -509,7 +668,7 @@ btnFly.MouseButton1Click:Connect(function()
 
 		flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, flyHeight, 0))
 
-		btnFly.Text = "🛑 Đi Trên Không : ON"
+		btnFly.Text = "Đi Trên Không : ON"
 		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
 
 		goingUp, flyTimer = true, 0
@@ -529,7 +688,7 @@ btnFly.MouseButton1Click:Connect(function()
 	else
 		if flyPart then flyPart:Destroy() flyPart = nil end
 		if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-		btnFly.Text = "🛑 Đi Trên Không : OFF"
+		btnFly.Text = "Đi Trên Không : OFF"
 		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	end
 end)
@@ -562,7 +721,7 @@ end
 btnESP.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 	if espEnabled then
-		btnESP.Text = "👀 ESP : ON"
+		btnESP.Text = "ESP : ON"
 		btnESP.BackgroundColor3 = Color3.fromRGB(50,200,50)
 		for _,plr in pairs(Players:GetPlayers()) do
 			if plr ~= player then
@@ -576,7 +735,7 @@ btnESP.MouseButton1Click:Connect(function()
 			end
 		end
 	else
-		btnESP.Text = "👀 ESP : OFF"
+		btnESP.Text = "ESP : OFF"
 		btnESP.BackgroundColor3 = Color3.fromRGB(200,50,50)
 		for _,plr in pairs(Players:GetPlayers()) do
 			if plr ~= player then
@@ -607,7 +766,7 @@ local warnConnection = nil
 btnWarn.MouseButton1Click:Connect(function()
 	warnEnabled = not warnEnabled
 	if warnEnabled then
-		btnWarn.Text = "👤 Warning : ON"
+		btnWarn.Text = "Warning : ON"
 		btnWarn.BackgroundColor3 = Color3.fromRGB(50,200,50)
 		warnConnection = RunService.RenderStepped:Connect(function()
 			local char = player.Character
@@ -629,7 +788,7 @@ btnWarn.MouseButton1Click:Connect(function()
 			end
 		end)
 	else
-		btnWarn.Text = "👤 Warning : OFF"
+		btnWarn.Text = "Warning : OFF"
 		btnWarn.BackgroundColor3 = Color3.fromRGB(200,50,50)
 		if warnConnection then warnConnection:Disconnect() warnConnection=nil end
 		warnLabel.Visible=false
@@ -647,7 +806,7 @@ btnJump.MouseButton1Click:Connect(function()
 		hum.UseJumpPower = true
 		hum.JumpPower = jumpOn and 150 or 50
 	end
-	btnJump.Text = jumpOn and "🟢 JumpPower : ON" or "🟢 JumpPower : OFF"
+	btnJump.Text = jumpOn and "JumpPower : ON" or "JumpPower : OFF"
 	btnJump.BackgroundColor3 = jumpOn and Color3.fromRGB(50,200,50) or Color3.fromRGB(200,50,50)
 end)
 
@@ -684,7 +843,7 @@ local shaderGuiName = "Shader4_MainUI"
 btnShader.MouseButton1Click:Connect(function()
 	shaderOn = not shaderOn
 	if shaderOn then
-		btnShader.Text = "✨ Shader & Fix Lag : ON"
+		btnShader.Text = "Shader & Fix Lag : ON"
 		btnShader.BackgroundColor3 = Color3.fromRGB(50,200,50)
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Shader4"))()
 	else
