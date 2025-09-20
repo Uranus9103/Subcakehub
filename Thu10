@@ -28,7 +28,7 @@ local colorPalette = {
 	light = Color3.fromRGB(240, 240, 240)
 }
 
--- Tạo gradient color function
+-- Rainbow gradient
 local function getRainbowColor(t)
 	local frequency = 0.3
 	local r = math.sin(frequency * t + 0) * 127 + 128
@@ -37,13 +37,13 @@ local function getRainbowColor(t)
 	return Color3.fromRGB(r, g, b)
 end
 
--- Toggle button với icon - SỬA LẠI PHẦN NÀY
+-- Toggle menu button
 local toggleBtn = Instance.new("ImageButton")
 toggleBtn.Size = UDim2.new(0, 60, 0, 60)
 toggleBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
 toggleBtn.BackgroundColor3 = colorPalette.dark
 toggleBtn.BackgroundTransparency = 0.4
-toggleBtn.Image = "rbxassetid://131679774975668" -- Icon mặc định
+toggleBtn.Image = "rbxassetid://131679774975668"
 toggleBtn.ScaleType = Enum.ScaleType.Fit
 toggleBtn.Parent = gui
 toggleBtn.Active = true
@@ -59,18 +59,17 @@ btnStroke.Thickness = 2
 btnStroke.Color = colorPalette.secondary
 btnStroke.Parent = toggleBtn
 
--- Thêm một ImageLabel để hiển thị icon thay thế khi ẩn menu
 local toggleIcon = Instance.new("ImageLabel")
-toggleIcon.Size = UDim2.new(0.7, 0, 0.7, 0)
-toggleIcon.Position = UDim2.new(0.15, 0, 0.15, 0)
+toggleIcon.Size = UDim2.new(0.7,0,0.7,0)
+toggleIcon.Position = UDim2.new(0.15,0,0.15,0)
 toggleIcon.BackgroundTransparency = 1
-toggleIcon.Image = "rbxassetid://131679774975668" -- Giữ nguyên icon
+toggleIcon.Image = "rbxassetid://131679774975668"
 toggleIcon.Parent = toggleBtn
 
--- Khung menu chính với background trong suốt và viền đẹp
+-- Main frame
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 320, 0, 380)
-frame.Position = UDim2.new(0.05, 0, 0.1, 0)
+frame.Size = UDim2.new(0,320,0,380)
+frame.Position = UDim2.new(0.05,0,0.1,0)
 frame.BackgroundColor3 = colorPalette.dark
 frame.BackgroundTransparency = 0.2
 frame.Active = true
@@ -79,7 +78,7 @@ frame.Visible = false
 frame.Parent = gui
 
 local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 15)
+frameCorner.CornerRadius = UDim.new(0,15)
 frameCorner.Parent = frame
 
 local frameStroke = Instance.new("UIStroke")
@@ -88,16 +87,16 @@ frameStroke.Thickness = 3
 frameStroke.Color = colorPalette.secondary
 frameStroke.Parent = frame
 
--- Tabs container với gradient
+-- Tabs
 local tabFrame = Instance.new("Frame")
-tabFrame.Size = UDim2.new(1, -20, 0, 40)
-tabFrame.Position = UDim2.new(0, 10, 0, 10)
+tabFrame.Size = UDim2.new(1,-20,0,40)
+tabFrame.Position = UDim2.new(0,10,0,10)
 tabFrame.BackgroundColor3 = colorPalette.dark
 tabFrame.BackgroundTransparency = 0.4
 tabFrame.Parent = frame
 
 local tabCorner = Instance.new("UICorner")
-tabCorner.CornerRadius = UDim.new(0, 10)
+tabCorner.CornerRadius = UDim.new(0,10)
 tabCorner.Parent = tabFrame
 
 local tabStroke = Instance.new("UIStroke")
@@ -106,70 +105,70 @@ tabStroke.Thickness = 2
 tabStroke.Color = colorPalette.secondary
 tabStroke.Parent = tabFrame
 
--- Nút chọn Tab
+-- Nút Main / All Script (giữ màu rõ)
 local btnMain = Instance.new("TextButton")
-btnMain.Size = UDim2.new(0.45, 0, 0.8, 0)
-btnMain.Position = UDim2.new(0.025, 0, 0.1, 0)
+btnMain.Size = UDim2.new(0.45,0,0.8,0)
+btnMain.Position = UDim2.new(0.025,0,0.1,0)
 btnMain.Text = "MAIN"
 btnMain.TextScaled = true
 btnMain.BackgroundColor3 = colorPalette.primary
-btnMain.BackgroundTransparency = 0.3
+btnMain.BackgroundTransparency = 0.4
 btnMain.TextColor3 = colorPalette.light
 btnMain.Font = Enum.Font.GothamBold
 btnMain.ZIndex = 2
 btnMain.Parent = tabFrame
 
 local btnMainCorner = Instance.new("UICorner")
-btnMainCorner.CornerRadius = UDim.new(0, 8)
+btnMainCorner.CornerRadius = UDim.new(0,8)
 btnMainCorner.Parent = btnMain
 
 local btnMainStroke = Instance.new("UIStroke")
 btnMainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 btnMainStroke.Thickness = 2
-btnMainStroke.Color = Color3.fromRGB(100, 220, 100)
+btnMainStroke.Color = Color3.fromRGB(100,220,100)
 btnMainStroke.Parent = btnMain
 
 local btnAll = Instance.new("TextButton")
-btnAll.Size = UDim2.new(0.45, 0, 0.8, 0)
-btnAll.Position = UDim2.new(0.525, 0, 0.1, 0)
+btnAll.Size = UDim2.new(0.45,0,0.8,0)
+btnAll.Position = UDim2.new(0.525,0,0.1,0)
 btnAll.Text = "ALL SCRIPT"
 btnAll.TextScaled = true
 btnAll.BackgroundColor3 = colorPalette.secondary
-btnAll.BackgroundTransparency = 0.3
+btnAll.BackgroundTransparency = 0.4
 btnAll.TextColor3 = colorPalette.light
 btnAll.Font = Enum.Font.GothamBold
 btnAll.ZIndex = 2
 btnAll.Parent = tabFrame
 
 local btnAllCorner = Instance.new("UICorner")
-btnAllCorner.CornerRadius = UDim.new(0, 8)
+btnAllCorner.CornerRadius = UDim.new(0,8)
 btnAllCorner.Parent = btnAll
 
 local btnAllStroke = Instance.new("UIStroke")
 btnAllStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 btnAllStroke.Thickness = 2
-btnAllStroke.Color = Color3.fromRGB(120, 120, 220)
+btnAllStroke.Color = Color3.fromRGB(120,120,220)
 btnAllStroke.Parent = btnAll
 
--- Scroll cho Main
+-- Scroll Frames
 local scrollMain = Instance.new("ScrollingFrame")
-scrollMain.Size = UDim2.new(1, -20, 1, -60)
-scrollMain.Position = UDim2.new(0, 10, 0, 55)
+scrollMain.Size = UDim2.new(1,-20,1,-60)
+scrollMain.Position = UDim2.new(0,10,0,55)
 scrollMain.BackgroundColor3 = colorPalette.dark
 scrollMain.BackgroundTransparency = 0.6
 scrollMain.BorderSizePixel = 0
-scrollMain.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollMain.CanvasSize = UDim2.new(0,0,0,0)
 scrollMain.ScrollBarThickness = 6
 scrollMain.ScrollBarImageColor3 = colorPalette.secondary
 scrollMain.Parent = frame
 
 local scrollMainCorner = Instance.new("UICorner")
-scrollMainCorner.CornerRadius = UDim.new(0, 12)
+scrollMainCorner.CornerRadius = UDim.new(0,12)
 scrollMainCorner.Parent = scrollMain
 
 local layoutMain = Instance.new("UIGridLayout")
-layoutMain.CellSize = UDim2.new(0.45, 0, 0, 45)
-layoutMain.CellPadding = UDim2.new(0.05, 0, 0.05, 0)
+layoutMain.CellSize = UDim2.new(0.45,0,0,45)
+layoutMain.CellPadding = UDim2.new(0.05,0,0.05,0)
 layoutMain.FillDirection = Enum.FillDirection.Horizontal
 layoutMain.SortOrder = Enum.SortOrder.LayoutOrder
 layoutMain.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -177,29 +176,28 @@ layoutMain.VerticalAlignment = Enum.VerticalAlignment.Top
 layoutMain.Parent = scrollMain
 
 layoutMain:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scrollMain.CanvasSize = UDim2.new(0, 0, 0, layoutMain.AbsoluteContentSize.Y + 15)
+	scrollMain.CanvasSize = UDim2.new(0,0,0,layoutMain.AbsoluteContentSize.Y + 15)
 end)
 
--- Scroll cho All Script
 local scrollAll = Instance.new("ScrollingFrame")
-scrollAll.Size = UDim2.new(1, -20, 1, -60)
-scrollAll.Position = UDim2.new(0, 10, 0, 55)
+scrollAll.Size = UDim2.new(1,-20,1,-60)
+scrollAll.Position = UDim2.new(0,10,0,55)
 scrollAll.BackgroundColor3 = colorPalette.dark
 scrollAll.BackgroundTransparency = 0.6
 scrollAll.BorderSizePixel = 0
-scrollAll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollAll.CanvasSize = UDim2.new(0,0,0,0)
 scrollAll.ScrollBarThickness = 6
 scrollAll.ScrollBarImageColor3 = colorPalette.secondary
 scrollAll.Visible = false
 scrollAll.Parent = frame
 
 local scrollAllCorner = Instance.new("UICorner")
-scrollAllCorner.CornerRadius = UDim.new(0, 12)
+scrollAllCorner.CornerRadius = UDim.new(0,12)
 scrollAllCorner.Parent = scrollAll
 
 local layoutAll = Instance.new("UIGridLayout")
-layoutAll.CellSize = UDim2.new(0.9, 0, 0, 45)
-layoutAll.CellPadding = UDim2.new(0, 0, 0.05, 0)
+layoutAll.CellSize = UDim2.new(0.9,0,0,45)
+layoutAll.CellPadding = UDim2.new(0,0,0.05,0)
 layoutAll.FillDirection = Enum.FillDirection.Vertical
 layoutAll.SortOrder = Enum.SortOrder.LayoutOrder
 layoutAll.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -207,69 +205,67 @@ layoutAll.VerticalAlignment = Enum.VerticalAlignment.Top
 layoutAll.Parent = scrollAll
 
 layoutAll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scrollAll.CanvasSize = UDim2.new(0, 0, 0, layoutAll.AbsoluteContentSize.Y + 15)
+	scrollAll.CanvasSize = UDim2.new(0,0,0,layoutAll.AbsoluteContentSize.Y + 15)
 end)
 
--- Hàm tạo nút đẹp với hiệu ứng trong suốt và hover
-local function createButton(parent, text, color)
+-- ===========================
+-- Hàm tạo nút trong suốt nhưng vẫn thấy màu
+-- ===========================
+local function createButton(parent,text,color)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0, 0, 0, 0)
+	btn.Size = UDim2.new(0,0,0,0)
 	btn.Text = text
 	btn.TextScaled = true
 	btn.BackgroundColor3 = color
-	btn.BackgroundTransparency = 0.4  -- Trong suốt
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Font = Enum.Font.GothamBold
+	btn.BackgroundTransparency = 0.7  -- trong suốt
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
 	btn.TextStrokeTransparency = 0.8
-	btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	btn.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+	btn.Font = Enum.Font.GothamBold
 	btn.AutoButtonColor = false
 	btn.Parent = parent
-	
+
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
+	corner.CornerRadius = UDim.new(0,10)
 	corner.Parent = btn
-	
+
 	local stroke = Instance.new("UIStroke")
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Thickness = 2
-	stroke.Color = Color3.fromRGB(255, 255, 255)
-	stroke.Transparency = 0.7
+	stroke.Color = color
+	stroke.Transparency = 0.5
 	stroke.Parent = btn
-	
+
 	local highlight = Instance.new("Frame")
-	highlight.Size = UDim2.new(1, 0, 1, 0)
-	highlight.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	highlight.Size = UDim2.new(1,0,1,0)
+	highlight.BackgroundColor3 = Color3.fromRGB(255,255,255)
 	highlight.BackgroundTransparency = 0.9
 	highlight.BorderSizePixel = 0
 	highlight.ZIndex = 2
 	highlight.Visible = false
 	highlight.Parent = btn
-	
+
 	local highlightCorner = Instance.new("UICorner")
-	highlightCorner.CornerRadius = UDim.new(0, 10)
+	highlightCorner.CornerRadius = UDim.new(0,10)
 	highlightCorner.Parent = highlight
-	
-	-- Hiệu ứng hover
+
 	btn.MouseEnter:Connect(function()
 		highlight.Visible = true
-		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
-		TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.5}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.3}):Play()
 	end)
-	
 	btn.MouseLeave:Connect(function()
 		highlight.Visible = false
-		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
-		TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.7}):Play()
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.7}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.5}):Play()
 	end)
-	
 	btn.MouseButton1Down:Connect(function()
-		TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.6}):Play()
 	end)
-	
 	btn.MouseButton1Up:Connect(function()
-		TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.2}):Play()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.5}):Play()
 	end)
-	
+
 	return btn
 end
 
@@ -288,12 +284,11 @@ btnAll.MouseButton1Click:Connect(function()
 	scrollMain.Visible = false
 end)
 
--- Toggle menu - SỬA LẠI PHẦN NÀY
+-- Toggle menu
 local menuVisible = false
 toggleBtn.MouseButton1Click:Connect(function()
 	menuVisible = not menuVisible
 	frame.Visible = menuVisible
-	-- Chỉ thay đổi ảnh của ImageLabel bên trong, không thay đổi ImageButton
 	toggleIcon.Image = menuVisible and "rbxassetid://131679774975668" or "rbxassetid://131679774975668"
 end)
 
@@ -307,24 +302,28 @@ RunService.RenderStepped:Connect(function(delta)
 end)
 
 --------------------------------------
+-- MAIN TAB (nút chức năng với màu sắc đẹp)
+--------------------------------------
+
+--------------------------------------
 
 --------------------------------------------------
 -- MAIN TAB (nút chức năng với màu sắc đẹp)
 --------------------------------------------------
 local btnLift     = createButton(scrollMain,"Nâng : OFF", Color3.fromRGB(200, 80, 80))
-local btnFly      = createButton(scrollMain,"Đi Trên Không : OFF", Color3.fromRGB(200, 100, 80))
-local btnESP      = createButton(scrollMain,"ESP : OFF", Color3.fromRGB(80, 150, 200))
-local btnWarn     = createButton(scrollMain,"Cảnh báo : OFF", Color3.fromRGB(200, 160, 80))
-local btnJump     = createButton(scrollMain,"JumpPower : OFF", Color3.fromRGB(80, 200, 120))
+local btnFly      = createButton(scrollMain,"Đi Trên Không : OFF", Color3.fromRGB(200, 80, 80))
+local btnESP      = createButton(scrollMain,"ESP : OFF", Color3.fromRGB(200, 80, 80))
+local btnWarn     = createButton(scrollMain,"Cảnh báo : OFF", Color3.fromRGB(200, 80, 80))
+local btnJump     = createButton(scrollMain,"JumpPower : OFF", Color3.fromRGB(200, 80, 80))
 local btnServer   = createButton(scrollMain,"Đổi Server", Color3.fromRGB(80, 150, 250))
-local btnShader   = createButton(scrollMain,"Shader & Fix Lag : OFF", Color3.fromRGB(180, 100, 220))
+local btnShader   = createButton(scrollMain,"Shader & Fix Lag : OFF", Color3.fromRGB(200, 80, 80))
 local btnEsp2     = createButton(scrollMain,"ESP v2 & Hitbox", Color3.fromRGB(255, 140, 0))
 local btnLockBase = createButton(scrollMain,"Khoá Base", Color3.fromRGB(180, 100, 250))
-local btnRun      = createButton(scrollMain,"Chạy : OFF", Color3.fromRGB(80, 180, 220))
-local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(220, 80, 160))
-local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(120, 200, 100))
+local btnRun      = createButton(scrollMain,"Chạy : OFF", Color3.fromRGB(200, 80, 80))
+local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(200, 80, 80))
+local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200, 80, 80))
 local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
-local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(150, 150, 200))
+local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
 
 -- Nút Đẩy Trọng Lực & Gây Lag
 local btnGravityLag = createButton(scrollMain,"Đẩy Trọng Lực & Gây Lag", Color3.fromRGB(255, 120, 120))
