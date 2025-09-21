@@ -326,33 +326,16 @@ local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 20
 local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
 
 -- Nút Đẩy Trọng Lực & Gây Lag
-local btnGravityLag = createButton(scrollMain,"Đang fix…", Color3.fromRGB(255, 120, 120))
+local btnGravityLag = createButton(scrollMain,"Đẩy Trọng Lực & Gây Lag", Color3.fromRGB(255, 120, 120))
 btnGravityLag.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet(""))()
+	loadstring(game:HttpGet("https://pastefy.app/WFQAcAV6/raw"))()
 end)
 
 -- Nút All Anti 99%
-local btnAllAnti = createButton(scrollMain,"All Anti 99%", Color3.fromRGB(120, 255, 150))
+local btnAllAnti = createButton(scrollMain,"All Anti 70%", Color3.fromRGB(120, 255, 150))
 btnAllAnti.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://pastefy.app/xDLJS1JV/raw"))()
 end)
-
--- Nút: Đi Trên Không v2
-local btnFlyV2 = createButton(scrollMain, "Đi Trên Không v2", Color3.fromRGB(200,80,80))
-btnFlyV2.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://pastefy.app/rqfeSQbN/raw"))()
-    end)
-end)
-
--- Nút: Anti-ban
-local btnAntiBan = createButton(scrollMain, "Anti-ban", Color3.fromRGB(200,80,80))
-btnAntiBan.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://pastefy.app/7OVflndN/raw"))()
-    end)
-end)
-
 
 --------------------------------------------------
 -- ALL SCRIPT TAB (Krud + Ajjans)
