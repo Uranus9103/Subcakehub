@@ -337,6 +337,23 @@ btnAllAnti.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://pastefy.app/xDLJS1JV/raw"))()
 end)
 
+-- Nút: Đi Trên Không v2
+local btnFlyV2 = createButton(scrollMain, "Đi Trên Không v2", Color3.fromRGB(200,80,80))
+btnFlyV2.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/rqfeSQbN/raw"))()
+    end)
+end)
+
+-- Nút: Anti-ban
+local btnAntiBan = createButton(scrollMain, "Anti-ban", Color3.fromRGB(200,80,80))
+btnAntiBan.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/7OVflndN/raw"))()
+    end)
+end)
+
+
 --------------------------------------------------
 -- ALL SCRIPT TAB (Krud + Ajjans)
 --------------------------------------------------
