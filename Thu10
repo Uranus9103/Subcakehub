@@ -353,6 +353,63 @@ btnAntiBan.MouseButton1Click:Connect(function()
     end)
 end)
 
+-- nút chạy pastefy (đặt trong MAIN)
+local btnRunPastefy = createButton(scrollMain, "Anti V2", Color3.fromRGB(120,220,120))
+
+btnRunPastefy.MouseButton1Click:Connect(function()
+    -- khóa nút tránh spam
+    btnRunPastefy.Active = false
+    btnRunPastefy.AutoButtonColor = false
+    local oldText = btnRunPastefy.Text
+    local oldColor = btnRunPastefy.BackgroundColor3
+    btnRunPastefy.Text = "Đang chạy..."
+    btnRunPastefy.BackgroundColor3 = Color3.fromRGB(255,200,0)
+
+    -- Hiện notify (sử dụng showNotify nếu có, nếu không tạo tạm)
+    local function shortNotify(text)
+        if type(showNotify) == "function" then
+            showNotify(text)
+            return
+        end
+        local n = Instance.new("TextLabel")
+        n.Size = UDim2.new(0,260,0,40)
+        n.Position = UDim2.new(0.5,-130,0.8,0)
+        n.BackgroundColor3 = Color3.fromRGB(20,20,20)
+        n.BackgroundTransparency = 0.2
+        n.Text = text
+        n.TextScaled = true
+        n.TextColor3 = Color3.fromRGB(0,255,120)
+        n.Font = Enum.Font.GothamBold
+        n.Parent = gui
+        local c = Instance.new("UICorner", n)
+        c.CornerRadius = UDim.new(0,8)
+        game:GetService("TweenService"):Create(n, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
+        task.delay(2, function() if n and n.Parent then n:Destroy() end end)
+    end
+
+    -- chạy script từ pastefy
+    task.spawn(function()
+        local ok, err = pcall(function()
+            local src = game:HttpGet("https://pastefy.app/BsG170GH/raw")
+            local f = loadstring(src)
+            if type(f) == "function" then f() end
+        end)
+
+        if ok then
+            shortNotify("✅ Script đã chạy. Có thể rejoin 1-2 lần.")
+        else
+            shortNotify("❌ Lỗi khi chạy: "..tostring(err))
+            warn("Error running pastefy script:", err)
+        end
+
+        -- khôi phục nút
+        btnRunPastefy.Text = oldText
+        btnRunPastefy.BackgroundColor3 = oldColor
+        btnRunPastefy.Active = true
+        btnRunPastefy.AutoButtonColor = true
+    end)
+end)
+
 
 --------------------------------------------------
 -- ALL SCRIPT TAB (Krud + Ajjans)
