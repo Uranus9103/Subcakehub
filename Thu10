@@ -319,7 +319,7 @@ local btnServer   = createButton(scrollMain,"Đổi Server", Color3.fromRGB(80, 
 local btnShader   = createButton(scrollMain,"Shader & Fix Lag : OFF", Color3.fromRGB(200, 80, 80))
 local btnEsp2     = createButton(scrollMain,"ESP v2 & Hitbox", Color3.fromRGB(255, 140, 0))
 local btnLockBase = createButton(scrollMain,"Khoá Base", Color3.fromRGB(180, 100, 250))
-local btnRun      = createButton(scrollMain,"Fix….", Color3.fromRGB(200, 80, 80))
+local btnRun      = createButton(scrollMain,"Bất tử : OFF", Color3.fromRGB(200, 80, 80))
 local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(200, 80, 80))
 local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200, 80, 80))
 local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
@@ -947,11 +947,11 @@ local runOn = false
 btnRun.MouseButton1Click:Connect(function()
 	runOn = not runOn
 	if runOn then
-		btnRun.Text = "Fix…."
+		btnRun.Text = "Bất tử : ON"
 		btnRun.BackgroundColor3 = Color3.fromRGB(50,200,50)
-		loadstring(game:HttpGet(""))()
+		loadstring(game:HttpGet("https://pastefy.app/lRsS0xIB/raw"))()
 	else
-		btnRun.Text = "Fix…."
+		btnRun.Text = "Bất tử : OFF"
 		btnRun.BackgroundColor3 = Color3.fromRGB(200,50,50)
 		-- Nếu script kia có GUI riêng thì xoá
 		local runGui = player:FindFirstChild("PlayerGui"):FindFirstChild("RunGui")
