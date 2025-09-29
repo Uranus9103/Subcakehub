@@ -410,6 +410,21 @@ btnRunPastefy.MouseButton1Click:Connect(function()
     end)
 end)
 
+-- Thêm nút Server trống vào MAIN tab
+local btnEmptyServer = createButton(scrollMain, "Server trống", Color3.fromRGB(0, 0, 0))
+btnEmptyServer.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/BQTNEEOj/raw"))()
+end)
+
+-- Thêm hiệu ứng đổi màu viền cho nút Server trống
+local emptyServerStroke = btnEmptyServer:FindFirstChildOfClass("UIStroke")
+if emptyServerStroke then
+    RunService.RenderStepped:Connect(function(delta)
+        t += delta
+        local rainbowColor = getRainbowColor(t)
+        emptyServerStroke.Color = rainbowColor
+    end)
+end
 
 --------------------------------------------------
 -- ALL SCRIPT TAB (Krud + Ajjans)
