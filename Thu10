@@ -68,7 +68,7 @@ toggleIcon.Parent = toggleBtn
 
 -- Main frame
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,320,0,380)
+frame.Size = UDim2.new(0,320,0,420) -- Tăng chiều cao để chứa gravity frame
 frame.Position = UDim2.new(0.05,0,0.1,0)
 frame.BackgroundColor3 = colorPalette.dark
 frame.BackgroundTransparency = 0.2
@@ -152,7 +152,7 @@ btnAllStroke.Parent = btnAll
 
 -- Scroll Frames
 local scrollMain = Instance.new("ScrollingFrame")
-scrollMain.Size = UDim2.new(1,-20,1,-60)
+scrollMain.Size = UDim2.new(1,-20,1,-100) -- Giảm chiều cao để nhường chỗ cho gravity frame
 scrollMain.Position = UDim2.new(0,10,0,55)
 scrollMain.BackgroundColor3 = colorPalette.dark
 scrollMain.BackgroundTransparency = 0.6
@@ -305,11 +305,47 @@ end)
 -- MAIN TAB (nút chức năng với màu sắc đẹp)
 --------------------------------------
 
---------------------------------------
+-- Tạo gravity frame trước (sẽ hiển thị dưới cùng)
+local gravityFrame = Instance.new("Frame")
+gravityFrame.Size = UDim2.new(1, -10, 0, 40)
+gravityFrame.Position = UDim2.new(0, 5, 1, -45) -- Vị trí dưới cùng
+gravityFrame.BackgroundColor3 = Color3.fromRGB(60,60,60)
+gravityFrame.Visible = false -- mặc định ẩn
+gravityFrame.Parent = frame
 
---------------------------------------------------
--- MAIN TAB (nút chức năng với màu sắc đẹp)
---------------------------------------------------
+local gravityCorner = Instance.new("UICorner")
+gravityCorner.CornerRadius = UDim.new(0,10)
+gravityCorner.Parent = gravityFrame
+
+-- Label
+local gravityLabel = Instance.new("TextLabel")
+gravityLabel.Size = UDim2.new(0.4,0,1,0)
+gravityLabel.Position = UDim2.new(0,5,0,0)
+gravityLabel.BackgroundTransparency = 1
+gravityLabel.Text = "Gravity:"
+gravityLabel.Font = Enum.Font.GothamBold
+gravityLabel.TextColor3 = Color3.new(1,1,1)
+gravityLabel.TextScaled = true
+gravityLabel.Parent = gravityFrame
+
+-- TextBox nhập số
+local gravityBox = Instance.new("TextBox")
+gravityBox.Size = UDim2.new(0.55,0,0.8,0)
+gravityBox.Position = UDim2.new(0.42,0,0.1,0)
+gravityBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+gravityBox.Text = ""
+gravityBox.PlaceholderText = "Nhập số..."
+gravityBox.TextColor3 = Color3.new(1,1,1)
+gravityBox.Font = Enum.Font.GothamBold
+gravityBox.TextScaled = true
+gravityBox.ClearTextOnFocus = false
+gravityBox.Parent = gravityFrame
+
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0,8)
+boxCorner.Parent = gravityBox
+
+-- Tạo các nút trong MAIN tab
 local btnLift     = createButton(scrollMain,"Nâng : OFF", Color3.fromRGB(200, 80, 80))
 local btnFly      = createButton(scrollMain,"Đi Trên Không : OFF", Color3.fromRGB(200, 80, 80))
 local btnESP      = createButton(scrollMain,"ESP : OFF", Color3.fromRGB(200, 80, 80))
@@ -324,6 +360,7 @@ local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fro
 local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200, 80, 80))
 local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
 local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
+local btnEspBrainrot = createButton(scrollMain,"Esp brainrot", Color3.fromRGB(255, 100, 200)) -- Nút mới
 
 -- Nút Đẩy Trọng Lực & Gây Lag
 local btnGravityLag = createButton(scrollMain,"Đẩy Trọng Lực & Gây Lag", Color3.fromRGB(255, 120, 120))
@@ -426,6 +463,11 @@ if emptyServerStroke then
     end)
 end
 
+-- Nút Esp brainrot
+btnEspBrainrot.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espbrainrot"))()
+end)
+
 --------------------------------------------------
 -- ALL SCRIPT TAB (Krud + Ajjans)
 --------------------------------------------------
@@ -463,77 +505,10 @@ btnAjjans.MouseButton1Click:Connect(function()
 	showNotify("✅ Ajjans GUI đã bật!")
 end)
 
--- [Các phần code về Gravity, Lift, Fly, ESP, Warning, Jump Power, Server, Shader, ESP v2, Lock Base, Run, Aimbot, ESP Base, Esp Camera, Anti Kick]
--- [Vui lòng giữ nguyên các phần này từ code gốc của bạn]
-
--- ... (giữ nguyên tất cả các phần code chức năng từ bản gốc)
-
---------------------------------------------------
--- Kết thúc code
---------------------------------------------------
-
---------------------------------------------------
---
---------------------------------------------------
-
---------------------------------------------------
---
---------------------------------------------------
-
---------------------------------------------------
---
---------------------------------------------------
-
---------------------------------------------------
--- Gravity (mới thêm)
---------------------------------------------------
-
---------------------------------------------------
--- Gravity (fix theo yêu cầu)
---------------------------------------------------
-
 --------------------------------------------------
 -- Gravity (fix)
 --------------------------------------------------
 local gravityOn = false
--- Frame chứa TextBox
-local gravityFrame = Instance.new("Frame")
-gravityFrame.Size = UDim2.new(1, -10, 0, 40)
-gravityFrame.BackgroundColor3 = Color3.fromRGB(60,60,60)
-gravityFrame.Visible = false -- mặc định ẩn
-gravityFrame.Parent = scrollMain -- ⚡ ĐÚNG: cho vào tab MAIN
-
-local gravityCorner = Instance.new("UICorner")
-gravityCorner.CornerRadius = UDim.new(0,10)
-gravityCorner.Parent = gravityFrame
-
--- Label
-local gravityLabel = Instance.new("TextLabel")
-gravityLabel.Size = UDim2.new(0.4,0,1,0)
-gravityLabel.Position = UDim2.new(0,5,0,0)
-gravityLabel.BackgroundTransparency = 1
-gravityLabel.Text = "Gravity:"
-gravityLabel.Font = Enum.Font.GothamBold
-gravityLabel.TextColor3 = Color3.new(1,1,1)
-gravityLabel.TextScaled = true
-gravityLabel.Parent = gravityFrame
-
--- TextBox nhập số
-local gravityBox = Instance.new("TextBox")
-gravityBox.Size = UDim2.new(0.55,0,0.8,0)
-gravityBox.Position = UDim2.new(0.42,0,0.1,0)
-gravityBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
-gravityBox.Text = ""
-gravityBox.PlaceholderText = "Nhập số..."
-gravityBox.TextColor3 = Color3.new(1,1,1)
-gravityBox.Font = Enum.Font.GothamBold
-gravityBox.TextScaled = true
-gravityBox.ClearTextOnFocus = false
-gravityBox.Parent = gravityFrame
-
-local boxCorner = Instance.new("UICorner")
-boxCorner.CornerRadius = UDim.new(0,8)
-boxCorner.Parent = gravityBox
 
 -- Khi nhập số và nhấn Enter
 gravityBox.FocusLost:Connect(function(enterPressed)
@@ -563,10 +538,14 @@ btnGravity.MouseButton1Click:Connect(function()
 	end
 end)
 
+--------------------------------------------------
+-- Các chức năng khác (giữ nguyên)
+--------------------------------------------------
 btnEspCam.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espcamera"))()
 end)
 
+-- ESP Base
 local espBaseOn = false
 local espLoop = nil
 local espList = {}
@@ -955,6 +934,7 @@ end)
 btnLockBase.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/SCVscript/refs/heads/main/Dk5"))()
 end)
+
 --------------------------------------------------
 -- Chạy (mới thêm)
 --------------------------------------------------
@@ -1004,3 +984,100 @@ mt.__namecall = newcclosure(function(self,...)
 	return old(self,...)
 end)
 setreadonly(mt,true)
+
+--------------------------------------------------
+-- ESP Earning (brainrot)
+--------------------------------------------------
+local Plots = workspace:FindFirstChild("Plots")
+
+-- Lấy số K/M từ text
+local function extractKValue(text)
+    text = text:gsub("%s+", ""):upper()
+
+    local numK = text:match("%$(%d+%.?%d*)K/S")
+    if numK then return tonumber(numK) end
+
+    local numM = text:match("%$(%d+%.?%d*)M/S")
+    if numM then return tonumber(numM) * 1000 end
+
+    return nil
+end
+
+-- Tạo hoặc cập nhật ESP
+local function updateEarningESP(parent, text, earningNum)
+    local billboard = parent:FindFirstChild("EarningESP")
+    local label
+
+    -- Nếu chưa có Billboard thì tạo mới
+    if not billboard then
+        billboard = Instance.new("BillboardGui")
+        billboard.Name = "EarningESP"
+        billboard.Size = UDim2.new(0, 100, 0, 20) -- nhỏ hơn
+        billboard.AlwaysOnTop = true
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.Parent = parent
+
+        label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBlack
+        label.TextSize = 14 -- chữ nhỏ
+        label.Name = "EarningLabel"
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 2
+        stroke.Color = Color3.fromRGB(0, 0, 0)
+        stroke.Parent = label
+
+        label.Parent = billboard
+    else
+        label = billboard:FindFirstChild("EarningLabel")
+    end
+
+    -- Cập nhật text
+    label.Text = text
+
+    -- Màu chữ dựa vào giá trị
+    if earningNum > 1000 then
+        label.TextColor3 = Color3.fromRGB(255, 0, 0) -- đỏ
+    elseif earningNum > 100 then
+        label.TextColor3 = Color3.fromRGB(255, 165, 0) -- cam
+    else
+        label.TextColor3 = Color3.fromRGB(255, 255, 0) -- vàng
+    end
+end
+
+-- Quét & cập nhật ESP liên tục
+task.spawn(function()
+    while task.wait(0.5) do -- quét mỗi 0.5 giây
+        if Plots then
+            for _, playerPlot in ipairs(Plots:GetChildren()) do
+                local animalPodiums = playerPlot:FindFirstChild("AnimalPodiums")
+                if animalPodiums then
+                    local highestPodium = nil
+                    local highestEarning = 0
+                    local highestText = ""
+
+                    for _, podium in ipairs(animalPodiums:GetChildren()) do
+                        for _, child in ipairs(podium:GetDescendants()) do
+                            if child:IsA("TextLabel") or child:IsA("TextButton") then
+                                local text = child.Text
+                                local earningNum = extractKValue(text)
+                                if earningNum and earningNum > highestEarning then
+                                    highestEarning = earningNum
+                                    highestPodium = podium
+                                    highestText = text
+                                end
+                            end
+                        end
+                    end
+
+                    -- Chỉ hiện nếu > 10K/S
+                    if highestPodium and highestEarning > 10 then
+                        updateEarningESP(highestPodium, highestText, highestEarning)
+                    end
+                end
+            end
+        end
+    end
+end)
