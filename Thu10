@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
+local TextService = game:GetService("TextService")
 
 -- GUI
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
@@ -105,9 +106,9 @@ tabStroke.Thickness = 2
 tabStroke.Color = colorPalette.secondary
 tabStroke.Parent = tabFrame
 
--- Nút Main / All Script (giữ màu rõ)
+-- Nút Main / All Script / Info
 local btnMain = Instance.new("TextButton")
-btnMain.Size = UDim2.new(0.45,0,0.8,0)
+btnMain.Size = UDim2.new(0.3,0,0.8,0)
 btnMain.Position = UDim2.new(0.025,0,0.1,0)
 btnMain.Text = "MAIN"
 btnMain.TextScaled = true
@@ -129,8 +130,8 @@ btnMainStroke.Color = Color3.fromRGB(100,220,100)
 btnMainStroke.Parent = btnMain
 
 local btnAll = Instance.new("TextButton")
-btnAll.Size = UDim2.new(0.45,0,0.8,0)
-btnAll.Position = UDim2.new(0.525,0,0.1,0)
+btnAll.Size = UDim2.new(0.3,0,0.8,0)
+btnAll.Position = UDim2.new(0.345,0,0.1,0)
 btnAll.Text = "ALL SCRIPT"
 btnAll.TextScaled = true
 btnAll.BackgroundColor3 = colorPalette.secondary
@@ -150,9 +151,32 @@ btnAllStroke.Thickness = 2
 btnAllStroke.Color = Color3.fromRGB(120,120,220)
 btnAllStroke.Parent = btnAll
 
+-- Nút Info (mới)
+local btnInfo = Instance.new("TextButton")
+btnInfo.Size = UDim2.new(0.3,0,0.8,0)
+btnInfo.Position = UDim2.new(0.665,0,0.1,0)
+btnInfo.Text = "INFO"
+btnInfo.TextScaled = true
+btnInfo.BackgroundColor3 = colorPalette.accent1
+btnInfo.BackgroundTransparency = 0.4
+btnInfo.TextColor3 = colorPalette.light
+btnInfo.Font = Enum.Font.GothamBold
+btnInfo.ZIndex = 2
+btnInfo.Parent = tabFrame
+
+local btnInfoCorner = Instance.new("UICorner")
+btnInfoCorner.CornerRadius = UDim.new(0,8)
+btnInfoCorner.Parent = btnInfo
+
+local btnInfoStroke = Instance.new("UIStroke")
+btnInfoStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnInfoStroke.Thickness = 2
+btnInfoStroke.Color = Color3.fromRGB(255, 180, 66)
+btnInfoStroke.Parent = btnInfo
+
 -- Scroll Frames
 local scrollMain = Instance.new("ScrollingFrame")
-scrollMain.Size = UDim2.new(1,-20,1,-100) -- Giảm chiều cao để nhường chỗ cho gravity frame
+scrollMain.Size = UDim2.new(1,-20,1,-100)
 scrollMain.Position = UDim2.new(0,10,0,55)
 scrollMain.BackgroundColor3 = colorPalette.dark
 scrollMain.BackgroundTransparency = 0.6
@@ -206,6 +230,36 @@ layoutAll.Parent = scrollAll
 
 layoutAll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	scrollAll.CanvasSize = UDim2.new(0,0,0,layoutAll.AbsoluteContentSize.Y + 15)
+end)
+
+-- Info Scroll Frame (mới)
+local scrollInfo = Instance.new("ScrollingFrame")
+scrollInfo.Size = UDim2.new(1,-20,1,-60)
+scrollInfo.Position = UDim2.new(0,10,0,55)
+scrollInfo.BackgroundColor3 = colorPalette.dark
+scrollInfo.BackgroundTransparency = 0.6
+scrollInfo.BorderSizePixel = 0
+scrollInfo.CanvasSize = UDim2.new(0,0,0,0)
+scrollInfo.ScrollBarThickness = 6
+scrollInfo.ScrollBarImageColor3 = colorPalette.accent1
+scrollInfo.Visible = false
+scrollInfo.Parent = frame
+
+local scrollInfoCorner = Instance.new("UICorner")
+scrollInfoCorner.CornerRadius = UDim.new(0,12)
+scrollInfoCorner.Parent = scrollInfo
+
+local layoutInfo = Instance.new("UIGridLayout")
+layoutInfo.CellSize = UDim2.new(0.9,0,0,60)
+layoutInfo.CellPadding = UDim2.new(0,0,0.05,0)
+layoutInfo.FillDirection = Enum.FillDirection.Vertical
+layoutInfo.SortOrder = Enum.SortOrder.LayoutOrder
+layoutInfo.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layoutInfo.VerticalAlignment = Enum.VerticalAlignment.Top
+layoutInfo.Parent = scrollInfo
+
+layoutInfo:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollInfo.CanvasSize = UDim2.new(0,0,0,layoutInfo.AbsoluteContentSize.Y + 15)
 end)
 
 -- ===========================
@@ -269,19 +323,103 @@ local function createButton(parent,text,color)
 	return btn
 end
 
+-- Hàm tạo nút Info đặc biệt với icon
+local function createInfoButton(parent, text, color, iconId)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,0,0,0)
+	btn.Text = "   " .. text
+	btn.TextScaled = true
+	btn.BackgroundColor3 = color
+	btn.BackgroundTransparency = 0.3
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.TextStrokeTransparency = 0.8
+	btn.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextXAlignment = Enum.TextXAlignment.Left
+	btn.AutoButtonColor = false
+	btn.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,10)
+	corner.Parent = btn
+
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Thickness = 2
+	stroke.Color = color
+	stroke.Transparency = 0.3
+	stroke.Parent = btn
+
+	-- Thêm icon
+	if iconId then
+		local icon = Instance.new("ImageLabel")
+		icon.Size = UDim2.new(0,30,0,30)
+		icon.Position = UDim2.new(0,10,0.5,-15)
+		icon.BackgroundTransparency = 1
+		icon.Image = iconId
+		icon.Parent = btn
+	end
+
+	-- Hiệu ứng hover
+	local highlight = Instance.new("Frame")
+	highlight.Size = UDim2.new(1,0,1,0)
+	highlight.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	highlight.BackgroundTransparency = 0.9
+	highlight.BorderSizePixel = 0
+	highlight.ZIndex = 2
+	highlight.Visible = false
+	highlight.Parent = btn
+
+	local highlightCorner = Instance.new("UICorner")
+	highlightCorner.CornerRadius = UDim.new(0,10)
+	highlightCorner.Parent = highlight
+
+	btn.MouseEnter:Connect(function()
+		highlight.Visible = true
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.2}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.1}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		highlight.Visible = false
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.3}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.3}):Play()
+	end)
+	btn.MouseButton1Down:Connect(function()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.4}):Play()
+	end)
+	btn.MouseButton1Up:Connect(function()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.2}):Play()
+	end)
+
+	return btn
+end
+
 -- Kết nối sự kiện tab
 btnMain.MouseButton1Click:Connect(function()
 	btnMain.BackgroundColor3 = colorPalette.primary
 	btnAll.BackgroundColor3 = colorPalette.secondary
+	btnInfo.BackgroundColor3 = colorPalette.accent1
 	scrollMain.Visible = true
 	scrollAll.Visible = false
+	scrollInfo.Visible = false
 end)
 
 btnAll.MouseButton1Click:Connect(function()
 	btnAll.BackgroundColor3 = colorPalette.primary
 	btnMain.BackgroundColor3 = colorPalette.secondary
+	btnInfo.BackgroundColor3 = colorPalette.accent1
 	scrollAll.Visible = true
 	scrollMain.Visible = false
+	scrollInfo.Visible = false
+end)
+
+btnInfo.MouseButton1Click:Connect(function()
+	btnInfo.BackgroundColor3 = colorPalette.primary
+	btnMain.BackgroundColor3 = colorPalette.secondary
+	btnAll.BackgroundColor3 = colorPalette.secondary
+	scrollInfo.Visible = true
+	scrollMain.Visible = false
+	scrollAll.Visible = false
 end)
 
 -- Toggle menu
@@ -360,7 +498,7 @@ local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fro
 local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200, 80, 80))
 local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
 local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
-local btnEspBrainrot = createButton(scrollMain,"Esp brainrot", Color3.fromRGB(255, 100, 200)) -- Nút mới
+local btnEspBrainrot = createButton(scrollMain,"Esp brainrot", Color3.fromRGB(255, 100, 200))
 
 -- Nút Đẩy Trọng Lực & Gây Lag
 local btnGravityLag = createButton(scrollMain,"Đẩy Trọng Lực & Gây Lag", Color3.fromRGB(255, 120, 120))
@@ -503,6 +641,57 @@ local btnAjjans = createButton(scrollAll,"Ajjans GUI", Color3.fromRGB(120, 200, 
 btnAjjans.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/onliengamerop/Steal-a-brainrot/refs/heads/main/Protected_3771863424757750.lua.txt"))()
 	showNotify("✅ Ajjans GUI đã bật!")
+end)
+
+--------------------------------------------------
+-- INFO TAB (mới)
+--------------------------------------------------
+-- Hàm copy text
+local function copyToClipboard(text)
+    local clipboard = setclipboard or toclipboard or set_clipboard
+    if clipboard then
+        clipboard(text)
+        showNotify("✅ Đã copy: " .. text)
+    else
+        showNotify("❌ Không thể copy trên thiết bị này")
+    end
+end
+
+-- Tạo các nút trong Info tab
+local btnDiscord = createInfoButton(scrollInfo, "Discord Server", Color3.fromRGB(88, 101, 242), "rbxassetid://131679774975668")
+local btnYoutube = createInfoButton(scrollInfo, "YouTube Channel", Color3.fromRGB(255, 0, 0), "rbxassetid://131679774975668")
+local btnTiktok = createInfoButton(scrollInfo, "TikTok Profile", Color3.fromRGB(0, 0, 0), "rbxassetid://131679774975668")
+local btnCredits = createInfoButton(scrollInfo, "Credits & About", Color3.fromRGB(100, 200, 255), "rbxassetid://131679774975668")
+
+-- Sự kiện cho nút Discord
+btnDiscord.MouseButton1Click:Connect(function()
+    copyToClipboard("https://discord.gg/gFKC6hqVU")
+end)
+
+-- Sự kiện cho nút YouTube
+btnYoutube.MouseButton1Click:Connect(function()
+    copyToClipboard("https://www.youtube.com/@Sub_cake_VN")
+end)
+
+-- Sự kiện cho nút TikTok
+btnTiktok.MouseButton1Click:Connect(function()
+    copyToClipboard("https://www.tiktok.com/@thekinmentit")
+end)
+
+-- Sự kiện cho nút Credits
+btnCredits.MouseButton1Click:Connect(function()
+    local creditsText = [[
+🤖 LIFT GUI SCRIPT
+────────────────
+👨‍💻 Developer: Sub_cake
+🎨 Designer: Uranus9103
+📅 Version: 2.0 Pro
+✨ Features: 15+ Tools
+    
+Thank you for using! ❤️
+    ]]
+    
+    showNotify(creditsText)
 end)
 
 --------------------------------------------------
@@ -1081,3 +1270,6 @@ task.spawn(function()
         end
     end
 end)
+
+-- Hiển thị thông báo khi script chạy
+showNotify("APEX HUB Đã Khởi Động!\n✨ Sẵn sàng với 15+ tính năng!")
