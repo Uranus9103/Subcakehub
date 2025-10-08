@@ -1,0 +1,1275 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local TweenService = game:GetService("TweenService")
+local TextService = game:GetService("TextService")
+
+-- GUI
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
+if not gui then
+	gui = Instance.new("ScreenGui")
+	gui.Name = "LiftGui"
+	gui.ResetOnSpawn = false 
+	gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Color palette
+local colorPalette = {
+	primary = Color3.fromRGB(70, 180, 70),
+	secondary = Color3.fromRGB(80, 80, 200),
+	accent1 = Color3.fromRGB(255, 140, 0),
+	accent2 = Color3.fromRGB(180, 100, 250),
+	accent3 = Color3.fromRGB(100, 200, 255),
+	danger = Color3.fromRGB(220, 80, 80),
+	success = Color3.fromRGB(80, 200, 120),
+	warning = Color3.fromRGB(255, 180, 66),
+	dark = Color3.fromRGB(25, 25, 25),
+	light = Color3.fromRGB(240, 240, 240)
+}
+
+-- Rainbow gradient
+local function getRainbowColor(t)
+	local frequency = 0.3
+	local r = math.sin(frequency * t + 0) * 127 + 128
+	local g = math.sin(frequency * t + 2) * 127 + 128
+	local b = math.sin(frequency * t + 4) * 127 + 128
+	return Color3.fromRGB(r, g, b)
+end
+
+-- Toggle menu button
+local toggleBtn = Instance.new("ImageButton")
+toggleBtn.Size = UDim2.new(0, 60, 0, 60)
+toggleBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+toggleBtn.BackgroundColor3 = colorPalette.dark
+toggleBtn.BackgroundTransparency = 0.4
+toggleBtn.Image = "rbxassetid://131679774975668"
+toggleBtn.ScaleType = Enum.ScaleType.Fit
+toggleBtn.Parent = gui
+toggleBtn.Active = true
+toggleBtn.Draggable = true
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 15)
+btnCorner.Parent = toggleBtn
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnStroke.Thickness = 2
+btnStroke.Color = colorPalette.secondary
+btnStroke.Parent = toggleBtn
+
+local toggleIcon = Instance.new("ImageLabel")
+toggleIcon.Size = UDim2.new(0.7,0,0.7,0)
+toggleIcon.Position = UDim2.new(0.15,0,0.15,0)
+toggleIcon.BackgroundTransparency = 1
+toggleIcon.Image = "rbxassetid://131679774975668"
+toggleIcon.Parent = toggleBtn
+
+-- Main frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,320,0,420) -- Increased height for gravity frame
+frame.Position = UDim2.new(0.05,0,0.1,0)
+frame.BackgroundColor3 = colorPalette.dark
+frame.BackgroundTransparency = 0.2
+frame.Active = true
+frame.Draggable = true
+frame.Visible = false
+frame.Parent = gui
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0,15)
+frameCorner.Parent = frame
+
+local frameStroke = Instance.new("UIStroke")
+frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+frameStroke.Thickness = 3
+frameStroke.Color = colorPalette.secondary
+frameStroke.Parent = frame
+
+-- Tabs
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1,-20,0,40)
+tabFrame.Position = UDim2.new(0,10,0,10)
+tabFrame.BackgroundColor3 = colorPalette.dark
+tabFrame.BackgroundTransparency = 0.4
+tabFrame.Parent = frame
+
+local tabCorner = Instance.new("UICorner")
+tabCorner.CornerRadius = UDim.new(0,10)
+tabCorner.Parent = tabFrame
+
+local tabStroke = Instance.new("UIStroke")
+tabStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+tabStroke.Thickness = 2
+tabStroke.Color = colorPalette.secondary
+tabStroke.Parent = tabFrame
+
+-- Main / All Script / Info buttons
+local btnMain = Instance.new("TextButton")
+btnMain.Size = UDim2.new(0.3,0,0.8,0)
+btnMain.Position = UDim2.new(0.025,0,0.1,0)
+btnMain.Text = "MAIN"
+btnMain.TextScaled = true
+btnMain.BackgroundColor3 = colorPalette.primary
+btnMain.BackgroundTransparency = 0.4
+btnMain.TextColor3 = colorPalette.light
+btnMain.Font = Enum.Font.GothamBold
+btnMain.ZIndex = 2
+btnMain.Parent = tabFrame
+
+local btnMainCorner = Instance.new("UICorner")
+btnMainCorner.CornerRadius = UDim.new(0,8)
+btnMainCorner.Parent = btnMain
+
+local btnMainStroke = Instance.new("UIStroke")
+btnMainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnMainStroke.Thickness = 2
+btnMainStroke.Color = Color3.fromRGB(100,220,100)
+btnMainStroke.Parent = btnMain
+
+local btnAll = Instance.new("TextButton")
+btnAll.Size = UDim2.new(0.3,0,0.8,0)
+btnAll.Position = UDim2.new(0.345,0,0.1,0)
+btnAll.Text = "ALL SCRIPT"
+btnAll.TextScaled = true
+btnAll.BackgroundColor3 = colorPalette.secondary
+btnAll.BackgroundTransparency = 0.4
+btnAll.TextColor3 = colorPalette.light
+btnAll.Font = Enum.Font.GothamBold
+btnAll.ZIndex = 2
+btnAll.Parent = tabFrame
+
+local btnAllCorner = Instance.new("UICorner")
+btnAllCorner.CornerRadius = UDim.new(0,8)
+btnAllCorner.Parent = btnAll
+
+local btnAllStroke = Instance.new("UIStroke")
+btnAllStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnAllStroke.Thickness = 2
+btnAllStroke.Color = Color3.fromRGB(120,120,220)
+btnAllStroke.Parent = btnAll
+
+-- Info button (new)
+local btnInfo = Instance.new("TextButton")
+btnInfo.Size = UDim2.new(0.3,0,0.8,0)
+btnInfo.Position = UDim2.new(0.665,0,0.1,0)
+btnInfo.Text = "INFO"
+btnInfo.TextScaled = true
+btnInfo.BackgroundColor3 = colorPalette.accent1
+btnInfo.BackgroundTransparency = 0.4
+btnInfo.TextColor3 = colorPalette.light
+btnInfo.Font = Enum.Font.GothamBold
+btnInfo.ZIndex = 2
+btnInfo.Parent = tabFrame
+
+local btnInfoCorner = Instance.new("UICorner")
+btnInfoCorner.CornerRadius = UDim.new(0,8)
+btnInfoCorner.Parent = btnInfo
+
+local btnInfoStroke = Instance.new("UIStroke")
+btnInfoStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+btnInfoStroke.Thickness = 2
+btnInfoStroke.Color = Color3.fromRGB(255, 180, 66)
+btnInfoStroke.Parent = btnInfo
+
+-- Scroll Frames
+local scrollMain = Instance.new("ScrollingFrame")
+scrollMain.Size = UDim2.new(1,-20,1,-100)
+scrollMain.Position = UDim2.new(0,10,0,55)
+scrollMain.BackgroundColor3 = colorPalette.dark
+scrollMain.BackgroundTransparency = 0.6
+scrollMain.BorderSizePixel = 0
+scrollMain.CanvasSize = UDim2.new(0,0,0,0)
+scrollMain.ScrollBarThickness = 6
+scrollMain.ScrollBarImageColor3 = colorPalette.secondary
+scrollMain.Parent = frame
+
+local scrollMainCorner = Instance.new("UICorner")
+scrollMainCorner.CornerRadius = UDim.new(0,12)
+scrollMainCorner.Parent = scrollMain
+
+local layoutMain = Instance.new("UIGridLayout")
+layoutMain.CellSize = UDim2.new(0.45,0,0,45)
+layoutMain.CellPadding = UDim2.new(0.05,0,0.05,0)
+layoutMain.FillDirection = Enum.FillDirection.Horizontal
+layoutMain.SortOrder = Enum.SortOrder.LayoutOrder
+layoutMain.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layoutMain.VerticalAlignment = Enum.VerticalAlignment.Top
+layoutMain.Parent = scrollMain
+
+layoutMain:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollMain.CanvasSize = UDim2.new(0,0,0,layoutMain.AbsoluteContentSize.Y + 15)
+end)
+
+local scrollAll = Instance.new("ScrollingFrame")
+scrollAll.Size = UDim2.new(1,-20,1,-60)
+scrollAll.Position = UDim2.new(0,10,0,55)
+scrollAll.BackgroundColor3 = colorPalette.dark
+scrollAll.BackgroundTransparency = 0.6
+scrollAll.BorderSizePixel = 0
+scrollAll.CanvasSize = UDim2.new(0,0,0,0)
+scrollAll.ScrollBarThickness = 6
+scrollAll.ScrollBarImageColor3 = colorPalette.secondary
+scrollAll.Visible = false
+scrollAll.Parent = frame
+
+local scrollAllCorner = Instance.new("UICorner")
+scrollAllCorner.CornerRadius = UDim.new(0,12)
+scrollAllCorner.Parent = scrollAll
+
+local layoutAll = Instance.new("UIGridLayout")
+layoutAll.CellSize = UDim2.new(0.9,0,0,45)
+layoutAll.CellPadding = UDim2.new(0,0,0.05,0)
+layoutAll.FillDirection = Enum.FillDirection.Vertical
+layoutAll.SortOrder = Enum.SortOrder.LayoutOrder
+layoutAll.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layoutAll.VerticalAlignment = Enum.VerticalAlignment.Top
+layoutAll.Parent = scrollAll
+
+layoutAll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollAll.CanvasSize = UDim2.new(0,0,0,layoutAll.AbsoluteContentSize.Y + 15)
+end)
+
+-- Info Scroll Frame (new)
+local scrollInfo = Instance.new("ScrollingFrame")
+scrollInfo.Size = UDim2.new(1,-20,1,-60)
+scrollInfo.Position = UDim2.new(0,10,0,55)
+scrollInfo.BackgroundColor3 = colorPalette.dark
+scrollInfo.BackgroundTransparency = 0.6
+scrollInfo.BorderSizePixel = 0
+scrollInfo.CanvasSize = UDim2.new(0,0,0,0)
+scrollInfo.ScrollBarThickness = 6
+scrollInfo.ScrollBarImageColor3 = colorPalette.accent1
+scrollInfo.Visible = false
+scrollInfo.Parent = frame
+
+local scrollInfoCorner = Instance.new("UICorner")
+scrollInfoCorner.CornerRadius = UDim.new(0,12)
+scrollInfoCorner.Parent = scrollInfo
+
+local layoutInfo = Instance.new("UIGridLayout")
+layoutInfo.CellSize = UDim2.new(0.9,0,0,60)
+layoutInfo.CellPadding = UDim2.new(0,0,0.05,0)
+layoutInfo.FillDirection = Enum.FillDirection.Vertical
+layoutInfo.SortOrder = Enum.SortOrder.LayoutOrder
+layoutInfo.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layoutInfo.VerticalAlignment = Enum.VerticalAlignment.Top
+layoutInfo.Parent = scrollInfo
+
+layoutInfo:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollInfo.CanvasSize = UDim2.new(0,0,0,layoutInfo.AbsoluteContentSize.Y + 15)
+end)
+
+-- ===========================
+-- Function to create transparent buttons with visible colors
+-- ===========================
+local function createButton(parent,text,color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,0,0,0)
+	btn.Text = text
+	btn.TextScaled = true
+	btn.BackgroundColor3 = color
+	btn.BackgroundTransparency = 0.7  -- transparent
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.TextStrokeTransparency = 0.8
+	btn.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+	btn.Font = Enum.Font.GothamBold
+	btn.AutoButtonColor = false
+	btn.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,10)
+	corner.Parent = btn
+
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Thickness = 2
+	stroke.Color = color
+	stroke.Transparency = 0.5
+	stroke.Parent = btn
+
+	local highlight = Instance.new("Frame")
+	highlight.Size = UDim2.new(1,0,1,0)
+	highlight.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	highlight.BackgroundTransparency = 0.9
+	highlight.BorderSizePixel = 0
+	highlight.ZIndex = 2
+	highlight.Visible = false
+	highlight.Parent = btn
+
+	local highlightCorner = Instance.new("UICorner")
+	highlightCorner.CornerRadius = UDim.new(0,10)
+	highlightCorner.Parent = highlight
+
+	btn.MouseEnter:Connect(function()
+		highlight.Visible = true
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.5}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.3}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		highlight.Visible = false
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.7}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.5}):Play()
+	end)
+	btn.MouseButton1Down:Connect(function()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.6}):Play()
+	end)
+	btn.MouseButton1Up:Connect(function()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.5}):Play()
+	end)
+
+	return btn
+end
+
+-- Function to create special Info button with icon
+local function createInfoButton(parent, text, color, iconId)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,0,0,0)
+	btn.Text = "   " .. text
+	btn.TextScaled = true
+	btn.BackgroundColor3 = color
+	btn.BackgroundTransparency = 0.3
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.TextStrokeTransparency = 0.8
+	btn.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextXAlignment = Enum.TextXAlignment.Left
+	btn.AutoButtonColor = false
+	btn.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,10)
+	corner.Parent = btn
+
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Thickness = 2
+	stroke.Color = color
+	stroke.Transparency = 0.3
+	stroke.Parent = btn
+
+	-- Add icon
+	if iconId then
+		local icon = Instance.new("ImageLabel")
+		icon.Size = UDim2.new(0,30,0,30)
+		icon.Position = UDim2.new(0,10,0.5,-15)
+		icon.BackgroundTransparency = 1
+		icon.Image = iconId
+		icon.Parent = btn
+	end
+
+	-- Hover effect
+	local highlight = Instance.new("Frame")
+	highlight.Size = UDim2.new(1,0,1,0)
+	highlight.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	highlight.BackgroundTransparency = 0.9
+	highlight.BorderSizePixel = 0
+	highlight.ZIndex = 2
+	highlight.Visible = false
+	highlight.Parent = btn
+
+	local highlightCorner = Instance.new("UICorner")
+	highlightCorner.CornerRadius = UDim.new(0,10)
+	highlightCorner.Parent = highlight
+
+	btn.MouseEnter:Connect(function()
+		highlight.Visible = true
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.2}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.1}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		highlight.Visible = false
+		TweenService:Create(btn,TweenInfo.new(0.2),{BackgroundTransparency=0.3}):Play()
+		TweenService:Create(stroke,TweenInfo.new(0.2),{Transparency=0.3}):Play()
+	end)
+	btn.MouseButton1Down:Connect(function()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.4}):Play()
+	end)
+	btn.MouseButton1Up:Connect(function()
+		TweenService:Create(btn,TweenInfo.new(0.1),{BackgroundTransparency=0.2}):Play()
+	end)
+
+	return btn
+end
+
+-- Connect tab events
+btnMain.MouseButton1Click:Connect(function()
+	btnMain.BackgroundColor3 = colorPalette.primary
+	btnAll.BackgroundColor3 = colorPalette.secondary
+	btnInfo.BackgroundColor3 = colorPalette.accent1
+	scrollMain.Visible = true
+	scrollAll.Visible = false
+	scrollInfo.Visible = false
+end)
+
+btnAll.MouseButton1Click:Connect(function()
+	btnAll.BackgroundColor3 = colorPalette.primary
+	btnMain.BackgroundColor3 = colorPalette.secondary
+	btnInfo.BackgroundColor3 = colorPalette.accent1
+	scrollAll.Visible = true
+	scrollMain.Visible = false
+	scrollInfo.Visible = false
+end)
+
+btnInfo.MouseButton1Click:Connect(function()
+	btnInfo.BackgroundColor3 = colorPalette.primary
+	btnMain.BackgroundColor3 = colorPalette.secondary
+	btnAll.BackgroundColor3 = colorPalette.secondary
+	scrollInfo.Visible = true
+	scrollMain.Visible = false
+	scrollAll.Visible = false
+end)
+
+-- Toggle menu
+local menuVisible = false
+toggleBtn.MouseButton1Click:Connect(function()
+	menuVisible = not menuVisible
+	frame.Visible = menuVisible
+	toggleIcon.Image = menuVisible and "rbxassetid://131679774975668" or "rbxassetid://131679774975668"
+end)
+
+-- Continuous border color changing effect
+local t = 0
+RunService.RenderStepped:Connect(function(delta)
+	t += delta
+	local rainbowColor = getRainbowColor(t)
+	frameStroke.Color = rainbowColor
+	btnStroke.Color = rainbowColor
+end)
+
+--------------------------------------
+-- MAIN TAB (function buttons with beautiful colors)
+--------------------------------------
+
+-- Create gravity frame first (will be displayed at the bottom)
+local gravityFrame = Instance.new("Frame")
+gravityFrame.Size = UDim2.new(1, -10, 0, 40)
+gravityFrame.Position = UDim2.new(0, 5, 1, -45) -- Bottom position
+gravityFrame.BackgroundColor3 = Color3.fromRGB(60,60,60)
+gravityFrame.Visible = false -- hidden by default
+gravityFrame.Parent = frame
+
+local gravityCorner = Instance.new("UICorner")
+gravityCorner.CornerRadius = UDim.new(0,10)
+gravityCorner.Parent = gravityFrame
+
+-- Label
+local gravityLabel = Instance.new("TextLabel")
+gravityLabel.Size = UDim2.new(0.4,0,1,0)
+gravityLabel.Position = UDim2.new(0,5,0,0)
+gravityLabel.BackgroundTransparency = 1
+gravityLabel.Text = "Gravity:"
+gravityLabel.Font = Enum.Font.GothamBold
+gravityLabel.TextColor3 = Color3.new(1,1,1)
+gravityLabel.TextScaled = true
+gravityLabel.Parent = gravityFrame
+
+-- Number input TextBox
+local gravityBox = Instance.new("TextBox")
+gravityBox.Size = UDim2.new(0.55,0,0.8,0)
+gravityBox.Position = UDim2.new(0.42,0,0.1,0)
+gravityBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+gravityBox.Text = ""
+gravityBox.PlaceholderText = "Enter number..."
+gravityBox.TextColor3 = Color3.new(1,1,1)
+gravityBox.Font = Enum.Font.GothamBold
+gravityBox.TextScaled = true
+gravityBox.ClearTextOnFocus = false
+gravityBox.Parent = gravityFrame
+
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0,8)
+boxCorner.Parent = gravityBox
+
+-- Create buttons in MAIN tab
+local btnLift     = createButton(scrollMain,"Lift : OFF", Color3.fromRGB(200, 80, 80))
+local btnFly      = createButton(scrollMain,"Walk on Air : OFF", Color3.fromRGB(200, 80, 80))
+local btnESP      = createButton(scrollMain,"ESP : OFF", Color3.fromRGB(200, 80, 80))
+local btnWarn     = createButton(scrollMain,"Warning : OFF", Color3.fromRGB(200, 80, 80))
+local btnJump     = createButton(scrollMain,"JumpPower : OFF", Color3.fromRGB(200, 80, 80))
+local btnServer   = createButton(scrollMain,"Change Server", Color3.fromRGB(80, 150, 250))
+local btnShader   = createButton(scrollMain,"Shader & Fix Lag : OFF", Color3.fromRGB(200, 80, 80))
+local btnEsp2     = createButton(scrollMain,"ESP v2 & Hitbox", Color3.fromRGB(255, 140, 0))
+local btnLockBase = createButton(scrollMain,"Lock Base", Color3.fromRGB(180, 100, 250))
+local btnRun      = createButton(scrollMain,"Immortal : OFF", Color3.fromRGB(200, 80, 80))
+local btnAimbot   = createButton(scrollMain,"Aimbot & ESP Box : OFF", Color3.fromRGB(200, 80, 80))
+local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200, 80, 80))
+local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
+local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
+local btnEspBrainrot = createButton(scrollMain,"Esp brainrot", Color3.fromRGB(255, 100, 200))
+
+-- Push Gravity & Cause Lag button
+local btnGravityLag = createButton(scrollMain,"Push Gravity & Cause Lag", Color3.fromRGB(255, 120, 120))
+btnGravityLag.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/WFQAcAV6/raw"))()
+end)
+
+-- All Anti 99% button
+local btnAllAnti = createButton(scrollMain,"All Anti 70%", Color3.fromRGB(120, 255, 150))
+btnAllAnti.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/xDLJS1JV/raw"))()
+end)
+
+-- Walk on Air v2 button
+local btnFlyV2 = createButton(scrollMain, "Walk on Air v2", Color3.fromRGB(200,80,80))
+btnFlyV2.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/rqfeSQbN/raw"))()
+    end)
+end)
+
+-- Anti-ban button
+local btnAntiBan = createButton(scrollMain, "Anti-ban", Color3.fromRGB(200,80,80))
+btnAntiBan.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/7OVflndN/raw"))()
+    end)
+end)
+
+-- Run pastefy button (placed in MAIN)
+local btnRunPastefy = createButton(scrollMain, "Anti V2", Color3.fromRGB(120,220,120))
+
+btnRunPastefy.MouseButton1Click:Connect(function()
+    -- Lock button to prevent spam
+    btnRunPastefy.Active = false
+    btnRunPastefy.AutoButtonColor = false
+    local oldText = btnRunPastefy.Text
+    local oldColor = btnRunPastefy.BackgroundColor3
+    btnRunPastefy.Text = "Running..."
+    btnRunPastefy.BackgroundColor3 = Color3.fromRGB(255,200,0)
+
+    -- Show notify (use showNotify if available, otherwise create temporary)
+    local function shortNotify(text)
+        if type(showNotify) == "function" then
+            showNotify(text)
+            return
+        end
+        local n = Instance.new("TextLabel")
+        n.Size = UDim2.new(0,260,0,40)
+        n.Position = UDim2.new(0.5,-130,0.8,0)
+        n.BackgroundColor3 = Color3.fromRGB(20,20,20)
+        n.BackgroundTransparency = 0.2
+        n.Text = text
+        n.TextScaled = true
+        n.TextColor3 = Color3.fromRGB(0,255,120)
+        n.Font = Enum.Font.GothamBold
+        n.Parent = gui
+        local c = Instance.new("UICorner", n)
+        c.CornerRadius = UDim.new(0,8)
+        game:GetService("TweenService"):Create(n, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
+        task.delay(2, function() if n and n.Parent then n:Destroy() end end)
+    end
+
+    -- Run script from pastefy
+    task.spawn(function()
+        local ok, err = pcall(function()
+            local src = game:HttpGet("https://pastefy.app/BsG170GH/raw")
+            local f = loadstring(src)
+            if type(f) == "function" then f() end
+        end)
+
+        if ok then
+            shortNotify("✅ Script executed. May need to rejoin 1-2 times.")
+        else
+            shortNotify("❌ Error running: "..tostring(err))
+            warn("Error running pastefy script:", err)
+        end
+
+        -- Restore button
+        btnRunPastefy.Text = oldText
+        btnRunPastefy.BackgroundColor3 = oldColor
+        btnRunPastefy.Active = true
+        btnRunPastefy.AutoButtonColor = true
+    end)
+end)
+
+-- Add Empty Server button to MAIN tab
+local btnEmptyServer = createButton(scrollMain, "Empty Server", Color3.fromRGB(0, 0, 0))
+btnEmptyServer.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/BQTNEEOj/raw"))()
+end)
+
+-- Add rainbow border effect for Empty Server button
+local emptyServerStroke = btnEmptyServer:FindFirstChildOfClass("UIStroke")
+if emptyServerStroke then
+    RunService.RenderStepped:Connect(function(delta)
+        t += delta
+        local rainbowColor = getRainbowColor(t)
+        emptyServerStroke.Color = rainbowColor
+    end)
+end
+
+-- Esp brainrot button
+btnEspBrainrot.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espbrainrot"))()
+end)
+
+--------------------------------------------------
+-- ALL SCRIPT TAB (Krud + Ajjans)
+--------------------------------------------------
+local function showNotify(msg)
+	local note = Instance.new("TextLabel")
+	note.Size = UDim2.new(0,260,0,40)
+	note.Position = UDim2.new(0.5,-130,0.85,0)
+	note.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	note.BackgroundTransparency = 0.2
+	note.Text = msg
+	note.TextScaled = true
+	note.TextColor3 = Color3.fromRGB(0,255,100)
+	note.Font = Enum.Font.GothamBold
+	note.Parent = gui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,8)
+	corner.Parent = note
+
+	game:GetService("TweenService"):Create(note,TweenInfo.new(0.5),{BackgroundTransparency=0.2}):Play()
+	task.delay(2,function()
+		note:Destroy()
+	end)
+end
+
+local btnKrudHub = createButton(scrollAll,"Krud Hub", Color3.fromRGB(250, 120, 80))
+btnKrudHub.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))()
+	showNotify("✅ Krud Hub activated!")
+end)
+
+local btnAjjans = createButton(scrollAll,"Ajjans GUI", Color3.fromRGB(120, 200, 250))
+btnAjjans.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/onliengamerop/Steal-a-brainrot/refs/heads/main/Protected_3771863424757750.lua.txt"))()
+	showNotify("✅ Ajjans GUI activated!")
+end)
+
+--------------------------------------------------
+-- INFO TAB (new)
+--------------------------------------------------
+-- Copy text function
+local function copyToClipboard(text)
+    local clipboard = setclipboard or toclipboard or set_clipboard
+    if clipboard then
+        clipboard(text)
+        showNotify("✅ Copied: " .. text)
+    else
+        showNotify("❌ Cannot copy on this device")
+    end
+end
+
+-- Create buttons in Info tab
+local btnDiscord = createInfoButton(scrollInfo, "Discord Server", Color3.fromRGB(88, 101, 242), "rbxassetid://131679774975668")
+local btnYoutube = createInfoButton(scrollInfo, "YouTube Channel", Color3.fromRGB(255, 0, 0), "rbxassetid://131679774975668")
+local btnTiktok = createInfoButton(scrollInfo, "TikTok Profile", Color3.fromRGB(0, 0, 0), "rbxassetid://131679774975668")
+local btnCredits = createInfoButton(scrollInfo, "Credits & About", Color3.fromRGB(100, 200, 255), "rbxassetid://131679774975668")
+
+-- Events for Discord button
+btnDiscord.MouseButton1Click:Connect(function()
+    copyToClipboard("https://discord.gg/gFKC6hqVU")
+end)
+
+-- Events for YouTube button
+btnYoutube.MouseButton1Click:Connect(function()
+    copyToClipboard("https://www.youtube.com/@Sub_cake_VN")
+end)
+
+-- Events for TikTok button
+btnTiktok.MouseButton1Click:Connect(function()
+    copyToClipboard("https://www.tiktok.com/@thekinmentit")
+end)
+
+-- Events for Credits button
+btnCredits.MouseButton1Click:Connect(function()
+    local creditsText = [[
+🤖 LIFT GUI SCRIPT
+────────────────
+👨‍💻 Developer: Sub_cake
+🎨 Designer: Uranus9103
+📅 Version: 2.0 Pro
+✨ Features: 15+ Tools
+    
+Thank you for using! ❤️
+    ]]
+    
+    showNotify(creditsText)
+end)
+
+--------------------------------------------------
+-- Gravity (fix)
+--------------------------------------------------
+local gravityOn = false
+
+-- When entering number and pressing Enter
+gravityBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed and gravityOn then
+		local value = tonumber(gravityBox.Text)
+		if value then
+			workspace.Gravity = value
+		else
+			gravityBox.Text = ""
+		end
+	end
+end)
+
+-- Toggle Gravity button
+btnGravity.MouseButton1Click:Connect(function()
+	gravityOn = not gravityOn
+	if gravityOn then
+		btnGravity.Text = "Gravity : ON"
+		btnGravity.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		gravityFrame.Visible = true
+	else
+		btnGravity.Text = "Gravity : OFF"
+		btnGravity.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		gravityFrame.Visible = false
+		workspace.Gravity = 196.2 -- return to default Roblox
+		gravityBox.Text = ""
+	end
+end)
+
+--------------------------------------------------
+-- Other functions (keep the same)
+--------------------------------------------------
+btnEspCam.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espcamera"))()
+end)
+
+-- ESP Base
+local espBaseOn = false
+local espLoop = nil
+local espList = {}
+
+-- ESP Config
+local ESP_CONFIG = {
+    Size = UDim2.new(0,80,0,25),
+    Offset = Vector3.new(0,6,0),
+
+    Text = {
+        Font = Enum.Font.GothamBold,
+        Color = Color3.fromRGB(0,255,128),
+        StrokeColor = Color3.fromRGB(0,0,0),
+        StrokeTransparency = 0,
+    },
+
+    Background = {
+        Color = Color3.fromRGB(20,20,20),
+        Transparency = 0.3,
+    },
+
+    Border = {
+        Enabled = true,
+        Thickness = 3,
+        Color = Color3.fromRGB(0,255,128),
+    }
+}
+
+local Workspace = game:GetService("Workspace")
+local plotsFolder = Workspace:WaitForChild("Plots")
+
+local function clearESP()
+    for _, esp in pairs(espList) do
+        if esp and esp.Parent then esp:Destroy() end
+    end
+    table.clear(espList)
+end
+
+local function getRemainingTimeText(plot)
+    for _, part in ipairs(plot:GetDescendants()) do
+        if part:IsA("TextLabel") and part.Name=="RemainingTime" then
+            return part.Text:gsub("s","")
+        end
+    end
+    return nil
+end
+
+local function findESPPart(plot)
+    for _, part in ipairs(plot:GetDescendants()) do
+        if part:IsA("BasePart") and (part.Name=="Main" or part.Name=="Hitbox") then 
+            return part 
+        end
+    end
+    for _, part in ipairs(plot:GetDescendants()) do
+        if part:IsA("BasePart") then return part end
+    end
+    return nil
+end
+
+local function createMinecraftESP(part, text)
+    local gui = Instance.new("BillboardGui")
+    gui.Name="MinecraftESP"
+    gui.Adornee=part
+    gui.Size=ESP_CONFIG.Size
+    gui.StudsOffset=ESP_CONFIG.Offset
+    gui.AlwaysOnTop=true
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1,0,1,0)
+    bg.BackgroundColor3 = ESP_CONFIG.Background.Color
+    bg.BackgroundTransparency = ESP_CONFIG.Background.Transparency
+    bg.BorderSizePixel = 0
+    bg.Parent = gui
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.Font = ESP_CONFIG.Text.Font
+    label.TextColor3 = ESP_CONFIG.Text.Color
+    label.TextStrokeTransparency = ESP_CONFIG.Text.StrokeTransparency
+    label.TextStrokeColor3 = ESP_CONFIG.Text.StrokeColor
+    label.Text = text
+    label.Parent = bg
+
+    if ESP_CONFIG.Border.Enabled then
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = ESP_CONFIG.Border.Thickness
+        stroke.Color = ESP_CONFIG.Border.Color
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = bg
+    end
+
+    gui.Parent = part
+    table.insert(espList,gui)
+end
+
+btnESPBase.MouseButton1Click:Connect(function()
+    espBaseOn = not espBaseOn
+    if espBaseOn then
+        btnESPBase.Text = "ESP Base : ON"
+        btnESPBase.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+        espLoop = task.spawn(function()
+            while espBaseOn do
+                clearESP()
+                for _, plot in ipairs(plotsFolder:GetChildren()) do
+                    if plot:IsA("Model") then
+                        local part = findESPPart(plot)
+                        local seconds = getRemainingTimeText(plot)
+                        if part and seconds then
+                            createMinecraftESP(part, seconds.."s")
+                        end
+                    end
+                end
+                task.wait(0.3)
+            end
+            clearESP()
+        end)
+
+    else
+        btnESPBase.Text = "ESP Base : OFF"
+        btnESPBase.BackgroundColor3 = Color3.fromRGB(200,50,50)
+        espBaseOn = false
+        clearESP()
+    end
+end)
+
+--------------------------------------------------
+-- Lift
+--------------------------------------------------
+local liftPart, liftEnabled, liftConnection = nil, false, nil
+local liftSpeed = 20
+
+btnLift.MouseButton1Click:Connect(function()
+	liftEnabled = not liftEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if liftEnabled then
+		liftPart = Instance.new("Part")
+		liftPart.Size = Vector3.new(6,1,6)
+		liftPart.Anchored = true
+		liftPart.CanCollide = true
+		liftPart.Color = Color3.fromRGB(50,200,50)
+		liftPart.Transparency = 0.2
+		liftPart.Parent = workspace
+
+		btnLift.Text = "Lift : ON"
+		btnLift.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		liftConnection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and liftPart and liftEnabled then
+				local pos = hrp.Position - Vector3.new(0,3,0)
+				liftPart.CFrame = CFrame.new(pos) * CFrame.new(0, liftSpeed*dt, 0)
+			end
+		end)
+	else
+		if liftPart then liftPart:Destroy() liftPart = nil end
+		if liftConnection then liftConnection:Disconnect() liftConnection = nil end
+		btnLift.Text = "Lift : OFF"
+		btnLift.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
+
+--------------------------------------------------
+-- Fly
+--------------------------------------------------
+local flyPart, flyEnabled, flyConnection = nil, false, nil
+local flyHeight, flyRange, switchTime = 3, 1, 1
+local goingUp, flyTimer = true, 0
+
+btnFly.MouseButton1Click:Connect(function()
+	flyEnabled = not flyEnabled
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	if flyEnabled then
+		flyPart = Instance.new("Part")
+		flyPart.Size = Vector3.new(8,1,8)
+		flyPart.Anchored = true
+		flyPart.CanCollide = true
+		flyPart.Color = Color3.fromRGB(100,150,250)
+		flyPart.Transparency = 0.2
+		flyPart.Name = "FlyPlatform"
+		flyPart.Parent = workspace
+
+		flyPart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, flyHeight, 0))
+
+		btnFly.Text = "Walk on Air : ON"
+		btnFly.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+		goingUp, flyTimer = true, 0
+
+		flyConnection = RunService.RenderStepped:Connect(function(dt)
+			if hrp and flyPart and flyEnabled then
+				flyTimer += dt
+				if flyTimer >= switchTime then
+					goingUp = not goingUp
+					flyTimer = 0
+				end
+				local basePos = hrp.Position - Vector3.new(0, flyHeight, 0)
+				local offset = goingUp and flyRange or -flyRange
+				flyPart.CFrame = flyPart.CFrame:Lerp(CFrame.new(basePos + Vector3.new(0, offset, 0)), 0.2)
+			end
+		end)
+	else
+		if flyPart then flyPart:Destroy() flyPart = nil end
+		if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+		btnFly.Text = "Walk on Air : OFF"
+		btnFly.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+end)
+
+--------------------------------------------------
+-- ESP Highlight
+--------------------------------------------------
+local espEnabled = false
+local highlights = {}
+
+local function addESP(targetPlayer)
+	if targetPlayer.Character and not highlights[targetPlayer] then
+		local hl = Instance.new("Highlight")
+		hl.FillTransparency = 1
+		hl.OutlineColor = Color3.fromRGB(255,0,0)
+		hl.OutlineTransparency = 0
+		hl.Adornee = targetPlayer.Character
+		hl.Parent = targetPlayer.Character
+		highlights[targetPlayer] = hl
+	end
+end
+
+local function removeESP(targetPlayer)
+	if highlights[targetPlayer] then
+		highlights[targetPlayer]:Destroy()
+		highlights[targetPlayer] = nil
+	end
+end
+
+btnESP.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	if espEnabled then
+		btnESP.Text = "ESP : ON"
+		btnESP.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr ~= player then
+				addESP(plr)
+				plr.CharacterAdded:Connect(function()
+					if espEnabled then
+						task.wait(1)
+						addESP(plr)
+					end
+				end)
+			end
+		end
+	else
+		btnESP.Text = "ESP : OFF"
+		btnESP.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr ~= player then
+				removeESP(plr)
+			end
+		end
+	end
+end)
+
+--------------------------------------------------
+-- Nearby Warning
+--------------------------------------------------
+local warnEnabled = false
+local warnDistance = 60
+local warnLabel = Instance.new("TextLabel")
+warnLabel.Size = UDim2.new(1,0,0,40)
+warnLabel.Position = UDim2.new(0,0,0,0)
+warnLabel.BackgroundTransparency = 0.3
+warnLabel.BackgroundColor3 = Color3.fromRGB(200,0,0)
+warnLabel.Text = ""
+warnLabel.TextScaled = true
+warnLabel.Visible = false
+warnLabel.TextColor3 = Color3.new(1,1,1)
+warnLabel.Font = Enum.Font.GothamBold
+warnLabel.Parent = gui
+local warnConnection = nil
+
+btnWarn.MouseButton1Click:Connect(function()
+	warnEnabled = not warnEnabled
+	if warnEnabled then
+		btnWarn.Text = "Warning : ON"
+		btnWarn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		warnConnection = RunService.RenderStepped:Connect(function()
+			local char = player.Character
+			if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+			local hrp = char.HumanoidRootPart
+			local danger = false
+			for _,plr in pairs(Players:GetPlayers()) do
+				if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					local dist = (plr.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+					if dist <= warnDistance then
+						danger = true
+						break
+					end
+				end
+			end
+			warnLabel.Visible = danger
+			if danger then
+				warnLabel.Text = "⚠️ Be careful! Someone is nearby!\n⚠️ Careful! Someone is near!"
+			end
+		end)
+	else
+		btnWarn.Text = "Warning : OFF"
+		btnWarn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		if warnConnection then warnConnection:Disconnect() warnConnection=nil end
+		warnLabel.Visible=false
+	end
+end)
+
+--------------------------------------------------
+-- Jump Power
+--------------------------------------------------
+local jumpOn = false
+btnJump.MouseButton1Click:Connect(function()
+	jumpOn = not jumpOn
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.UseJumpPower = true
+		hum.JumpPower = jumpOn and 150 or 50
+	end
+	btnJump.Text = jumpOn and "JumpPower : ON" or "JumpPower : OFF"
+	btnJump.BackgroundColor3 = jumpOn and Color3.fromRGB(50,200,50) or Color3.fromRGB(200,50,50)
+end)
+
+--------------------------------------------------
+-- Change Server
+--------------------------------------------------
+btnServer.MouseButton1Click:Connect(function()
+	local gameId = game.PlaceId
+	local servers = {}
+	local success,result = pcall(function()
+		return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..gameId.."/servers/Public?sortOrder=Asc&limit=100"))
+	end)
+	if success and result and result.data then
+		for _,srv in ipairs(result.data) do
+			if srv.playing < srv.maxPlayers and srv.id ~= game.JobId then
+				table.insert(servers,srv.id)
+			end
+		end
+	end
+	if #servers>0 then
+		local randomServer = servers[math.random(1,#servers)]
+		TeleportService:TeleportToPlaceInstance(gameId,randomServer,player)
+	else
+		TeleportService:Teleport(gameId,player)
+	end
+end)
+
+--------------------------------------------------
+-- Shader & Fix Lag
+--------------------------------------------------
+local shaderOn = false
+local shaderGuiName = "Shader4_MainUI"
+
+btnShader.MouseButton1Click:Connect(function()
+	shaderOn = not shaderOn
+	if shaderOn then
+		btnShader.Text = "Shader & Fix Lag : ON"
+		btnShader.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Shader4"))()
+	else
+		btnShader.Text = "✨ Shader & Fix Lag : OFF"
+		btnShader.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		local shaderGui = player:FindFirstChild("PlayerGui"):FindFirstChild(shaderGuiName)
+		if shaderGui then shaderGui:Destroy() end
+	end
+end)
+
+--------------------------------------------------
+-- ESP v2 & Hitbox
+--------------------------------------------------
+btnEsp2.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/aimbotok"))()
+end)
+
+--------------------------------------------------
+-- Lock Base
+--------------------------------------------------
+btnLockBase.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/SCVscript/refs/heads/main/Dk5"))()
+end)
+
+--------------------------------------------------
+-- Run (newly added)
+--------------------------------------------------
+local runOn = false
+btnRun.MouseButton1Click:Connect(function()
+	runOn = not runOn
+	if runOn then
+		btnRun.Text = "Immortal : ON"
+		btnRun.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		loadstring(game:HttpGet("https://pastefy.app/lRsS0xIB/raw"))()
+	else
+		btnRun.Text = "Immortal : OFF"
+		btnRun.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		-- If that script has its own GUI, delete it
+		local runGui = player:FindFirstChild("PlayerGui"):FindFirstChild("RunGui")
+		if runGui then runGui:Destroy() end
+	end
+end)
+
+-- Aimbot & ESP Box
+local aimbotOn = false
+btnAimbot.MouseButton1Click:Connect(function()
+	aimbotOn = not aimbotOn
+	if aimbotOn then
+		btnAimbot.Text = "Aimbot & ESP Box : ON"
+		btnAimbot.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/Subcakehub/refs/heads/main/Hityo6"))()
+	else
+		btnAimbot.Text = "Aimbot & ESP Box : OFF"
+		btnAimbot.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		local aimGui = player:FindFirstChild("PlayerGui"):FindFirstChild("AimbotGui")
+		if aimGui then aimGui:Destroy() end
+	end
+end)
+
+--------------------------------------------------
+-- Anti Kick
+--------------------------------------------------
+local mt = getrawmetatable(game)
+setreadonly(mt,false)
+local old = mt.__namecall
+mt.__namecall = newcclosure(function(self,...)
+	local method = getnamecallmethod()
+	if method=="Kick" or method=="kick" then
+		return nil
+	end
+	return old(self,...)
+end)
+setreadonly(mt,true)
+
+--------------------------------------------------
+-- ESP Earning (brainrot)
+--------------------------------------------------
+local Plots = workspace:FindFirstChild("Plots")
+
+-- Get K/M value from text
+local function extractKValue(text)
+    text = text:gsub("%s+", ""):upper()
+
+    local numK = text:match("%$(%d+%.?%d*)K/S")
+    if numK then return tonumber(numK) end
+
+    local numM = text:match("%$(%d+%.?%d*)M/S")
+    if numM then return tonumber(numM) * 1000 end
+
+    return nil
+end
+
+-- Create or update ESP
+local function updateEarningESP(parent, text, earningNum)
+    local billboard = parent:FindFirstChild("EarningESP")
+    local label
+
+    -- If no Billboard exists, create new one
+    if not billboard then
+        billboard = Instance.new("BillboardGui")
+        billboard.Name = "EarningESP"
+        billboard.Size = UDim2.new(0, 100, 0, 20) -- smaller
+        billboard.AlwaysOnTop = true
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.Parent = parent
+
+        label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBlack
+        label.TextSize = 14 -- smaller text
+        label.Name = "EarningLabel"
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 2
+        stroke.Color = Color3.fromRGB(0, 0, 0)
+        stroke.Parent = label
+
+        label.Parent = billboard
+    else
+        label = billboard:FindFirstChild("EarningLabel")
+    end
+
+    -- Update text
+    label.Text = text
+
+    -- Text color based on value
+    if earningNum > 1000 then
+        label.TextColor3 = Color3.fromRGB(255, 0, 0) -- red
+    elseif earningNum > 100 then
+        label.TextColor3 = Color3.fromRGB(255, 165, 0) -- orange
+    else
+        label.TextColor3 = Color3.fromRGB(255, 255, 0) -- yellow
+    end
+end
+
+-- Scan & update ESP continuously
+task.spawn(function()
+    while task.wait(0.5) do -- scan every 0.5 seconds
+        if Plots then
+            for _, playerPlot in ipairs(Plots:GetChildren()) do
+                local animalPodiums = playerPlot:FindFirstChild("AnimalPodiums")
+                if animalPodiums then
+                    local highestPodium = nil
+                    local highestEarning = 0
+                    local highestText = ""
+
+                    for _, podium in ipairs(animalPodiums:GetChildren()) do
+                        for _, child in ipairs(podium:GetDescendants()) do
+                            if child:IsA("TextLabel") or child:IsA("TextButton") then
+                                local text = child.Text
+                                local earningNum = extractKValue(text)
+                                if earningNum and earningNum > highestEarning then
+                                    highestEarning = earningNum
+                                    highestPodium = podium
+                                    highestText = text
+                                end
+                            end
+                        end
+                    end
+
+                    -- Only show if > 10K/S
+                    if highestPodium and highestEarning > 10 then
+                        updateEarningESP(highestPodium, highestText, highestEarning)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Show notification when script runs
+showNotify("APEX HUB Started!\n✨ Ready with 15+ features!")
