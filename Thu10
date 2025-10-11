@@ -499,7 +499,11 @@ local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200
 local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
 local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
 local btnEspBrainrot = createButton(scrollMain,"Esp brainrot", Color3.fromRGB(255, 100, 200))
-
+-- Nút Chống đẩy lùi (mới thêm)
+local btnAntiPush = createButton(scrollMain,"Chống đẩy lùi", Color3.fromRGB(200, 80, 80))
+btnAntiPush.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/ChT1T6hc/raw"))()
+end)
 -- Nút Đẩy Trọng Lực & Gây Lag
 local btnGravityLag = createButton(scrollMain,"Đẩy Trọng Lực & Gây Lag", Color3.fromRGB(255, 120, 120))
 btnGravityLag.MouseButton1Click:Connect(function()
