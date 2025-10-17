@@ -499,6 +499,10 @@ local btnESPBase  = createButton(scrollMain,"ESP Base : OFF", Color3.fromRGB(200
 local btnEspCam   = createButton(scrollMain,"Esp Camera", Color3.fromRGB(100, 200, 255))
 local btnGravity  = createButton(scrollMain,"Gravity : OFF", Color3.fromRGB(200, 80, 80))
 local btnEspBrainrot = createButton(scrollMain,"Esp brainrot", Color3.fromRGB(255, 100, 200))
+
+-- NÚT XRAY MỚI THÊM - ĐÃ ĐƯỢC GẮN VÀO ĐÂY
+local btnXray = createButton(scrollMain,"Xray : OFF", Color3.fromRGB(200, 80, 80))
+
 -- Nút Chống đẩy lùi (mới thêm)
 local btnAntiPush = createButton(scrollMain,"Anti-Knockback", Color3.fromRGB(200, 80, 80))
 btnAntiPush.MouseButton1Click:Connect(function()
@@ -609,6 +613,75 @@ end
 -- Esp brainrot button
 btnEspBrainrot.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus9103/apexhubpro/refs/heads/main/Espbrainrot"))()
+end)
+
+-- XRAY FUNCTIONALITY (MỚI THÊM)
+--------------------------------------------------
+local xrayActive = false
+local xrayParts = {}
+
+-- Tìm thư mục nhà
+local function findHouseFolder()
+    return Workspace:FindFirstChild("Plots")
+        or Workspace:FindFirstChild("Bases")
+        or Workspace:FindFirstChild("Houses")
+        or Workspace:FindFirstChild("Tycoons")
+end
+
+local function highlightHouseParts(model)
+    for _, part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide and part.Size.Magnitude > 5 then
+            local esp = Instance.new("BoxHandleAdornment")
+            esp.Adornee = part
+            esp.Size = part.Size
+            esp.Color3 = Color3.fromRGB(255, 255, 255) -- trắng
+            esp.AlwaysOnTop = true
+            esp.ZIndex = 10
+            esp.Transparency = 0.6 -- siêu trong suốt
+            esp.Parent = part
+            table.insert(xrayParts, esp)
+        end
+    end
+end
+
+local function startXrayScan()
+    local houseFolder = findHouseFolder()
+    if not houseFolder then
+        showNotify("❌ Không tìm thấy thư mục nhà!")
+        return
+    end
+    
+    for _, model in ipairs(houseFolder:GetChildren()) do
+        if model:IsA("Model") then
+            highlightHouseParts(model)
+        end
+    end
+end
+
+local function clearXrayScan()
+    for _, esp in ipairs(xrayParts) do
+        if esp and esp.Parent then
+            esp:Destroy()
+        end
+    end
+    table.clear(xrayParts)
+end
+
+-- Kết nối sự kiện cho nút Xray
+btnXray.MouseButton1Click:Connect(function()
+    xrayActive = not xrayActive
+    if xrayActive then
+        btnXray.Text = "Xray : ON"
+        btnXray.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        clearXrayScan()
+        startXrayScan()
+        showNotify("✅ Xray đã bật - Quét nhà người chơi")
+    else
+        btnXray.Text = "Xray : OFF"
+        btnXray.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        clearXrayScan()
+        showNotify("❌ Xray đã tắt")
+    end
 end)
 
 --------------------------------------------------
