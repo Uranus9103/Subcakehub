@@ -6,7 +6,7 @@ local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 
--- GUI
+-- Gt-anhUI
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("LiftGui")
 if not gui then
 	gui = Instance.new("ScreenGui")
@@ -595,9 +595,9 @@ btnRunPastefy.MouseButton1Click:Connect(function()
 end)
 
 -- Add Empty Server button to MAIN tab
-local btnEmptyServer = createButton(scrollMain, "Empty Server", Color3.fromRGB(0, 0, 0))
+local btnEmptyServer = createButton(scrollMain, "Fixing", Color3.fromRGB(0, 0, 0))
 btnEmptyServer.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet("https://pastefy.app/BQTNEEOj/raw"))()
+    loadstring(game:HttpGet(""))()
 end)
 
 local btnani1 = createButton(scrollMain, "Animation", Color3.fromRGB(200,80,80))
