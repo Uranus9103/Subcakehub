@@ -594,9 +594,9 @@ btnRunPastefy.MouseButton1Click:Connect(function()
 end)
 
 -- Thêm nút Server trống vào MAIN tab
-local btnEmptyServer = createButton(scrollMain, "Đang fix", Color3.fromRGB(0, 0, 0))
+local btnEmptyServer = createButton(scrollMain, "Hover", Color3.fromRGB(0, 0, 0))
 btnEmptyServer.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet(""))()
+    loadstring(game:HttpGet("https://pastefy.app/R61rV3gi/raw"))()
 end)
 
 local btnani1 = createButton(scrollMain, "Animation", Color3.fromRGB(200,80,80))
