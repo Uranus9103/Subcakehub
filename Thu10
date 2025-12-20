@@ -750,7 +750,7 @@ local btnCredits = createInfoButton(scrollInfo, "Credits & About", Color3.fromRG
 
 -- Sự kiện cho nút Discord
 btnDiscord.MouseButton1Click:Connect(function()
-    copyToClipboard("https://discord.gg/gFKC6hqVU")
+    copyToClipboard("https://discord.gg/zZndBBdCj")
 end)
 
 -- Sự kiện cho nút YouTube
