@@ -606,6 +606,13 @@ btnani1.MouseButton1Click:Connect(function()
     end)
 end)
 
+local btnapex2 = createButton(scrollMain, "APEX V2", Color3.fromRGB(200,80,80))
+btnapex2.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/qkBY4YDz/raw"))()
+    end)
+end)
+
 -- Thêm hiệu ứng đổi màu viền cho nút Server trống
 local emptyServerStroke = btnEmptyServer:FindFirstChildOfClass("UIStroke")
 if emptyServerStroke then
@@ -1357,4 +1364,4 @@ task.spawn(function()
 end)
 
 -- Hiển thị thông báo khi script chạy
-showNotify("APEX HUB Đã Khởi Động!\n✨ Sẵn sàng với 15+ tính năng!")
+showNotify("APEX HUB Đã Khởi Động!\n✨ Sẵn sàng với 50+ tính năng!")
