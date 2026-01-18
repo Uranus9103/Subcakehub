@@ -1,0 +1,185 @@
+--// APEX HUB V2 UI LOADER
+--// Mobile / PC / KRNL / Delta X
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- Anti duplicate UI
+pcall(function()
+	player.PlayerGui:FindFirstChild("APEX_HUB_V2_UI"):Destroy()
+end)
+
+--========================
+-- ScreenGui
+--========================
+local gui = Instance.new("ScreenGui")
+gui.Name = "APEX_HUB_V2_UI"
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
+
+--========================
+-- Toggle Button (Image)
+--========================
+local toggle = Instance.new("ImageButton")
+toggle.Name = "ToggleButton"
+toggle.Parent = gui
+toggle.Size = UDim2.new(0, 56, 0, 56)
+toggle.Position = UDim2.new(0, 20, 0.5, -28)
+toggle.BackgroundColor3 = Color3.fromRGB(20,20,20)
+toggle.BackgroundTransparency = 0
+toggle.Image = "rbxassetid://131679774975668"
+toggle.AutoButtonColor = false
+toggle.Active = true
+
+-- UICorner cho nút ẩn/hiện ✅
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 14)
+toggleCorner.Parent = toggle
+
+-- Viền cho nút toggle
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Color = Color3.fromRGB(90,150,255)
+toggleStroke.Thickness = 1.2
+toggleStroke.Parent = toggle
+
+--========================
+-- Main Frame
+--========================
+local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
+frame.Parent = gui
+frame.Size = UDim2.new(0, 280, 0, 300)
+frame.Position = UDim2.new(0.5, -140, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(15,15,15)
+frame.BackgroundTransparency = 0.15
+frame.Visible = true
+frame.Active = true
+
+-- Corner Frame
+local frameCorner = Instance.new("UICorner", frame)
+frameCorner.CornerRadius = UDim.new(0, 16)
+
+-- Stroke Frame
+local frameStroke = Instance.new("UIStroke", frame)
+frameStroke.Color = Color3.fromRGB(90,150,255)
+frameStroke.Thickness = 1.2
+
+--========================
+-- Title
+--========================
+local title = Instance.new("TextLabel")
+title.Parent = frame
+title.Size = UDim2.new(1, 0, 0, 45)
+title.BackgroundTransparency = 1
+title.Text = "APEX HUB"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.TextColor3 = Color3.fromRGB(200,220,255)
+
+--========================
+-- Button creator
+--========================
+local function createButton(text, posY)
+	local btn = Instance.new("TextButton")
+	btn.Parent = frame
+	btn.Size = UDim2.new(0.85, 0, 0, 42)
+	btn.Position = UDim2.new(0.075, 0, 0, posY)
+	btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	btn.Text = text
+	btn.Font = Enum.Font.GothamSemibold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.AutoButtonColor = false
+
+	local c = Instance.new("UICorner", btn)
+	c.CornerRadius = UDim.new(0, 12)
+
+	btn.MouseEnter:Connect(function()
+		btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	end)
+	btn.MouseLeave:Connect(function()
+		btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	end)
+
+	return btn
+end
+
+--========================
+-- Buttons
+--========================
+local btn1 = createButton("Đi trên không", 55)
+local btn2 = createButton("FOV", 105)
+local btn3 = createButton("Quay về", 155)
+local btn4 = createButton("DUPE (ẢO)", 205)
+local btn5 = createButton("APEX HUB V2", 255)
+
+--========================
+-- Button actions
+--========================
+btn1.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/rqfeSQbN/raw"))()
+end)
+
+btn2.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/qBIVJfX4/raw"))()
+end)
+
+btn3.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/bk0cTNl2/raw"))()
+end)
+
+btn4.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/eZdRLw7e/raw"))()
+end)
+
+btn5.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://pastefy.app/qkBY4YDz/raw"))()
+end)
+
+--========================
+-- Toggle show / hide
+--========================
+toggle.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
+end)
+
+--========================
+-- Drag function (PC + Mobile)
+--========================
+local function makeDraggable(obj)
+	local dragging = false
+	local dragStart, startPos
+
+	obj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = obj.Position
+		end
+	end)
+
+	obj.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			obj.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+makeDraggable(frame)
+makeDraggable(toggle)
