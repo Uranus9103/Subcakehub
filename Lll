@@ -108,7 +108,7 @@ end
 --========================
 -- Buttons
 --========================
-local btn1 = createButton("Đi trên không", 55)
+local btn1 = createButton("Hover", 55)
 local btn2 = createButton("FOV", 105)
 local btn3 = createButton("Quay về", 155)
 local btn4 = createButton("DUPE (ẢO)", 205)
@@ -118,7 +118,7 @@ local btn5 = createButton("APEX HUB V2", 255)
 -- Button actions
 --========================
 btn1.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/rqfeSQbN/raw"))()
+	loadstring(game:HttpGet("https://pastefy.app/aqLCVR2c/raw"))()
 end)
 
 btn2.MouseButton1Click:Connect(function()
