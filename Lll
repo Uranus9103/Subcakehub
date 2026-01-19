@@ -1,185 +1,225 @@
---// APEX HUB V2 UI LOADER
---// Mobile / PC / KRNL / Delta X
+--================================================
+--      🌈 APEX HUB FINAL (TOGGLE BORDER ONLY)
+--   Toggle đổi màu VIỀN • UI ổn định • Full
+--================================================
 
+if game.CoreGui:FindFirstChild("APEX_HUB_FINAL") then
+    game.CoreGui.APEX_HUB_FINAL:Destroy()
+end
+
+-- SERVICES
 local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- Anti duplicate UI
-pcall(function()
-	player.PlayerGui:FindFirstChild("APEX_HUB_V2_UI"):Destroy()
-end)
+--================================================
+-- CONFIG
+--================================================
+local MAX_ZOOM = 1000000
+local MIN_ZOOM = 0.5
+local zoomEnabled = false
 
---========================
--- ScreenGui
---========================
-local gui = Instance.new("ScreenGui")
-gui.Name = "APEX_HUB_V2_UI"
-gui.ResetOnSpawn = false
-gui.Parent = player.PlayerGui
+local godEnabled = false
+local hbConn
 
---========================
--- Toggle Button (Image)
---========================
-local toggle = Instance.new("ImageButton")
-toggle.Name = "ToggleButton"
-toggle.Parent = gui
-toggle.Size = UDim2.new(0, 56, 0, 56)
-toggle.Position = UDim2.new(0, 20, 0.5, -28)
-toggle.BackgroundColor3 = Color3.fromRGB(20,20,20)
-toggle.BackgroundTransparency = 0
-toggle.Image = "rbxassetid://131679774975668"
-toggle.AutoButtonColor = false
-toggle.Active = true
+local Gaps = {
+    Vector3.new(200, -9.02499, 0),
+    Vector3.new(284,-9.02499,0),
+    Vector3.new(398,-9.02499,0),
+    Vector3.new(542,-9.02499,0),
+    Vector3.new(756,-9.02499,0),
+    Vector3.new(1074, -9.02499, 0),
+    Vector3.new(1555,-9.02499,0),
+    Vector3.new(2252.5,-9.02499,0),
+    Vector3.new(2607.5,-9.02499,0),
+}
+local currentGap = 1
+local lastUse = 0
 
--- UICorner cho nút ẩn/hiện ✅
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 14)
-toggleCorner.Parent = toggle
+--================================================
+-- CORE
+--================================================
+local function dashToGap(i)
+    if tick() - lastUse < 0.5 then return end
+    lastUse = tick()
 
--- Viền cho nút toggle
-local toggleStroke = Instance.new("UIStroke")
-toggleStroke.Color = Color3.fromRGB(90,150,255)
-toggleStroke.Thickness = 1.2
-toggleStroke.Parent = toggle
+    local c = player.Character
+    if not c then return end
+    local hrp = c:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
---========================
--- Main Frame
---========================
-local frame = Instance.new("Frame")
-frame.Name = "MainFrame"
-frame.Parent = gui
-frame.Size = UDim2.new(0, 280, 0, 300)
-frame.Position = UDim2.new(0.5, -140, 0.5, -150)
-frame.BackgroundColor3 = Color3.fromRGB(15,15,15)
-frame.BackgroundTransparency = 0.15
-frame.Visible = true
-frame.Active = true
+    TweenService:Create(
+        hrp,
+        TweenInfo.new(0.4, Enum.EasingStyle.Linear),
+        {CFrame = CFrame.new(Gaps[i])}
+    ):Play()
+end
 
--- Corner Frame
-local frameCorner = Instance.new("UICorner", frame)
-frameCorner.CornerRadius = UDim.new(0, 16)
+local function protect(char)
+    local hum = char:WaitForChild("Humanoid",5)
+    if not hum then return end
 
--- Stroke Frame
-local frameStroke = Instance.new("UIStroke", frame)
-frameStroke.Color = Color3.fromRGB(90,150,255)
-frameStroke.Thickness = 1.2
+    hum.BreakJointsOnDeath = false
+    hum:SetStateEnabled(Enum.HumanoidStateType.Dead,false)
 
---========================
--- Title
---========================
-local title = Instance.new("TextLabel")
-title.Parent = frame
-title.Size = UDim2.new(1, 0, 0, 45)
+    if hbConn then hbConn:Disconnect() end
+    hbConn = RunService.Heartbeat:Connect(function()
+        if godEnabled and hum.Health <= 0 then
+            hum.Health = 1
+            hum:ChangeState(Enum.HumanoidStateType.Running)
+        end
+    end)
+end
+
+--================================================
+-- UI BASE
+--================================================
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "APEX_HUB_FINAL"
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+-- MAIN PANEL
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromOffset(260,320)
+main.Position = UDim2.fromScale(0.35,0.3)
+main.BackgroundColor3 = Color3.fromRGB(18,18,22)
+main.BackgroundTransparency = 0.2
+main.Active = true
+main.Draggable = true
+main.ZIndex = 10
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
+
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Thickness = 2
+mainStroke.ZIndex = 11
+
+-- TITLE
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,40)
 title.BackgroundTransparency = 1
 title.Text = "APEX HUB"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 22
-title.TextColor3 = Color3.fromRGB(200,220,255)
+title.TextSize = 20
+title.TextColor3 = Color3.new(1,1,1)
+title.ZIndex = 11
 
---========================
--- Button creator
---========================
-local function createButton(text, posY)
-	local btn = Instance.new("TextButton")
-	btn.Parent = frame
-	btn.Size = UDim2.new(0.85, 0, 0, 42)
-	btn.Position = UDim2.new(0.075, 0, 0, posY)
-	btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
-	btn.Text = text
-	btn.Font = Enum.Font.GothamSemibold
-	btn.TextSize = 16
-	btn.TextColor3 = Color3.fromRGB(255,255,255)
-	btn.AutoButtonColor = false
+-- SCROLL
+local scroll = Instance.new("ScrollingFrame", main)
+scroll.Position = UDim2.fromOffset(0,40)
+scroll.Size = UDim2.new(1,0,1,-40)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.ScrollBarThickness = 4
+scroll.BackgroundTransparency = 1
+scroll.ZIndex = 11
 
-	local c = Instance.new("UICorner", btn)
-	c.CornerRadius = UDim.new(0, 12)
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0,10)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-	btn.MouseEnter:Connect(function()
-		btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-	end)
-	btn.MouseLeave:Connect(function()
-		btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
-	end)
+--================================================
+-- BUTTON MAKER
+--================================================
+local function makeBtn(text)
+    local b = Instance.new("TextButton", scroll)
+    b.Size = UDim2.fromOffset(220,42)
+    b.Text = text
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 14
+    b.TextColor3 = Color3.new(1,1,1)
+    b.BackgroundColor3 = Color3.fromRGB(35,35,45)
+    b.BackgroundTransparency = 0.15
+    b.BorderSizePixel = 0
+    b.ZIndex = 12
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,14)
 
-	return btn
+    local s = Instance.new("UIStroke", b)
+    s.Thickness = 1.5
+    s.ZIndex = 13
+
+    return b
 end
 
---========================
--- Buttons
---========================
-local btn1 = createButton("Hover", 55)
-local btn2 = createButton("FOV", 105)
-local btn3 = createButton("Quay về", 155)
-local btn4 = createButton("DUPE (ẢO)", 205)
-local btn5 = createButton("APEX HUB V2", 255)
-
---========================
--- Button actions
---========================
-btn1.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/aqLCVR2c/raw"))()
+--================================================
+-- BUTTONS
+--================================================
+makeBtn("HOVER").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/aqLCVR2c/raw"))()
 end)
 
-btn2.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/qBIVJfX4/raw"))()
+makeBtn("DUPE (ẢO)").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/eZdRLw7e/raw"))()
 end)
 
-btn3.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/ZvWybC7h/raw"))()
+makeBtn("APEX HUB V2").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/qkBY4YDz/raw"))()
 end)
 
-btn4.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/eZdRLw7e/raw"))()
+makeBtn("GAP UP").MouseButton1Click:Connect(function()
+    if currentGap < #Gaps then
+        currentGap += 1
+        dashToGap(currentGap)
+    end
 end)
 
-btn5.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/qkBY4YDz/raw"))()
+makeBtn("GAP DOWN").MouseButton1Click:Connect(function()
+    if currentGap > 1 then
+        currentGap -= 1
+        dashToGap(currentGap)
+    end
 end)
 
---========================
--- Toggle show / hide
---========================
+local godBtn = makeBtn("BẢO VỆ 1 MẠNG : OFF")
+godBtn.MouseButton1Click:Connect(function()
+    godEnabled = not godEnabled
+    godBtn.Text = godEnabled and "BẢO VỆ 1 MẠNG : ON" or "BẢO VỆ 1 MẠNG : OFF"
+    if godEnabled and player.Character then
+        protect(player.Character)
+    end
+end)
+
+local zoomBtn = makeBtn("UNLOCK ZOOM : OFF")
+zoomBtn.MouseButton1Click:Connect(function()
+    zoomEnabled = not zoomEnabled
+    zoomBtn.Text = zoomEnabled and "UNLOCK ZOOM : ON" or "UNLOCK ZOOM : OFF"
+    player.CameraMaxZoomDistance = zoomEnabled and MAX_ZOOM or 12
+    player.CameraMinZoomDistance = zoomEnabled and MIN_ZOOM or 0.5
+end)
+
+--================================================
+-- 🔘 TOGGLE AVATAR (CHỈ ĐỔI MÀU VIỀN)
+--================================================
+local toggle = Instance.new("ImageButton", gui)
+toggle.Size = UDim2.fromOffset(52,52)
+toggle.Position = UDim2.fromScale(0.05,0.5)
+toggle.Image = "rbxassetid://131679774975668"
+toggle.BackgroundTransparency = 1
+toggle.Active = true
+toggle.Draggable = true
+toggle.ZIndex = 50
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(1,0)
+
+local toggleStroke = Instance.new("UIStroke", toggle)
+toggleStroke.Thickness = 2
+toggleStroke.ZIndex = 51
+
 toggle.MouseButton1Click:Connect(function()
-	frame.Visible = not frame.Visible
+    main.Visible = not main.Visible
 end)
 
---========================
--- Drag function (PC + Mobile)
---========================
-local function makeDraggable(obj)
-	local dragging = false
-	local dragStart, startPos
+--================================================
+-- 🌈 RAINBOW (VIỀN TOGGLE + VIỀN UI)
+--
 
-	obj.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = obj.Position
-		end
-	end)
+--================================================
+-- RESPAWN FIX
+--================================================
+player.CharacterAdded:Connect(function(c)
+    task.wait(0.3)
+    currentGap = 1
+    if godEnabled then
+        protect(c)
+    end
+end)
 
-	obj.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch) then
-			local delta = input.Position - dragStart
-			obj.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end
-
-makeDraggable(frame)
-makeDraggable(toggle)
+print("✅ APEX HUB LOADED (TOGGLE BORDER RAINBOW ONLY)")
