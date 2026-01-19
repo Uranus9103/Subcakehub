@@ -126,7 +126,7 @@ btn2.MouseButton1Click:Connect(function()
 end)
 
 btn3.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://pastefy.app/bk0cTNl2/raw"))()
+	loadstring(game:HttpGet("https://pastefy.app/ZvWybC7h/raw"))()
 end)
 
 btn4.MouseButton1Click:Connect(function()
