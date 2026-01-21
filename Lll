@@ -155,6 +155,10 @@ makeBtn("APEX HUB V2").MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://pastefy.app/qkBY4YDz/raw"))()
 end)
 
+makeBtn("SPEED").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/Sw8tgRHW/raw"))()
+end)
+
 makeBtn("GAP UP").MouseButton1Click:Connect(function()
     if currentGap < #Gaps then
         currentGap += 1
