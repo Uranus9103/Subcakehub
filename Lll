@@ -40,6 +40,10 @@ local lastUse = 0
 --================================================
 -- CORE
 --================================================
+
+local DASH_TIME = 0.35
+local SAFE_Y_OFFSET = 3
+
 local function dashToGap(i)
     if tick() - lastUse < 0.5 then return end
     lastUse = tick()
@@ -47,13 +51,30 @@ local function dashToGap(i)
     local c = player.Character
     if not c then return end
     local hrp = c:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+    local hum = c:FindFirstChild("Humanoid")
+    if not hrp or not hum then return end
+
+    -- Khoá rơi khi dash
+    hum:ChangeState(Enum.HumanoidStateType.Physics)
+
+    local targetPos = Gaps[i] + Vector3.new(0, SAFE_Y_OFFSET, 0)
+    local targetCF = CFrame.new(targetPos) * CFrame.Angles(
+        0,
+        math.rad(hrp.Orientation.Y),
+        0
+    )
 
     TweenService:Create(
         hrp,
-        TweenInfo.new(0.4, Enum.EasingStyle.Linear),
-        {CFrame = CFrame.new(Gaps[i])}
+        TweenInfo.new(DASH_TIME, Enum.EasingStyle.Linear),
+        {CFrame = targetCF}
     ):Play()
+
+    task.delay(DASH_TIME, function()
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Running)
+        end
+    end)
 end
 
 local function protect(char)
