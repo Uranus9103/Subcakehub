@@ -240,6 +240,10 @@ makeBtn(functionSection, "AUTO ĐI LÊN/VỀ").MouseButton1Click:Connect(functio
     loadstring(game:HttpGet("https://pastefy.app/MI9yOGrP/raw"))()
 end)
 
+makeBtn(functionSection, "PHÁT HIỆN SÓNG THẦN").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/pAjxljv7/raw"))()
+end)
+
 makeBtn(functionSection, "GAP UP").MouseButton1Click:Connect(function()
     if currentGap < #Gaps then
         currentGap += 1
