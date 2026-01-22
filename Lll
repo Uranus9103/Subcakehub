@@ -1,4 +1,4 @@
---================================================
+--===================================pro=============
 --      🌈 APEX HUB FINAL (TOGGLE BORDER ONLY)
 --   Toggle đổi màu VIỀN • UI ổn định • Full
 --================================================
@@ -178,6 +178,10 @@ end)
 
 makeBtn("SPEED").MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://pastefy.app/Sw8tgRHW/raw"))()
+end)
+
+makeBtn("AUTO ĐI LÊN/VỀ").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/MI9yOGrP/raw"))()
 end)
 
 makeBtn("GAP UP").MouseButton1Click:Connect(function()
