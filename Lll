@@ -168,6 +168,10 @@ makeBtn("HOVER").MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://pastefy.app/aqLCVR2c/raw"))()
 end)
 
+makeBtn("HOVER (NHANH)").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://pastefy.app/v6qturaF/raw"))()
+end)
+
 makeBtn("DUPE (ẢO)").MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://pastefy.app/eZdRLw7e/raw"))()
 end)
