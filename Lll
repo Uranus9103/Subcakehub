@@ -216,12 +216,12 @@ end
 --================================================
 -- FUNCTION SECTION BUTTONS
 --================================================
-makeBtn(functionSection, "HOVER").MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet("https://pastefy.app/aqLCVR2c/raw"))()
+makeBtn(functionSection, "Đang fix…").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet(""))()
 end)
 
-makeBtn(functionSection, "HOVER (NHANH)").MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet("https://pastefy.app/v6qturaF/raw"))()
+makeBtn(functionSection, "Đang fix…").MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet(""))()
 end)
 
 makeBtn(functionSection, "DUPE (ẢO)").MouseButton1Click:Connect(function()
